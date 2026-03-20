@@ -9,7 +9,6 @@ export const theme = {
     primaryDark: '#B91C1C',
     accent: '#7C3AED',        // Vibe purple
     accentLight: '#A78BFA',
-    deezer: '#EF0B3A',
     success: '#22C55E',
     text: '#F0F0F5',
     textMuted: '#8888A0',

@@ -150,29 +150,42 @@ export async function getTopTracks(
   return (data.items ?? []).map((t: any) => t as SpotifyTrack);
 }
 
-// ─── Recommendations (for Swipe) ──────────────────────────────────────────────
+// ─── Recommendations (Fallback for Swipe) ──────────────────────────────────────
 
+// NOTA: El endpoint oficial '/recommendations' (404/400) y el de Playlists (403)
+// presentan restricciones regionales.
+// Como fallback final para el Swipe Deck, extraemos canciones aleatorias mediante Búsqueda (Search).
 export async function getRecommendations(
   accessToken: string,
-  seedTracks: string[],
+  _seedTracks: string[], // Mantenido por compatibilidad de firma
   limit = 20
 ): Promise<SpotifyTrack[]> {
-  if (!seedTracks || seedTracks.length === 0) return [];
-  const seeds = seedTracks.slice(0, 5).join(','); // Max 5 seeds allowed
-  
   try {
+    // Aseguramos que el limit sea un numero entero ESTRICTO entre 1 y 50
+    let parsedLimit = Math.round(Number(limit));
+    if (isNaN(parsedLimit) || parsedLimit < 1) parsedLimit = 20;
+    if (parsedLimit > 50) parsedLimit = 50;
+
+    // Buscamos tracks populares del año actual para tener un "Discovery" real
+    const currentYear = new Date().getFullYear();
+    const query = encodeURIComponent(`genre:pop`);
+    
+    console.log(`[SpotifyAPI] Enviando busqueda con limite ${parsedLimit}`);
+    
     const data = await spotifyGet<any>(
-      `/recommendations?limit=${limit}&seed_tracks=${seeds}`,
+      `/search?q=${query}&type=track&limit=${parsedLimit}`,
       accessToken
     );
     
-    // Filter out tracks without preview_url if we specifically need audio previews
-    // but for now let's just return what Spotify gives us. 
-    // We'll handle null preview_url in the UI.
-    return (data.tracks ?? []).map((t: any) => t as SpotifyTrack);
+    if (!data.tracks || !data.tracks.items) return [];
+
+    // Filter out invalid items and map to SpotifyTrack
+    return data.tracks.items
+      .filter((track: any) => track && track.id) // Asegurar que es un track válido
+      .map((track: any) => track as SpotifyTrack);
+
   } catch (err: any) {
-    console.error('[SpotifyAPI] getRecommendations error:', err.message);
-    // If it fails with 404 or 400, return an empty array so UI handles it gracefully
+    console.error('[SpotifyAPI] getRecommendations (Search Fallback) error:', err.message);
     return [];
   }
 }
@@ -241,8 +254,11 @@ export async function computeVibeVector(
 
     if (features.length === 0) throw new Error('No features returned');
 
-    const avg = (key: keyof AudioFeature): number =>
-      features.reduce((sum, f) => sum + (f[key] as number), 0) / features.length;
+    const avg = (key: keyof AudioFeature): number => {
+      const vals = features.map(f => Number(f[key])).filter(v => !isNaN(v));
+      if (vals.length === 0) return 0.5;
+      return vals.reduce((sum, v) => sum + v, 0) / vals.length;
+    };
 
     const vector: VibeVector = {
       energy: avg('energy'),
@@ -256,12 +272,15 @@ export async function computeVibeVector(
     // ── Fallback for 403 (audio-features deprecated for new apps) ────────────
     console.warn('[Encorely] Audio Features 403 — usando fallback de metadata:', e?.message);
 
+    const safe = (val: number, fallback = 0.5) => (isNaN(val) || val === null || val === undefined) ? fallback : val;
+
     const fallbackVector: VibeVector = {
-      // popularity-based energy proxy
-      energy: tracks.reduce((s, t) => s + (t.popularity / 100) * 0.3, 0) / tracks.length,
+      // popularity-based energy proxy (popularity can be undefined)
+      energy: safe(tracks.reduce((s, t) => s + ((t.popularity ?? 50) / 100) * 0.3, 0) / tracks.length),
       // use explicit as rough danceability proxy
-      danceability:
-        tracks.reduce((s, t) => s + (t.explicit ? 0.75 : 0.45), 0) / tracks.length,
+      danceability: safe(
+        tracks.reduce((s, t) => s + (t.explicit ? 0.75 : 0.45), 0) / tracks.length
+      ),
       // mid valence (no data without audio-features)
       valence: 0.5,
       // can't know tempo without audio-features — use mid

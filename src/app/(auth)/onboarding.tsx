@@ -1,100 +1,268 @@
-import React, { useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  TouchableOpacity,
-  Animated,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, FlatList, Dimensions, Animated, ActivityIndicator, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import styled, { useTheme } from 'styled-components/native';
 import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
 import { useVibeVector } from '../../hooks/useVibeVector';
 import { useAuth } from '../../context/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-// ─── Slide 1: Welcome ─────────────────────────────────────────────────────────
+// ─── Styled Components ────────────────────────────────────────────────────────
+
+const Container = styled.View`
+  flex: 1;
+  background-color: ${({ theme }: any) => theme.colors.background};
+`;
+
+const BackgroundGradient = styled(LinearGradient)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.8;
+`;
+
+const StyledSafeArea = styled(SafeAreaView)`
+  flex: 1;
+`;
+
+const SlideContainer = styled.View`
+  width: ${width}px;
+  flex: 1;
+  padding-horizontal: 28px;
+  padding-top: 44px;
+  padding-bottom: 30px;
+  justify-content: flex-end;
+`;
+
+const LogoBlock = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  top: 60px;
+  align-self: center;
+`;
+
+const LogoEmoji = styled.Text`
+  font-size: 30px;
+`;
+
+const LogoText = styled.Text`
+  font-size: 24px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }: any) => theme.colors.text};
+`;
+
+const HeroTitle = styled.Text`
+  font-size: 42px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }: any) => theme.colors.text};
+  letter-spacing: -1.5px;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const HeroSub = styled.Text`
+  font-size: 16px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
+  color: ${({ theme }: any) => theme.colors.textDim};
+  text-align: center;
+  line-height: 24px;
+  margin-bottom: 40px;
+  padding-horizontal: 20px;
+`;
+
+const PrimaryButton = styled.TouchableOpacity`
+  background-color: ${({ theme }: any) => theme.colors.primary};
+  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  padding-vertical: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.6;
+  shadow-radius: 16px;
+  elevation: 10;
+`;
+
+const PrimaryButtonText = styled.Text`
+  color: #FFFFFF;
+  font-size: 16px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+`;
+
+const SecondaryButton = styled.TouchableOpacity`
+  background-color: transparent;
+  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  padding-vertical: 16px;
+  align-items: center;
+  border-width: 1px;
+  border-color: ${({ theme }: any) => theme.colors.glassLight};
+`;
+
+const SecondaryButtonText = styled.Text`
+  color: ${({ theme }: any) => theme.colors.text};
+  font-size: 14px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+`;
+
+// Glass Card for Vibe Vector
+const GlassCard = styled(BlurView)`
+  border-radius: 24px;
+  padding: 24px;
+  overflow: hidden;
+  border-width: 1px;
+  border-color: ${({ theme }: any) => theme.colors.glassLight};
+  background-color: ${({ theme }: any) => theme.colors.glassDark};
+  margin-bottom: 40px;
+`;
+
+const SectionTag = styled.Text`
+  font-size: 11px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }: any) => theme.colors.primary};
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  text-align: center;
+`;
+
+const SlideTitle = styled.Text`
+  font-size: 32px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }: any) => theme.colors.text};
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+// Vibe Dims
+const DimList = styled.View`
+  gap: 14px;
+  margin-vertical: 20px;
+`;
+
+const DimRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+`;
+
+const DimLabel = styled.Text`
+  width: 64px;
+  font-size: 12px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyBold};
+  color: ${({ theme }: any) => theme.colors.text};
+`;
+
+const BarTrack = styled.View`
+  flex: 1;
+  height: 6px;
+  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  border-radius: 99px;
+  overflow: hidden;
+`;
+
+const BarFillWrapper = styled(Animated.View)`
+  height: 100%;
+  border-radius: 99px;
+`;
+
+const DimVal = styled.Text<{ color: string }>`
+  width: 34px;
+  font-size: 12px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyBold};
+  text-align: right;
+  color: ${({ color }: { color: string }) => color};
+`;
+
+const SpotifyButton = styled(PrimaryButton)`
+  background-color: ${({ theme }: any) => theme.colors.primary};
+  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+`;
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+function AnimatedBar({ value, color }: { value: number; color: string }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, { toValue: value, duration: 900, delay: 200, useNativeDriver: false }).start();
+  }, []);
+  return (
+    <BarTrack>
+      <BarFillWrapper style={{
+        backgroundColor: color,
+        width: anim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+      }} />
+    </BarTrack>
+  );
+}
+
+// ─── Slide 1: Welcome (Mockup 1) ──────────────────────────────────────────────
 function SlideWelcome({ onNext }: { onNext: () => void }) {
   return (
-    <View style={styles.slide}>
-      <View style={styles.logoBlock}>
-        <Text style={styles.logoEmoji}>🎵</Text>
-        <Text style={styles.logoText}>Encorely</Text>
-        <View style={styles.betaBadge}><Text style={styles.betaText}>BETA</Text></View>
-      </View>
-      <Text style={styles.heroTitle}>Encuentra{'\n'}tu tribu.</Text>
-      <Text style={styles.heroSub}>
-        Conecta con fans en conciertos que comparten exactamente tu vibe.
-        No likes, no followers — pura compatibilidad musical.
-      </Text>
-      <View style={styles.chips}>
-        {['🎫 Conciertos', '🎯 Matching', '📡 Radar'].map((c) => (
-          <View key={c} style={styles.chip}>
-            <Text style={styles.chipText}>{c}</Text>
-          </View>
-        ))}
-      </View>
-      <TouchableOpacity style={styles.nextBtn} onPress={onNext}>
-        <Text style={styles.nextBtnText}>Siguiente →</Text>
-      </TouchableOpacity>
-    </View>
+    <SlideContainer>
+      <LogoBlock>
+        <LogoEmoji>🎵</LogoEmoji>
+        <LogoText>Encorely</LogoText>
+      </LogoBlock>
+      
+      <HeroTitle>No vuelvas a ir solo a un concierto</HeroTitle>
+      <HeroSub>
+        Te conectamos con personas compatibles según lo que escuchas en Spotify
+      </HeroSub>
+
+      <PrimaryButton onPress={onNext}>
+        <PrimaryButtonText>Comenzar</PrimaryButtonText>
+      </PrimaryButton>
+
+      <SecondaryButton onPress={onNext}>
+        <SecondaryButtonText>Ya tengo cuenta, iniciar sesión</SecondaryButtonText>
+      </SecondaryButton>
+    </SlideContainer>
   );
 }
 
 // ─── Slide 2: Vibe Vector ─────────────────────────────────────────────────────
 const DIMS = [
-  { label: 'Energy', value: 0.78, color: theme.colors.primary },
+  { label: 'Energy', value: 0.78, color: '#F366FF' },
   { label: 'Baile', value: 0.65, color: '#F97316' },
   { label: 'Valencia', value: 0.52, color: '#EAB308' },
-  { label: 'Tempo', value: 0.84, color: theme.colors.accent },
+  { label: 'Tempo', value: 0.84, color: '#A855F7' },
 ];
-
-function AnimatedBar({ value, color }: { value: number; color: string }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  React.useEffect(() => {
-    Animated.timing(anim, { toValue: value, duration: 900, delay: 200, useNativeDriver: false }).start();
-  }, []);
-  return (
-    <View style={styles.bar}>
-      <Animated.View style={[styles.barFill, {
-        backgroundColor: color,
-        width: anim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-      }]} />
-    </View>
-  );
-}
 
 function SlideVibeVector({ onNext }: { onNext: () => void }) {
   return (
-    <View style={styles.slide}>
-      <Text style={styles.tag}>TU PERFIL MUSICAL</Text>
-      <Text style={styles.slideTitle}>Vector{'\n'}de Vibe</Text>
-      <Text style={styles.slideSub}>
-        Analizamos tus últimas 50 canciones en Spotify y calculamos
-        4 dimensiones de tu gusto musical.
-      </Text>
-      <View style={styles.dimList}>
-        {DIMS.map((d) => (
-          <View key={d.label} style={styles.dimRow}>
-            <Text style={styles.dimLabel}>{d.label}</Text>
-            <AnimatedBar value={d.value} color={d.color} />
-            <Text style={[styles.dimVal, { color: d.color }]}>{Math.round(d.value * 100)}%</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.matchPill}>
-        <Text style={styles.matchText}>🎯 Match coseno {'>'} 70% = conexión real</Text>
-      </View>
-      <TouchableOpacity style={styles.nextBtn} onPress={onNext}>
-        <Text style={styles.nextBtnText}>Conectar Spotify →</Text>
-      </TouchableOpacity>
-    </View>
+    <SlideContainer style={{ justifyContent: 'center' }}>
+      <GlassCard intensity={40} tint="dark">
+        <SectionTag>TU MUSIC DNA</SectionTag>
+        <SlideTitle>Vector de Vibe</SlideTitle>
+        <HeroSub style={{ marginBottom: 0 }}>
+          Descubrimos tu perfil analizando tus 50 tracks más recientes en Spotify.
+        </HeroSub>
+        
+        <DimList>
+          {DIMS.map((d) => (
+            <DimRow key={d.label}>
+              <DimLabel>{d.label}</DimLabel>
+              <AnimatedBar value={d.value} color={d.color} />
+              <DimVal color={d.color}>{Math.round(d.value * 100)}%</DimVal>
+            </DimRow>
+          ))}
+        </DimList>
+      </GlassCard>
+
+      <PrimaryButton onPress={onNext}>
+        <PrimaryButtonText>Siguiente</PrimaryButtonText>
+      </PrimaryButton>
+    </SlideContainer>
   );
 }
 
@@ -105,8 +273,9 @@ function SlideConnect() {
   const { compute: computeVibe, usedFallback } = useVibeVector();
   const { setSession } = useAuth();
   const [computing, setComputing] = useState(false);
+  const theme = useTheme();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) return;
     (async () => {
       setComputing(true);
@@ -127,52 +296,50 @@ function SlideConnect() {
   }, [user]);
 
   return (
-    <View style={styles.slide}>
-      <Text style={styles.tag}>LISTO PARA COMENZAR</Text>
-      <Text style={styles.slideTitle}>Conecta{'\n'}Spotify.</Text>
-      <Text style={styles.slideSub}>
-        Autorizamos acceso a tu historial de reproducción.{'\n'}
-        No almacenamos tus canciones ni tus datos de escucha.
-      </Text>
-      <View style={styles.permList}>
-        {[
-          '✅ Historial de reproducción (últimas 50)',
-          '✅ Tu perfil público',
-          '❌ Playlists (no requeridas)',
-        ].map((p) => (
-          <Text key={p} style={styles.permItem}>{p}</Text>
-        ))}
-      </View>
-      {error ? (
-        <View style={styles.errBox}>
-          <Text style={styles.errText}>⚠️ {error}</Text>
+    <SlideContainer style={{ justifyContent: 'center' }}>
+      <GlassCard intensity={40} tint="dark">
+        <SectionTag>CONEXIÓN SEGURA</SectionTag>
+        <SlideTitle>Conecta Spotify</SlideTitle>
+        <HeroSub>
+          Solo leemos tu historial de reproducción reciente para calcular tu compatibilidad.
+        </HeroSub>
+        
+        <View style={{ gap: 12, marginBottom: 30 }}>
+            <Text style={{ color: theme.colors.textDim, fontFamily: theme.typography.fontFamily.body }}>✅ Historial de reproducción (50 tracks)</Text>
+            <Text style={{ color: theme.colors.textDim, fontFamily: theme.typography.fontFamily.body }}>✅ Tu perfil público</Text>
+            <Text style={{ color: theme.colors.textDim, fontFamily: theme.typography.fontFamily.body }}>❌ No leemos playlists privadas</Text>
         </View>
-      ) : null}
-      <TouchableOpacity
-        style={[styles.spotifyBtn, (isLoggingIn || computing) && styles.spotifyBtnDim]}
-        onPress={login}
-        disabled={isLoggingIn || computing}
-      >
-        {(isLoggingIn || computing) ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.spotifyBtnText}>♪  Conectar con Spotify</Text>
-        )}
-      </TouchableOpacity>
-      {computing && (
-        <Text style={styles.computingText}>⚡ Calculando tu Vector de Vibe...</Text>
-      )}
-    </View>
+
+        {error ? (
+          <View style={{ backgroundColor: '#7F1D1D22', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text style={{ color: '#FCA5A5', textAlign: 'center', fontFamily: theme.typography.fontFamily.body }}>⚠️ {error}</Text>
+          </View>
+        ) : null}
+
+        <SpotifyButton onPress={login} disabled={isLoggingIn || computing} style={{ opacity: (isLoggingIn || computing) ? 0.7 : 1, marginBottom: 0 }}>
+          {isLoggingIn || computing ? (
+             <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Text style={{ color: '#fff', fontSize: 20 }}>♪</Text>
+              <PrimaryButtonText>Conectar con Spotify</PrimaryButtonText>
+            </>
+          )}
+        </SpotifyButton>
+        {computing && <Text style={{ color: theme.colors.textDim, textAlign: 'center', marginTop: 16, fontFamily: theme.typography.fontFamily.body }}>⚡ Analizando tu perfil musical...</Text>}
+      </GlassCard>
+    </SlideContainer>
   );
 }
 
-// ─── Main Onboarding ──────────────────────────────────────────────────────────
+// ─── Main Onboarding Screen ───────────────────────────────────────────────────
 const SLIDES = ['welcome', 'vibe', 'connect'] as const;
 
 export default function OnboardingScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
+  const theme = useTheme();
 
   const goNext = () => {
     const next = Math.min(currentIndex + 1, SLIDES.length - 1);
@@ -199,74 +366,57 @@ export default function OnboardingScreen() {
       outputRange: [0.3, 1, 0.3],
       extrapolate: 'clamp',
     });
-    return <Animated.View key={i} style={[styles.dot, { opacity, transform: [{ scaleX }] }]} />;
+    return (
+      <Animated.View
+        key={i}
+        style={{
+          width: 8, height: 8, borderRadius: 4,
+          backgroundColor: theme.colors.text,
+          opacity,
+          transform: [{ scaleX }]
+        }}
+      />
+    );
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.FlatList
-        ref={flatListRef}
-        data={SLIDES}
-        renderItem={renderSlide}
-        keyExtractor={(item) => item}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-        onMomentumScrollEnd={(e) => {
-          setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / width));
-        }}
+    <Container>
+      {/* Background with Dark base and Magenta bottom Glow */}
+      <BackgroundGradient
+        colors={['#181818', '#2a1a3a', '#181818']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
       />
-      <View style={styles.dotsRow}>{dots}</View>
-    </SafeAreaView>
+      
+      {/* Optional Soft liquid blob at the bottom for glassmorphism background */}
+      <View style={{
+        position: 'absolute', bottom: -100, left: -50, right: -50, height: 400,
+        backgroundColor: 'rgba(168, 85, 247, 0.15)', borderRadius: 999,
+        transform: [{ scaleX: 1.5 }]
+      }} />
+
+      <StyledSafeArea edges={['top', 'bottom']}>
+        <Animated.FlatList
+          ref={flatListRef}
+          data={SLIDES}
+          renderItem={renderSlide}
+          keyExtractor={(item) => item}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          onMomentumScrollEnd={(e) => {
+            setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+          }}
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 20 }}>
+          {dots}
+        </View>
+      </StyledSafeArea>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  slide: { width, flex: 1, paddingHorizontal: 28, paddingTop: 44, paddingBottom: 16 },
-  // Logo
-  logoBlock: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 32 },
-  logoEmoji: { fontSize: 30 },
-  logoText: { fontSize: 24, fontWeight: '800', color: theme.colors.text },
-  betaBadge: { backgroundColor: theme.colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 99 },
-  betaText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  // Hero
-  heroTitle: { fontSize: 52, fontWeight: '900', color: theme.colors.text, letterSpacing: -2, lineHeight: 56, marginBottom: 16 },
-  heroSub: { fontSize: 15, color: theme.colors.textMuted, lineHeight: 24, marginBottom: 28 },
-  chips: { flexDirection: 'row', gap: 8, marginBottom: 32 },
-  chip: { backgroundColor: theme.colors.surfaceHigh, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: theme.colors.border },
-  chipText: { color: theme.colors.text, fontSize: 13, fontWeight: '600' },
-  // Slide generic
-  tag: { fontSize: 11, fontWeight: '700', color: theme.colors.primary, letterSpacing: 2, marginBottom: 12 },
-  slideTitle: { fontSize: 42, fontWeight: '900', color: theme.colors.text, letterSpacing: -1.5, lineHeight: 46, marginBottom: 14 },
-  slideSub: { fontSize: 14, color: theme.colors.textMuted, lineHeight: 22, marginBottom: 24 },
-  // Vibe dims
-  dimList: { gap: 14, marginBottom: 24 },
-  dimRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dimLabel: { width: 64, fontSize: 12, fontWeight: '700', color: theme.colors.text },
-  bar: { flex: 1, height: 6, backgroundColor: theme.colors.surfaceHigh, borderRadius: 99, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 99 },
-  dimVal: { width: 34, fontSize: 12, fontWeight: '700', textAlign: 'right' },
-  matchPill: { alignSelf: 'flex-start', backgroundColor: theme.colors.accent + '22', borderWidth: 1, borderColor: theme.colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, marginBottom: 28 },
-  matchText: { color: theme.colors.accentLight, fontSize: 12, fontWeight: '700' },
-  // Spotify connect slide
-  permList: { gap: 10, marginBottom: 24 },
-  permItem: { color: theme.colors.textMuted, fontSize: 14, lineHeight: 20 },
-  errBox: { backgroundColor: '#7F1D1D22', borderWidth: 1, borderColor: '#EF4444', borderRadius: theme.radius.md, padding: 12, marginBottom: 12 },
-  errText: { color: '#FCA5A5', fontSize: 13, textAlign: 'center' },
-  spotifyBtn: { backgroundColor: '#1DB954', borderRadius: theme.radius.lg, paddingVertical: 18, alignItems: 'center', marginBottom: 12 },
-  spotifyBtnDim: { opacity: 0.6 },
-  spotifyBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  computingText: { color: theme.colors.textMuted, fontSize: 13, textAlign: 'center' },
-  // Buttons
-  nextBtn: { alignSelf: 'flex-end', backgroundColor: theme.colors.surfaceHigh, borderWidth: 1, borderColor: theme.colors.border, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 99 },
-  nextBtnText: { color: theme.colors.text, fontSize: 15, fontWeight: '700' },
-  // Dots
-  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 28 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.primary },
-});

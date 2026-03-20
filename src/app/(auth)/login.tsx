@@ -49,9 +49,9 @@ export default function LoginScreen() {
   const { compute: computeVibe, usedFallback } = useVibeVector();
   const { setSession, user: authUser } = useAuth();
 
-  // Redirect if already logged in
+  // Redirect if already logged in (Manejado globalmente en _layout.tsx)
   useEffect(() => {
-    if (authUser) router.replace('/(main)');
+    // Ya no redireccionamos acá manualmente para evitar "Attempted to navigate before mounting"
   }, [authUser]);
 
   // After Spotify user is available, compute vibe + store session
@@ -66,8 +66,10 @@ export default function LoginScreen() {
       await setSession(user, token, vibe);
 
       if (usedFallback) showFallbackToast();
-
-      router.replace('/(main)');
+      
+      // NOTA: Al hacer setSession, AuthContext emitirá authUser !== null
+      // y _layout.tsx NavigationGuard() se encargará de hacer router.replace()
+      // automáticamente de una forma Thread-safe.
     })();
   }, [user]);
 

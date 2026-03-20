@@ -54,7 +54,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 // ─── Redirect URI ─────────────────────────────────────────────────────────────
 // HARDCODED para desarrollo con tunnel, para asegurar MATCH EXACTO
 // Si el tunnel cambia, hay que cambiarlo aquí.
-const redirectUri = 'exp://ajlcpjk-anonymous-8081.exp.direct';
+const redirectUri = 'exp://3abvrlm-anonymous-8081.exp.direct';
 
 console.log('[Encorely] 🚨 URI EXACTA — agrega en Spotify Dashboard:', redirectUri);
 

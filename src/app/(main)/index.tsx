@@ -1,273 +1,455 @@
 import React, { useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-} from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import styled from 'styled-components/native';
+import { BlurView } from 'expo-blur';
 import { useAuth } from '../../context/AuthContext';
 import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
 import { VibeVector } from '../../hooks/useVibeVector';
 import { useRouter } from 'expo-router';
-import { useSwipes, SWIPE_THRESHOLD } from '../../hooks/useSwipes';
+import { useSwipeEngine } from '../../hooks/useSwipeEngine';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+// victory-native removed — causes 'Building 100%' hang in Expo Go
 
-// ─── Vibe Bar ──────────────────────────────────────────────────────────────────
-interface VibeBarProps {
-  label: string;
-  value: number;
-  color: string;
-  suffix?: string;
-}
+// ─── Styled Components ────────────────────────────────────────────────────────
 
-function VibeBar({ label, value, color, suffix = '%' }: VibeBarProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+const Container = styled.View`
+  flex: 1;
+  background-color: ${({ theme }: any) => theme.colors.background};
+`;
 
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: value,
-      duration: 800,
-      delay: 150,
-      useNativeDriver: false,
+const BackgroundGradient = styled(LinearGradient)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.6;
+`;
+
+const StyledSafeArea = styled(SafeAreaView)`
+  flex: 1;
+`;
+
+const ContentScroller = styled.ScrollView.attrs({
+  contentContainerStyle: { padding: 22, paddingTop: 10, gap: 20, paddingBottom: 110 }
+})``;
+
+// Header
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const HeaderLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+`;
+
+const AvatarImg = styled.Image`
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: ${({ theme }: any) => theme.colors.surface};
+`;
+
+const AvatarPlaceholder = styled.View`
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #ffdcb5;
+  align-items: center;
+  justify-content: center;
+`;
+
+const AvatarInitial = styled.Text`
+  font-size: 20px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
+  color: #181818;
+`;
+
+const HeaderTextContainer = styled.View`
+  justify-content: center;
+`;
+
+const Greeting = styled.Text`
+  font-size: 20px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }: any) => theme.colors.text};
+`;
+
+const SubGreetingPill = styled.View`
+  background-color: ${({ theme }: any) => theme.colors.glassNeon};
+  border-radius: 99px;
+  padding-horizontal: 8px;
+  padding-vertical: 2px;
+  align-self: flex-start;
+  margin-top: 2px;
+`;
+
+const SubGreetingText = styled.Text`
+  font-size: 11px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+  color: ${({ theme }: any) => theme.colors.primary};
+`;
+
+const SettingsBtn = styled.TouchableOpacity`
+  width: 38px;
+  height: 38px;
+  border-radius: 19px;
+  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  align-items: center;
+  justify-content: center;
+`;
+
+// Glass Card Base
+const GlassCard = styled(BlurView)`
+  border-radius: 32px;
+  padding: 24px;
+  overflow: hidden;
+  border-width: 1px;
+  border-color: ${({ theme }: any) => theme.colors.glassLight};
+  background-color: ${({ theme }: any) => theme.colors.glassDark};
+`;
+
+// Music DNA Section
+const DNATitle = styled.Text`
+  font-size: 24px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }: any) => theme.colors.text};
+  margin-bottom: 24px;
+`;
+
+const DNADescription = styled.Text`
+  font-size: 14px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
+  color: ${({ theme }: any) => theme.colors.textDim};
+  text-align: center;
+  line-height: 22px;
+  margin-top: 24px;
+  margin-bottom: 20px;
+`;
+
+const ChipsContainer = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+`;
+
+const VibeChip = styled.View`
+  border-width: 1px;
+  border-color: ${({ theme }: any) => theme.colors.glassNeon};
+  border-radius: 99px;
+  padding-horizontal: 16px;
+  padding-vertical: 8px;
+  background-color: ${({ theme }: any) => theme.colors.glassNeon};
+`;
+
+const VibeChipText = styled.Text`
+  color: ${({ theme }: any) => theme.colors.primary};
+  font-size: 13px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+`;
+
+const RadarContainer = styled(GlassCard)`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+`;
+
+const SpotifyStatusContainer = styled.View`
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+`;
+
+const SpotifyLogoWrap = styled.View`
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #1DB954;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SpotifyStatusText = styled.Text`
+  font-size: 16px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }: any) => theme.colors.text};
+`;
+
+const SpotifyStatusSub = styled.Text`
+  font-size: 12px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
+  color: ${({ theme }: any) => theme.colors.textDim};
+`;
+
+const ActionButton = styled.TouchableOpacity`
+  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  padding-horizontal: 16px;
+  padding-vertical: 8px;
+  border-radius: 99px;
+`;
+
+const ActionButtonText = styled.Text`
+  color: ${({ theme }: any) => theme.colors.text};
+  font-size: 13px;
+  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+`;
+
+function RealRadarChart({ vibeVector }: { vibeVector: VibeVector }) {
+  const [opacity] = React.useState(new Animated.Value(0));
+
+  React.useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
     }).start();
-  }, [value]);
+  }, []);
 
-  return (
-    <View style={styles.barRow}>
-      <Text style={styles.barLabel}>{label}</Text>
-      <View style={styles.barTrack}>
-        <Animated.View
-          style={[
-            styles.barFill,
-            {
-              backgroundColor: color,
-              width: anim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-            },
-          ]}
-        />
-      </View>
-      <Text style={[styles.barValue, { color }]}>
-        {Math.round(value * 100)}{suffix}
-      </Text>
-    </View>
-  );
-}
+  if (!vibeVector) return null;
 
-// ─── Vibe Card ────────────────────────────────────────────────────────────────
-function VibeCard({ vibe }: { vibe: VibeVector }) {
-  const bars = [
-    { label: 'Energy',    value: vibe.energy,       color: theme.colors.primary },
-    { label: 'Baile',     value: vibe.danceability,  color: '#F97316' },
-    { label: 'Valencia',  value: vibe.valence,       color: '#EAB308' },
-    { label: 'Tempo',     value: vibe.tempo,         color: theme.colors.accent },
+  const safeNum = (v: any, fallback = 0.5): number => {
+    const n = Number(v);
+    return (isNaN(n) || n === null || n === undefined) ? fallback : Math.max(0, Math.min(1, n));
+  };
+
+  const dimensions = [
+    { label: 'Energy', value: safeNum(vibeVector.energy), color: '#F366FF' },
+    { label: 'Dance', value: safeNum(vibeVector.danceability), color: '#A855F7' },
+    { label: 'Valence', value: safeNum(vibeVector.valence), color: '#8B5CF6' },
+    { label: 'Tempo', value: safeNum(vibeVector.tempo), color: '#EC4899' },
   ];
 
-  // Overall vibe score = mean of all dims
-  const score = Math.round(
-    bars.reduce((s, b) => s + b.value, 0) / bars.length * 100
-  );
+  const SIZE = 220;
+  const CENTER = SIZE / 2;
+  const MAX_R = SIZE * 0.38;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardLabel}>⚡ Tu Vector de Vibe</Text>
-        <View style={styles.scorePill}>
-          <Text style={styles.scoreText}>Score {score}</Text>
-        </View>
+    <Animated.View style={{ opacity, alignItems: 'center', marginVertical: 10 }}>
+      <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
+        {/* Grid circles */}
+        {[0.25, 0.5, 0.75, 1].map((ring) => (
+          <View
+            key={ring}
+            style={{
+              position: 'absolute',
+              width: MAX_R * 2 * ring,
+              height: MAX_R * 2 * ring,
+              borderRadius: MAX_R * ring,
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.08)',
+            }}
+          />
+        ))}
+
+        {/* Axis lines + bars */}
+        {dimensions.map((dim, i) => {
+          const angle = (i * 90) - 90; // 0°, 90°, 180°, 270° starting from top
+          const barLength = MAX_R * dim.value;
+
+          return (
+            <React.Fragment key={dim.label}>
+              {/* Axis line */}
+              <View
+                style={{
+                  position: 'absolute',
+                  width: 1,
+                  height: MAX_R,
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  bottom: CENTER,
+                  left: CENTER - 0.5,
+                  transformOrigin: 'bottom',
+                  transform: [{ rotate: `${angle}deg` }],
+                }}
+              />
+              {/* Value bar (glow effect) */}
+              <View
+                style={{
+                  position: 'absolute',
+                  width: 4,
+                  height: barLength,
+                  backgroundColor: dim.color,
+                  bottom: CENTER,
+                  left: CENTER - 2,
+                  borderRadius: 2,
+                  transformOrigin: 'bottom',
+                  transform: [{ rotate: `${angle}deg` }],
+                  shadowColor: dim.color,
+                  shadowOpacity: 0.8,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              />
+              {/* Dot at end */}
+              <View
+                style={{
+                  position: 'absolute',
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: dim.color,
+                  left: CENTER - 4 + barLength * Math.cos((angle * Math.PI) / 180),
+                  top: CENTER - 4 + barLength * Math.sin((angle * Math.PI) / 180),
+                  shadowColor: dim.color,
+                  shadowOpacity: 1,
+                  shadowRadius: 6,
+                  elevation: 4,
+                }}
+              />
+            </React.Fragment>
+          );
+        })}
+
+        {/* Center glow dot */}
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: '#F366FF',
+            shadowColor: '#F366FF',
+            shadowOpacity: 0.8,
+            shadowRadius: 10,
+            elevation: 4,
+          }}
+        />
       </View>
-      <View style={styles.barList}>
-        {bars.map((b) => <VibeBar key={b.label} {...b} />)}
+
+      {/* Labels */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12 }}>
+        {dimensions.map((dim) => (
+          <View key={dim.label} style={{ alignItems: 'center' }}>
+            <Text style={{ color: dim.color, fontSize: 12, fontFamily: 'Inter_500Medium' }}>
+              {dim.label}
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Inter_500Medium' }}>
+              {Math.round(dim.value * 100)}%
+            </Text>
+          </View>
+        ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
-  const { user: authUser, vibeVector, logout } = useAuth();
+  const { user: authUser, vibeVector } = useAuth();
   const { user: spotifyUser } = useSpotifyAuth();
-  const { swipeCount, isRadarUnlocked } = useSwipes();
+  const { swipesCount, hasReachedThreshold } = useSwipeEngine();
 
-  const progressPercent = Math.min((swipeCount / SWIPE_THRESHOLD) * 100, 100);
-
+  const progressPercent = Math.min((swipesCount / 100) * 100, 100);
   const displayUser = spotifyUser ?? authUser;
-
-  const handleLogout = async () => {
-    await logout();
-  };
 
   if (!displayUser) return null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {spotifyUser?.avatar ? (
-              <Image source={{ uri: spotifyUser.avatar }} style={styles.avatar} />
+    <Container>
+      <BackgroundGradient
+        colors={['#181818', '#2a1a3a', '#181818']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
+      <StyledSafeArea>
+        <ContentScroller showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <HeaderContainer>
+            <HeaderLeft>
+              {spotifyUser?.avatar ? (
+                <AvatarImg source={{ uri: spotifyUser.avatar }} />
+              ) : (
+                <AvatarPlaceholder>
+                  <AvatarInitial>
+                    {displayUser.name?.[0]?.toUpperCase() ?? '?'}
+                  </AvatarInitial>
+                </AvatarPlaceholder>
+              )}
+              <HeaderTextContainer>
+                <Greeting>{displayUser.name.split(' ')[0]}</Greeting>
+                <SubGreetingPill>
+                  <SubGreetingText>Perfil musical</SubGreetingText>
+                </SubGreetingPill>
+              </HeaderTextContainer>
+            </HeaderLeft>
+            <SettingsBtn onPress={() => router.push('/(main)/settings')}>
+              <Ionicons name="settings-sharp" size={20} color="#fff" />
+            </SettingsBtn>
+          </HeaderContainer>
+
+          {/* Music DNA Card */}
+          <GlassCard intensity={40} tint="dark">
+            <DNATitle>Tu Music DNA</DNATitle>
+            
+            {vibeVector ? (
+              <View>
+                 <RealRadarChart vibeVector={vibeVector} />
+              </View>
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>
-                  {displayUser.name?.[0]?.toUpperCase() ?? '?'}
-                </Text>
+              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                <Text style={{ color: 'rgba(255,255,255,0.5)' }}>Calculando ADN musical...</Text>
               </View>
             )}
-            <View>
-              <Text style={styles.greeting}>Hola, {displayUser.name.split(' ')[0]} 👋</Text>
-              <Text style={styles.subGreeting}>Vibe activo · SDK 54</Text>
-            </View>
-          </View>
-          <View style={styles.activeDot} />
-        </View>
 
-        {/* Vibe Card */}
-        {vibeVector ? (
-          <VibeCard vibe={vibeVector} />
-        ) : (
-          <View style={[styles.card, styles.noVibeCard]}>
-            <Text style={styles.noVibeText}>
-              ⚡ Calculando tu Vector de Vibe...
-            </Text>
-          </View>
-        )}
+            <DNADescription>
+              Tu Music DNA se calcula basándose en tu historial de Spotify.
+              Analizamos estos datos para encontrar tus matches musicales perfectos.
+            </DNADescription>
 
-        {/* Stats Row */}
-        {vibeVector && (
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{Math.round(vibeVector.tempo * 200)}</Text>
-              <Text style={styles.statLabel}>BPM avg</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{Math.round(vibeVector.energy * 100)}%</Text>
-              <Text style={styles.statLabel}>Energy</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{Math.round(vibeVector.valence * 100)}%</Text>
-              <Text style={styles.statLabel}>Mood</Text>
-            </View>
-          </View>
-        )}
+            <ChipsContainer>
+              <VibeChip><VibeChipText>Chill</VibeChipText></VibeChip>
+              <VibeChip><VibeChipText>Happy</VibeChipText></VibeChip>
+              <VibeChip><VibeChipText>Night Vibes</VibeChipText></VibeChip>
+            </ChipsContainer>
+          </GlassCard>
 
-        {/* Radar Placeholder */}
-        <TouchableOpacity 
-          style={[styles.card, styles.radarCard]}
-          activeOpacity={0.8}
-          onPress={() => router.push(isRadarUnlocked ? '/(main)/radar' : '/(main)/swipe')}
-        >
-          <Text style={styles.radarIcon}>{isRadarUnlocked ? '🌍' : '📡'}</Text>
-          <Text style={styles.radarTitle}>{isRadarUnlocked ? 'Radar Social Activo' : 'Desbloquea el Radar'}</Text>
-          <Text style={styles.radarSub}>
-            {isRadarUnlocked 
-              ? 'Descubre fans de conciertos cerca de ti con tu mismo Vibe.'
-              : `Disponible al alcanzar ${SWIPE_THRESHOLD} swipes.\nEvalúa tracks para activar el mapa.`}
-          </Text>
-          <View style={styles.progress}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-          </View>
-          <Text style={styles.progressLabel}>{swipeCount} / {SWIPE_THRESHOLD} swipes</Text>
-          
-          <View style={[styles.actionBtn, isRadarUnlocked && styles.actionBtnActive]}>
-             <Text style={styles.actionBtnText}>{isRadarUnlocked ? 'Abrir Mapa' : 'Empezar Swipes'}</Text>
-          </View>
-        </TouchableOpacity>
+          {/* Spotify Status Connection */}
+          <GlassCard intensity={40} tint="dark" style={{ borderRadius: 99, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <SpotifyStatusContainer>
+              <SpotifyLogoWrap>
+                <Ionicons name="musical-notes" size={24} color="#000" />
+              </SpotifyLogoWrap>
+              <View>
+                <SpotifyStatusText>Conectado con{'\n'}Spotify</SpotifyStatusText>
+                <SpotifyStatusSub>Última actualización: Hoy</SpotifyStatusSub>
+              </View>
+            </SpotifyStatusContainer>
+            <ActionButton onPress={() => {}}>
+              <ActionButtonText>Actualizar</ActionButtonText>
+            </ActionButton>
+          </GlassCard>
 
-        {/* Logout */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Cerrar sesión</Text>
-        </TouchableOpacity>
+          {/* Swipe/Radar Action Card */}
+           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedThreshold ? '/(main)/radar' : '/(main)/swipe')}>
+              <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <SpotifyStatusText>{hasReachedThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
+                  <Ionicons name="chevron-forward" size={20} color="#fff" />
+                </View>
+                <SpotifyStatusSub style={{ marginBottom: 16 }}>
+                  {hasReachedThreshold 
+                    ? 'Descubre fans de conciertos cerca de ti con tu mismo Vibe.'
+                    : `Evalúa tracks para desbloquear el radar de personas.`}
+                </SpotifyStatusSub>
 
-        <Text style={styles.version}>Encorely v1.0 · Beta · Spotify</Text>
-      </ScrollView>
-    </SafeAreaView>
+                <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: '#F366FF', borderRadius: 99 }} />
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 8, textAlign: 'right' }}>
+                  {swipesCount} / 100 swipes
+                </Text>
+              </GlassCard>
+           </TouchableOpacity>
+
+        </ContentScroller>
+      </StyledSafeArea>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  content: { padding: 22, gap: 14, paddingBottom: 48 },
-
-  // Header
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: '#1DB954' },
-  avatarPlaceholder: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2, borderColor: theme.colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarInitial: { fontSize: 20, fontWeight: '800', color: theme.colors.text },
-  greeting: { fontSize: 20, fontWeight: '900', color: theme.colors.text, letterSpacing: -0.5 },
-  subGreeting: { fontSize: 12, color: theme.colors.textMuted, marginTop: 1 },
-  activeDot: {
-    width: 12, height: 12, borderRadius: 6,
-    backgroundColor: '#1DB954',
-    shadowColor: '#1DB954', shadowOpacity: 0.8, shadowRadius: 6, elevation: 4,
-  },
-
-  // Card
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  cardLabel: { fontSize: 12, fontWeight: '700', color: theme.colors.textMuted, letterSpacing: 0.8 },
-  scorePill: {
-    backgroundColor: theme.colors.accent + '22',
-    borderWidth: 1, borderColor: theme.colors.accent,
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99,
-  },
-  scoreText: { color: theme.colors.accentLight, fontSize: 11, fontWeight: '800' },
-  noVibeCard: { alignItems: 'center', paddingVertical: 28 },
-  noVibeText: { color: theme.colors.textMuted, fontSize: 14 },
-
-  // Vibe bars
-  barList: { gap: 12 },
-  barRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  barLabel: { width: 66, fontSize: 12, fontWeight: '700', color: theme.colors.text },
-  barTrack: { flex: 1, height: 7, backgroundColor: theme.colors.surfaceHigh, borderRadius: 99, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 99 },
-  barValue: { width: 36, fontSize: 12, fontWeight: '700', textAlign: 'right' },
-
-  // Stats row
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statCard: {
-    flex: 1, backgroundColor: theme.colors.surface,
-    borderWidth: 1, borderColor: theme.colors.border,
-    borderRadius: theme.radius.md, padding: 14, alignItems: 'center',
-  },
-  statValue: { fontSize: 22, fontWeight: '900', color: theme.colors.text },
-  statLabel: { fontSize: 11, color: theme.colors.textMuted, marginTop: 4 },
-
-  // Radar
-  radarCard: { alignItems: 'center', gap: 8 },
-  radarIcon: { fontSize: 42, marginBottom: 4 },
-  radarTitle: { fontSize: 20, fontWeight: '900', color: theme.colors.text },
-  radarSub: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', lineHeight: 20 },
-  progress: { width: '100%', height: 6, backgroundColor: theme.colors.surfaceHigh, borderRadius: 99, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: theme.colors.primary, borderRadius: 99 },
-  progressLabel: { fontSize: 12, color: theme.colors.textDim, fontWeight: '600' },
-
-  // Logout
-  logoutBtn: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.lg, paddingVertical: 14, alignItems: 'center' },
-  logoutText: { color: theme.colors.textMuted, fontSize: 14, fontWeight: '700' },
-  version: { textAlign: 'center', color: theme.colors.textDim, fontSize: 12 },
-
-  // Call to action
-  actionBtn: { marginTop: 12, backgroundColor: theme.colors.surfaceHigh, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 99 },
-  actionBtnActive: { backgroundColor: theme.colors.primary },
-  actionBtnText: { color: theme.colors.text, fontWeight: '800', fontSize: 13 },
-});

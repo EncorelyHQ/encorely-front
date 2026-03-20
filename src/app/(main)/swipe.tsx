@@ -1,196 +1,254 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSpotifyAuth } from '../../hooks/useSpotifyAuth';
-import { useAuth } from '../../context/AuthContext';
-import { getRecommendations, SpotifyTrack } from '../../services/spotifyService';
-import { useSwipes, SWIPE_THRESHOLD } from '../../hooks/useSwipes';
-import { SwipeCard } from '../../components/SwipeCard';
+import { spotifySwipeService, SwipeTrack } from '../../services/spotifySwipeService';
+import { useSwipeEngine } from '../../hooks/useSwipeEngine';
+import { SwipeStack } from '../../components/SwipeStack';
+import { ProgressFooter } from '../../components/ProgressFooter';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const SWIPE_THRESHOLD = 100;
 
-const Container = styled(SafeAreaView)`
+const Container = styled.View`
   flex: 1;
-  background-color: #0A0A0F;
+  background-color: #181818;
+`;
+
+const BackgroundGradient = styled(LinearGradient)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.6;
+`;
+
+const StyledSafeArea = styled(SafeAreaView)`
+  flex: 1;
   align-items: center;
 `;
 
 const Header = styled.View`
   width: 100%;
   padding: 20px;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   z-index: 10;
 `;
 
-const Title = styled.Text`
-  color: #FFF;
-  font-size: 24px;
-  font-weight: bold;
+const TitleContainer = styled.View`
+  align-items: center;
 `;
 
-const DeckContainer = styled.View`
-  flex: 1;
-  width: ${width * 0.9}px;
+const HeaderTitle = styled.Text`
+  color: #FFF;
+  font-size: 20px;
+  font-family: 'GolosText_700Bold';
+`;
+
+const HeaderSubtitle = styled.Text`
+  color: #F366FF;
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+  margin-top: 2px;
+`;
+
+const ProfileSmall = styled.View`
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: #A855F7;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
+  border-width: 2px;
+  border-color: rgba(255,255,255,0.2);
 `;
 
-const ProgressContainer = styled.View`
-  width: 90%;
-  padding: 20px;
+const EpicModalContainer = styled.View`
+  flex: 1;
+  background-color: #181818;
   align-items: center;
+  justify-content: center;
 `;
 
-const ProgressBarBg = styled.View`
-  width: 100%;
-  height: 8px;
-  background-color: #333;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-`;
-
-const ProgressBarFill = styled.View<{ progress: number }>`
-  height: 100%;
-  width: ${(props: { progress: number }) => props.progress * 100}%;
-  background-color: #1DB954;
-`;
-
-const ProgressText = styled.Text`
-  color: #aaa;
-  font-size: 14px;
-  font-weight: 600;
+const EpicTitle = styled.Text`
+  color: #F366FF;
+  font-size: 32px;
+  font-family: 'GolosText_700Bold';
+  margin-top: 24px;
+  text-align: center;
+  text-shadow-color: rgba(243, 102, 255, 0.5);
+  text-shadow-offset: 0px 4px;
+  text-shadow-radius: 20px;
 `;
 
 export default function SwipeScreen() {
   const router = useRouter();
   const { accessToken } = useSpotifyAuth();
-  const { swipeCount, isRadarUnlocked, incrementSwipe, isLoading: countsLoading } = useSwipes();
+  const { swipesCount, hasReachedThreshold, like, dislike, resetSwipes, isLoaded } = useSwipeEngine();
 
-  const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
+  const [tracks, setTracks] = useState<SwipeTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   const fetchMoreTracks = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
     try {
-      // 1. Intentamos obtener verdaderos Top Tracks del usuario para evitar 404
-      const { getTopTracks } = require('../../services/spotifyService');
-      const userTopTracks = await getTopTracks(accessToken, 5);
+      console.log('[SwipeScreen] Fetching swipe batch...');
+      const newTracks = await spotifySwipeService.getSwipeBatch(accessToken);
       
-      let seedTracks: string[] = [];
-
-      if (userTopTracks && userTopTracks.length > 0) {
-        seedTracks = userTopTracks.map((t: SpotifyTrack) => t.id);
+      if (newTracks.length > 0) {
+        setTracks((prev) => [...prev, ...newTracks]);
       } else {
-        // Fallback global súper validos si el usuario es nuevo
-        // 4PTG3Z6ehGkBFwjybzWkR8 (HUMBLE) | 7ouMYWcgJqbhb0Z74rA010 (Bohemian Rhapsody)
-        seedTracks = ['4PTG3Z6ehGkBFwjybzWkR8', '7ouMYWcgJqbhb0Z74rA010']; 
+        console.warn('[SwipeScreen] getSwipeBatch returned 0 tracks after all fallbacks.');
       }
-
-      console.log('[SwipeScreen] Fetching recommendations seeds:', seedTracks);
-      const newTracks = await getRecommendations(accessToken, seedTracks, 20);
-      setTracks((prev) => [...prev, ...newTracks]);
     } catch (e) {
       console.warn('[SwipeScreen] Fetch tracks failed:', e);
     } finally {
       setLoading(false);
+      setFetchAttempted(true);
     }
   }, [accessToken]);
 
+  const hasFetchedInitialRef = React.useRef(false);
+
   useEffect(() => {
-    if (accessToken && tracks.length === 0) {
+    if (accessToken && tracks.length === 0 && !hasFetchedInitialRef.current) {
+      hasFetchedInitialRef.current = true;
       fetchMoreTracks();
     }
   }, [accessToken, fetchMoreTracks, tracks.length]);
 
   // Handle Radar Unlock Redirect
   useEffect(() => {
-    if (isRadarUnlocked) {
+    if (hasReachedThreshold) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Wait a moment for UX before navigating
       setTimeout(() => {
-        router.replace('/(main)'); // Temporary: redirect home or radar
-      }, 1000);
+        router.replace('/(main)/radar');
+      }, 3000);
     }
-  }, [isRadarUnlocked, router]);
+  }, [hasReachedThreshold, router]);
 
   const handleSwipe = async (direction: 'left' | 'right') => {
-    // 1. Remove the top track
+    if (tracks.length === 0) return;
+    const currentTrack = tracks[0];
+
+    // Remove the top track
     setTracks((prev) => prev.slice(1));
     
-    // 2. Increment counter
-    await incrementSwipe();
+    // Register swipe in engine
+    if (direction === 'right') {
+      await like(currentTrack.id);
+    } else {
+      await dislike(currentTrack.id);
+    }
 
-    // 3. Fetch more if running low
+    // Fetch more if running low
     if (tracks.length < 5) {
       fetchMoreTracks();
     }
   };
 
-  if (countsLoading || (loading && tracks.length === 0)) {
+  if (!isLoaded || (loading && tracks.length === 0 && !hasReachedThreshold)) {
     return (
-      <Container style={{ justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#1DB954" />
-        <Text style={{ color: '#fff', marginTop: 10 }}>Calculando tu Vibe...</Text>
+      <Container style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <BackgroundGradient
+          colors={['#181818', '#2a1a3a', '#181818']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
+        <ActivityIndicator size="large" color="#F366FF" />
+        <Text style={{ color: '#fff', marginTop: 10, fontFamily: 'Inter_500Medium' }}>Preparando tracks...</Text>
       </Container>
     );
   }
 
-  if (isRadarUnlocked) {
+  // Only show empty state AFTER fetch has been attempted at least once
+  if (fetchAttempted && tracks.length === 0 && !loading && !hasReachedThreshold) {
     return (
-      <Container style={{ justifyContent: 'center' }}>
-        <Ionicons name="radar-outline" size={100} color="#1DB954" />
-        <Title style={{ marginTop: 20 }}>¡Radar Desbloqueado!</Title>
+      <Container style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <BackgroundGradient
+          colors={['#181818', '#2a1a3a', '#181818']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
+        <Ionicons name="musical-notes-outline" size={64} color="rgba(243,102,255,0.5)" />
+        <Text style={{ color: '#fff', marginTop: 16, fontFamily: 'GolosText_700Bold', fontSize: 18, textAlign: 'center', paddingHorizontal: 40 }}>
+          Tu Spotify necesita más historial
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 8, fontFamily: 'Inter_500Medium', fontSize: 14, textAlign: 'center', paddingHorizontal: 40 }}>
+          Escucha más música y vuelve 🎵
+        </Text>
+        <TouchableOpacity
+          onPress={() => { setFetchAttempted(false); hasFetchedInitialRef.current = false; fetchMoreTracks(); }}
+          style={{ marginTop: 24, backgroundColor: 'rgba(243,102,255,0.2)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20, borderWidth: 1, borderColor: '#F366FF' }}
+        >
+          <Text style={{ color: '#F366FF', fontFamily: 'Inter_500Medium' }}>Reintentar</Text>
+        </TouchableOpacity>
       </Container>
     );
   }
 
-  // Display top 3 tracks to avoid rendering too many Audio components
-  const visibleTracks = tracks.slice(0, 3).reverse();
+  if (hasReachedThreshold) {
+    return (
+      <EpicModalContainer>
+        <BackgroundGradient
+          colors={['#181818', '#2a1a3a', '#181818']}
+        />
+        <Ionicons name="planet-outline" size={120} color="#F366FF" />
+        <EpicTitle>¡RADAR{'\n'}DESBLOQUEADO!</EpicTitle>
+        <TouchableOpacity onPress={resetSwipes} style={{ marginTop: 40, padding: 10, borderWidth: 1, borderColor: '#555', borderRadius: 8 }}>
+           <Text style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter_500Medium' }}>⚙️ Reset Swipes (Debug)</Text>
+        </TouchableOpacity>
+      </EpicModalContainer>
+    );
+  }
 
   return (
     <Container>
-      <Header>
-        <Title>Descubre tu Vibe</Title>
-      </Header>
+      <BackgroundGradient
+        colors={['#181818', '#2a1a3a', '#181818']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
+      <StyledSafeArea>
+        <Header>
+          <ProfileSmall>
+            <Ionicons name="person" size={20} color="#FFF" />
+          </ProfileSmall>
+          <TitleContainer>
+            <HeaderTitle>Sound-Swipe</HeaderTitle>
+            <HeaderSubtitle>Discover</HeaderSubtitle>
+          </TitleContainer>
+          <TouchableOpacity onPress={resetSwipes} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="refresh" size={22} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
+        </Header>
 
-      <DeckContainer>
         {tracks.length === 0 ? (
-          <Text style={{ color: '#aaa' }}>No hay más canciones :(</Text>
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <ActivityIndicator size="large" color="#F366FF" />
+             <Text style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter_500Medium', marginTop: 10 }}>Cargando más canciones...</Text>
+           </View>
         ) : (
-          visibleTracks.map((track, index) => {
-            const isFront = index === visibleTracks.length - 1;
-            return (
-              <View
-                key={track.id + index}
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  { padding: 10 },
-                ]}
-                pointerEvents={isFront ? 'auto' : 'none'}
-              >
-                <SwipeCard track={track} isFront={isFront} onSwipe={handleSwipe} />
-              </View>
-            );
-          })
+           <SwipeStack tracks={tracks} onSwipe={handleSwipe} />
         )}
-      </DeckContainer>
 
-      <ProgressContainer>
-        <ProgressBarBg>
-          <ProgressBarFill progress={Math.min(swipeCount / SWIPE_THRESHOLD, 1)} />
-        </ProgressBarBg>
-        <ProgressText>
-          {swipeCount} / {SWIPE_THRESHOLD} Swipes para Desbloquear Radar
-        </ProgressText>
-      </ProgressContainer>
+        <ProgressFooter 
+          swipesCount={swipesCount} 
+          threshold={SWIPE_THRESHOLD} 
+          onUnlockClick={() => router.replace('/(main)/radar')} 
+        />
+      </StyledSafeArea>
     </Container>
   );
 }
