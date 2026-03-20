@@ -1,27 +1,43 @@
 {
   "expo": {
-    "name": "encorely-app",
+    "name": "Encorely",
     "slug": "encorely-app",
+    "scheme": "encorely",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0A0F"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "src/app"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c",
+      "spotifyRedirectUri": "exp://9y-jcfc-anonymous-8081.exp.direct"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.encorely.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0A0A0F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.encorely.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
