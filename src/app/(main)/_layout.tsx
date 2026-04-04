@@ -57,13 +57,13 @@ export default function MainTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarButton: (props) => CustomTabButton(props, 'home-outline', 'home', 'Home', isTabFocused('index')),
+          tabBarButton: (props) => CustomTabButton(props, 'musical-notes-outline', 'musical-notes', 'Discover', isTabFocused('index')),
         }}
       />
       <Tabs.Screen
         name="swipe"
         options={{
-          tabBarButton: (props) => CustomTabButton(props, 'heart-outline', 'heart', 'Descubrir', isTabFocused('swipe')),
+          href: null, // hidden from tab bar — redirects to index
         }}
       />
       <Tabs.Screen
@@ -85,6 +85,7 @@ export default function MainTabsLayout() {
         }}
       />
     </Tabs>
+
   );
 }
 
