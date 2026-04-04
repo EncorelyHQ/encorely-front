@@ -77,6 +77,7 @@ src/
 ├── routes/              # NavigationGuard y lógica de enrutado global
 └── modules/
     ├── auth/screens/
+    ├── onboarding/screens/
     ├── home/screens/
     ├── swipe/           # screens, components, hooks
     ├── radar/screens/
@@ -88,9 +89,10 @@ src/
 
 ### 5.1 `app/` — Núcleo de rutas
 
-- **`_layout.tsx`**: providers globales (tema, auth, fuentes, splash), `Stack` raíz.
-- **Grupos `(auth)` y `(main)`**: stacks y tabs según flujo de la app.
+- **`_layout.tsx`**: providers globales (tema, auth, onboarding, fuentes, splash), `Stack` raíz.
+- **Grupos `(auth)`, `(main)` y `(onboarding)`**: login; tabs principales; onboarding en 6 pasos (`step-1` … `step-6`) con `NavigationGuard` que bloquea `(main)` hasta marcar onboarding completo.
 - **Archivos de ruta** (`login.tsx`, `swipe.tsx`, …): en la práctica **reexportan** el `default` desde `modules/...`, manteniendo la convención de expo-router sin duplicar lógica.
+- **`index.tsx`**: entrada inicial que redirige al flujo de onboarding; el guard ajusta según sesión Spotify y flag `encorely_onboarding_complete` en AsyncStorage.
 
 Qué aporta: una sola fuente de verdad para la jerarquía de navegación sin mezclar lógica de negocio.
 
