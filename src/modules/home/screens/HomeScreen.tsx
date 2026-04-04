@@ -8,6 +8,7 @@ import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import type { VibeVector } from '@/shared/types/vibe';
 import { useRouter } from 'expo-router';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
+import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 // victory-native removed — causes 'Building 100%' hang in Expo Go
@@ -344,9 +345,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user: authUser, vibeVector } = useAuth();
   const { user: spotifyUser } = useSpotifyAuth();
-  const { swipesCount, hasReachedThreshold } = useSwipeEngine();
+  const { swipesCount, hasReachedRadarThreshold } = useSwipeEngine();
 
-  const progressPercent = Math.min((swipesCount / 100) * 100, 100);
+  const progressPercent = Math.min((swipesCount / RADAR_SWIPES_THRESHOLD) * 100, 100);
   const displayUser = spotifyUser ?? authUser;
 
   if (!displayUser) return null;
@@ -430,20 +431,20 @@ export default function HomeScreen() {
            <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedThreshold ? '/(main)/radar' : '/(main)/')}>
               <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <SpotifyStatusText>{hasReachedThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
+                  <SpotifyStatusText>{hasReachedRadarThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
                   <Ionicons name="chevron-forward" size={20} color="#fff" />
                 </View>
                 <SpotifyStatusSub style={{ marginBottom: 16 }}>
-                  {hasReachedThreshold 
+                  {hasReachedRadarThreshold 
                     ? 'Descubre fans de conciertos cerca de ti con tu mismo Vibe.'
-                    : `Evalúa tracks para desbloquear el radar de personas.`}
+                    : `Evalúa tracks para desbloquear el radar de personas (${RADAR_SWIPES_THRESHOLD} swipes).`}
                 </SpotifyStatusSub>
 
                 <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
                   <View style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: '#F366FF', borderRadius: 99 }} />
                 </View>
                 <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 8, textAlign: 'right' }}>
-                  {swipesCount} / 100 swipes
+                  {swipesCount} / {RADAR_SWIPES_THRESHOLD} swipes
                 </Text>
               </GlassCard>
            </TouchableOpacity>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +25,11 @@ export type ScreenShellProps = {
   gradientOpacity?: number;
   centerContent?: boolean;
   edges?: Edge[];
+  /**
+   * Extra padding below the top safe inset (notch / status bar).
+   * Use on flows con header para que el contenido no quede pegado arriba.
+   */
+  topContentGap?: number;
 };
 
 export function ScreenShell({
@@ -32,6 +38,7 @@ export function ScreenShell({
   gradientOpacity = 0.6,
   centerContent = false,
   edges = ['top', 'left', 'right'],
+  topContentGap = 0,
 }: ScreenShellProps) {
   return (
     <Root>
@@ -43,8 +50,17 @@ export function ScreenShell({
           style={{ opacity: gradientOpacity }}
         />
       )}
-      <SafeAreaView style={{ flex: 1, alignItems: centerContent ? 'center' : undefined }} edges={edges}>
-        {children}
+      <SafeAreaView style={{ flex: 1 }} edges={edges}>
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            paddingTop: topContentGap,
+            alignItems: centerContent ? 'center' : undefined,
+          }}
+        >
+          {children}
+        </View>
       </SafeAreaView>
     </Root>
   );

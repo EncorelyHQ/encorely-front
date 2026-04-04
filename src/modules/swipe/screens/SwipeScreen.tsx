@@ -11,8 +11,19 @@ import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
 import { SwipeStack } from '@/modules/swipe/components/SwipeStack';
 import { ProgressFooter } from '@/modules/swipe/components/ProgressFooter';
 import { ScreenShell } from '@/layout';
+import {
+  ONBOARDING_SWIPES_REQUIRED,
+  RADAR_SWIPES_THRESHOLD,
+} from '@/config/onboarding';
 
-const SWIPE_THRESHOLD = 100;
+export type SwipeScreenMode = 'main' | 'onboarding';
+
+interface SwipeScreenProps {
+  /** main: progress toward radar (100) and navigate to radar when done. onboarding: progress toward 25 and parent handles completion. */
+  mode?: SwipeScreenMode;
+  /** Called when onboarding swipe count reaches ONBOARDING_SWIPES_REQUIRED (only in onboarding mode). */
+  onOnboardingSwipesComplete?: () => void;
+}
 
 const Header = styled.View`
   width: 100%;
@@ -69,10 +80,26 @@ const EpicTitle = styled.Text`
   text-shadow-radius: 20px;
 `;
 
-export default function SwipeScreen() {
+export default function SwipeScreen({
+  mode = 'main',
+  onOnboardingSwipesComplete,
+}: SwipeScreenProps) {
   const router = useRouter();
   const { accessToken } = useSpotifyAuth();
-  const { swipesCount, hasReachedThreshold, like, dislike, resetSwipes, isLoaded } = useSwipeEngine();
+  const {
+    swipesCount,
+    hasReachedRadarThreshold,
+    hasCompletedOnboardingSwipes,
+    like,
+    dislike,
+    resetSwipes,
+    isLoaded,
+  } = useSwipeEngine();
+
+  const isOnboardingMode = mode === 'onboarding';
+  const progressThreshold = isOnboardingMode
+    ? ONBOARDING_SWIPES_REQUIRED
+    : RADAR_SWIPES_THRESHOLD;
 
   const [tracks, setTracks] = useState<SwipeTrack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,14 +134,39 @@ export default function SwipeScreen() {
     }
   }, [accessToken, fetchMoreTracks, tracks.length]);
 
+  const onboardingCompleteFired = React.useRef(false);
+  const mainRadarScheduled = React.useRef(false);
+
   useEffect(() => {
-    if (hasReachedThreshold) {
+    if (!hasReachedRadarThreshold) mainRadarScheduled.current = false;
+  }, [hasReachedRadarThreshold]);
+
+  useEffect(() => {
+    if (isOnboardingMode && hasCompletedOnboardingSwipes) {
+      if (onboardingCompleteFired.current) return;
+      onboardingCompleteFired.current = true;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setTimeout(() => {
+      const t = setTimeout(() => {
+        void Promise.resolve(onOnboardingSwipesComplete?.());
+      }, 2000);
+      return () => clearTimeout(t);
+    }
+    if (!isOnboardingMode && hasReachedRadarThreshold) {
+      if (mainRadarScheduled.current) return;
+      mainRadarScheduled.current = true;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const t = setTimeout(() => {
         router.replace('/(main)/radar');
       }, 3000);
+      return () => clearTimeout(t);
     }
-  }, [hasReachedThreshold, router]);
+  }, [
+    isOnboardingMode,
+    hasCompletedOnboardingSwipes,
+    hasReachedRadarThreshold,
+    onOnboardingSwipesComplete,
+    router,
+  ]);
 
   const handleSwipe = async (direction: 'left' | 'right') => {
     if (tracks.length === 0) return;
@@ -133,7 +185,11 @@ export default function SwipeScreen() {
     }
   };
 
-  if (!isLoaded || (loading && tracks.length === 0 && !hasReachedThreshold)) {
+  const thresholdMet = isOnboardingMode
+    ? hasCompletedOnboardingSwipes
+    : hasReachedRadarThreshold;
+
+  if (!isLoaded || (loading && tracks.length === 0 && !thresholdMet)) {
     return (
       <ScreenShell centerContent gradientOpacity={0.6}>
         <ActivityIndicator size="large" color="#F366FF" />
@@ -144,7 +200,7 @@ export default function SwipeScreen() {
     );
   }
 
-  if (fetchAttempted && tracks.length === 0 && !loading && !hasReachedThreshold) {
+  if (fetchAttempted && tracks.length === 0 && !loading && !thresholdMet) {
     return (
       <ScreenShell centerContent gradientOpacity={0.6}>
         <Ionicons name="musical-notes-outline" size={64} color="rgba(243,102,255,0.5)" />
@@ -194,7 +250,29 @@ export default function SwipeScreen() {
     );
   }
 
-  if (hasReachedThreshold) {
+  if (isOnboardingMode && hasCompletedOnboardingSwipes) {
+    return (
+      <ScreenShell centerContent gradientOpacity={0.6} edges={['top', 'left', 'right', 'bottom']}>
+        <EpicModalContainer style={{ backgroundColor: 'transparent' }}>
+          <Ionicons name="checkmark-circle-outline" size={120} color="#F366FF" />
+          <EpicTitle>¡ONBOARDING{'\n'}LISTO!</EpicTitle>
+          <Text
+            style={{
+              color: 'rgba(255,255,255,0.6)',
+              fontFamily: 'Inter_500Medium',
+              marginTop: 16,
+              textAlign: 'center',
+              paddingHorizontal: 32,
+            }}
+          >
+            Entrando a Encorely…
+          </Text>
+        </EpicModalContainer>
+      </ScreenShell>
+    );
+  }
+
+  if (!isOnboardingMode && hasReachedRadarThreshold) {
     return (
       <ScreenShell centerContent gradientOpacity={0.6} edges={['top', 'left', 'right', 'bottom']}>
         <EpicModalContainer style={{ backgroundColor: 'transparent' }}>
@@ -225,12 +303,16 @@ export default function SwipeScreen() {
           <HeaderTitle>Sound-Swipe</HeaderTitle>
           <HeaderSubtitle>Discover</HeaderSubtitle>
         </TitleContainer>
-        <TouchableOpacity
-          onPress={resetSwipes}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Ionicons name="refresh" size={22} color="rgba(255,255,255,0.3)" />
-        </TouchableOpacity>
+        {!isOnboardingMode ? (
+          <TouchableOpacity
+            onPress={resetSwipes}
+            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="refresh" size={22} color="rgba(255,255,255,0.3)" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 44, height: 44 }} />
+        )}
       </Header>
 
       {tracks.length === 0 ? (
@@ -252,8 +334,9 @@ export default function SwipeScreen() {
 
       <ProgressFooter
         swipesCount={swipesCount}
-        threshold={SWIPE_THRESHOLD}
+        threshold={progressThreshold}
         onUnlockClick={() => router.replace('/(main)/radar')}
+        showRadarButton={!isOnboardingMode}
       />
     </ScreenShell>
   );

@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/shared/context/AuthContext';
+import { SpotifyAuthProvider } from '@/shared/hooks/useSpotifyAuth';
+import { OnboardingProvider } from '@/shared/context/OnboardingContext';
 import { CustomThemeProvider } from '@/shared/theme/ThemeProvider';
 import { NavigationGuard } from '@/routes/NavigationGuard';
 import { useFonts } from 'expo-font';
@@ -42,9 +44,13 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <CustomThemeProvider>
           <AuthProvider>
-            <NavigationGuard />
-            <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#181818' } }} />
+            <SpotifyAuthProvider>
+              <OnboardingProvider>
+                <NavigationGuard />
+                <StatusBar style="light" />
+                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#181818' } }} />
+              </OnboardingProvider>
+            </SpotifyAuthProvider>
           </AuthProvider>
         </CustomThemeProvider>
       </SafeAreaProvider>

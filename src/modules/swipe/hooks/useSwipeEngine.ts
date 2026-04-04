@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { VibeVector } from '@/shared/types/vibe';
+import {
+  ONBOARDING_SWIPES_REQUIRED,
+  RADAR_SWIPES_THRESHOLD,
+} from '@/config/onboarding';
 
 const STORAGE_KEY = '@encorely_swipe_state';
 
@@ -67,7 +71,8 @@ export function useSwipeEngine() {
     await saveState({ swipesCount: 0, likes: [], dislikes: [] });
   };
 
-  const hasReachedThreshold = swipesCount >= 100;
+  const hasCompletedOnboardingSwipes = swipesCount >= ONBOARDING_SWIPES_REQUIRED;
+  const hasReachedRadarThreshold = swipesCount >= RADAR_SWIPES_THRESHOLD;
 
   return {
     swipesCount,
@@ -77,7 +82,8 @@ export function useSwipeEngine() {
     like,
     dislike,
     resetSwipes,
-    hasReachedThreshold,
+    hasCompletedOnboardingSwipes,
+    hasReachedRadarThreshold,
   };
 }
 
