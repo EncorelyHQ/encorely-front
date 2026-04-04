@@ -1,109 +1,218 @@
-import React from 'react';
-import { Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, ScrollView, Animated, Easing, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import styled from 'styled-components/native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
+import { OnboardingStepFooter } from '@/modules/onboarding/components/OnboardingStepFooter';
+import { OnboardingFlowDots } from '@/modules/onboarding/components/OnboardingFlowDots';
+import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 
-const Title = styled.Text`
-  color: #fff;
-  font-size: 28px;
-  font-family: 'GolosText_700Bold';
-  text-align: center;
-  margin-bottom: 12px;
-  padding-horizontal: 20px;
+const Root = styled.View`
+  flex: 1;
+  width: 100%;
+  align-items: stretch;
 `;
 
 const Sub = styled.Text`
-  color: rgba(255, 255, 255, 0.65);
+  width: 100%;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 15px;
   font-family: 'Inter_500Medium';
   text-align: center;
-  line-height: 22px;
-  padding-horizontal: 28px;
-  margin-bottom: 32px;
+  line-height: 23px;
+  padding-horizontal: 8px;
+  margin-bottom: 8px;
 `;
 
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding-vertical: 12px;
-  padding-horizontal: 16px;
-  border-radius: 16px;
-  background-color: rgba(255, 255, 255, 0.06);
-  margin-bottom: 10px;
+const Teaser = styled.Text`
+  width: 100%;
+  color: rgba(243, 102, 255, 0.9);
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+  text-align: center;
+  margin-bottom: 26px;
+`;
+
+const Card = styled(BlurView)`
   width: 100%;
   max-width: 340px;
+  border-radius: 20px;
+  padding-vertical: 18px;
+  padding-horizontal: 18px;
+  overflow: hidden;
+  border-width: 1px;
+  border-color: rgba(243, 102, 255, 0.22);
+  margin-bottom: 12px;
+  background-color: rgba(0, 0, 0, 0.25);
 `;
 
-const RowText = styled.Text`
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
-  font-family: 'Inter_500Medium';
-  flex: 1;
+const CardIconWrap = styled.View`
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: rgba(243, 102, 255, 0.15);
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin-bottom: 12px;
+  border-width: 1px;
+  border-color: rgba(243, 102, 255, 0.25);
 `;
 
-const PrimaryBtn = styled.TouchableOpacity`
-  background-color: #f366ff;
-  padding-horizontal: 48px;
-  padding-vertical: 16px;
-  border-radius: 99px;
-  margin-top: 24px;
-`;
-
-const PrimaryTxt = styled.Text`
+const CardTitle = styled.Text`
+  width: 100%;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-family: 'GolosText_700Bold';
+  text-align: center;
+  margin-bottom: 6px;
 `;
 
-const BackBtn = styled.TouchableOpacity`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 12px;
+const CardBody = styled.Text`
+  width: 100%;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+  text-align: center;
+  line-height: 19px;
 `;
 
 export default function OnboardingStep2Screen() {
   const router = useRouter();
+  const intro = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(intro, {
+      toValue: 1,
+      duration: 580,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [intro]);
 
   return (
-    <ScreenShell centerContent gradientOpacity={0.75} edges={['top', 'left', 'right', 'bottom']}>
-      <BackBtn onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={28} color="#fff" />
-      </BackBtn>
-      <Title>Tu Music DNA</Title>
-      <Sub>
-        Analizamos lo que escuchás para armar tu vector de vibe y recomendaciones que suenan a vos.
-      </Sub>
-      <View style={{ alignItems: 'center', width: '100%' }}>
-        <Row>
-          <Ionicons name="pulse-outline" size={22} color="#F366FF" />
-          <RowText>Energy, baile, valencia y tempo a partir de tu historial</RowText>
-        </Row>
-        <Row>
-          <Ionicons name="people-outline" size={22} color="#F366FF" />
-          <RowText>Base para matches y radar social</RowText>
-        </Row>
-        <Row>
-          <Ionicons name="lock-closed-outline" size={22} color="#F366FF" />
-          <RowText>Sin guardar playlists privadas</RowText>
-        </Row>
-      </View>
-      <PrimaryBtn onPress={() => router.push('/(onboarding)/step-3')}>
-        <PrimaryTxt>Siguiente</PrimaryTxt>
-      </PrimaryBtn>
-      <Text
-        style={{
-          color: 'rgba(255,255,255,0.35)',
-          fontSize: 12,
-          fontFamily: 'Inter_500Medium',
-          marginTop: 16,
-        }}
-      >
-        Paso 2 de 6
-      </Text>
+    <ScreenShell
+      centerContent={false}
+      gradientOpacity={0.55}
+      edges={['top', 'left', 'right']}
+      topContentGap={8}
+    >
+      <Root>
+        <LinearGradient
+          colors={['rgba(243,102,255,0.14)', 'transparent']}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 220 }}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(168,85,247,0.2)', 'rgba(24,24,24,0.95)']}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 340 }}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        <ScrollView
+          style={{ flex: 1, width: '100%' }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+            paddingTop: 8,
+            paddingBottom: 24,
+            width: '100%',
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Animated.View
+            style={{
+              width: '100%',
+              maxWidth: 400,
+              alignSelf: 'center',
+              alignItems: 'stretch',
+              opacity: intro,
+              transform: [
+                {
+                  translateY: intro.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [18, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <OnboardingScreenHeader onBack={() => router.back()} />
+            <View style={{ marginBottom: 20 }}>
+              <OnboardingFlowDots activeStep={2} />
+            </View>
+
+            <Text
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                marginBottom: 12,
+                fontSize: 30,
+                fontFamily: 'GolosText_900Black',
+                lineHeight: 36,
+              }}
+            >
+              <Text style={{ color: '#fff' }}>Tu Music </Text>
+              <Text
+                style={{
+                  color: '#f366ff',
+                  textShadowColor: 'rgba(243, 102, 255, 0.45)',
+                  textShadowOffset: { width: 0, height: 2 },
+                  textShadowRadius: 10,
+                }}
+              >
+                DNA
+              </Text>
+            </Text>
+            <Sub>
+              Traducimos lo que escuchás en un perfil musical vivo: energía, baile, ánimo y ritmo. Es
+              la base para recomendaciones y para encontrar tu gente.
+            </Sub>
+            <Teaser>Siguiente: conectás Spotify y seguís el camino hasta el swipe.</Teaser>
+
+            <View style={{ alignItems: 'center', width: '100%' }}>
+              <Card intensity={45} tint="dark">
+                <CardIconWrap>
+                  <Ionicons name="pulse-outline" size={22} color="#F366FF" />
+                </CardIconWrap>
+                <CardTitle>Tu huella sonora</CardTitle>
+                <CardBody>
+                  Medimos energy, danceability, valencia y tempo a partir de tu historial reciente.
+                </CardBody>
+              </Card>
+              <Card intensity={45} tint="dark">
+                <CardIconWrap>
+                  <Ionicons name="people-outline" size={22} color="#F366FF" />
+                </CardIconWrap>
+                <CardTitle>Matches con sentido</CardTitle>
+                <CardBody>
+                  Personas con un vibe parecido al tuyo — no solo “misma playlist genérica”.
+                </CardBody>
+              </Card>
+              <Card intensity={45} tint="dark">
+                <CardIconWrap>
+                  <Ionicons name="lock-closed-outline" size={22} color="#F366FF" />
+                </CardIconWrap>
+                <CardTitle>Privacidad</CardTitle>
+                <CardBody>No guardamos playlists privadas. Solo lo necesario para tu perfil.</CardBody>
+              </Card>
+            </View>
+          </Animated.View>
+        </ScrollView>
+        <OnboardingStepFooter
+          step={2}
+          label="Siguiente"
+          hintBelow="Cada paso te acerca al feed y al radar. Dale que falta poco."
+          onNext={() => router.push('/(onboarding)/step-3')}
+        />
+      </Root>
     </ScreenShell>
   );
 }

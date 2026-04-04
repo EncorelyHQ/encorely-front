@@ -26,6 +26,7 @@ const SectionTag = styled.Text`
 `;
 
 const Title = styled.Text`
+  width: 100%;
   font-size: 28px;
   font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
   color: ${({ theme }: any) => theme.colors.text};
@@ -34,6 +35,7 @@ const Title = styled.Text`
 `;
 
 const Body = styled.Text`
+  width: 100%;
   font-size: 15px;
   font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
   color: ${({ theme }: any) => theme.colors.textDim};
@@ -62,9 +64,16 @@ interface SpotifyConnectCardProps {
   tag: string;
   title: string;
   body: string;
+  /** Muestra una etiqueta “Recomendado” sobre el botón de Spotify. */
+  showRecommendedPill?: boolean;
 }
 
-export function SpotifyConnectCard({ tag, title, body }: SpotifyConnectCardProps) {
+export function SpotifyConnectCard({
+  tag,
+  title,
+  body,
+  showRecommendedPill = false,
+}: SpotifyConnectCardProps) {
   const router = useRouter();
   const theme = useTheme();
   const { user, isLoggingIn, error, login, getValidToken } = useSpotifyAuth();
@@ -117,6 +126,31 @@ export function SpotifyConnectCard({ tag, title, body }: SpotifyConnectCardProps
             }}
           >
             ⚠️ {error}
+          </Text>
+        </View>
+      ) : null}
+      {showRecommendedPill ? (
+        <View
+          style={{
+            alignSelf: 'center',
+            backgroundColor: 'rgba(243, 102, 255, 0.2)',
+            paddingHorizontal: 14,
+            paddingVertical: 6,
+            borderRadius: 99,
+            marginBottom: 12,
+            borderWidth: 1,
+            borderColor: 'rgba(243, 102, 255, 0.45)',
+          }}
+        >
+          <Text
+            style={{
+              color: '#F366FF',
+              fontSize: 12,
+              fontFamily: 'GolosText_700Bold',
+              letterSpacing: 0.5,
+            }}
+          >
+            Recomendado · mejor experiencia
           </Text>
         </View>
       ) : null}

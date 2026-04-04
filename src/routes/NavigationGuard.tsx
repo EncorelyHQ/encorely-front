@@ -47,7 +47,15 @@ export function NavigationGuard() {
         return;
       }
 
-      if (inMain || inAuth) {
+      if (inMain) {
+        router.replace('/(onboarding)/step-1');
+        return;
+      }
+      if (inAuth) {
+        const isLoginRoute = route === 'login';
+        if (isLoginRoute) {
+          return;
+        }
         router.replace('/(onboarding)/step-1');
         return;
       }

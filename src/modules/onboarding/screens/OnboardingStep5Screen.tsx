@@ -12,16 +12,11 @@ import { useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
+import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import { searchArtists, type SpotifyArtistSearchItem } from '@/clients/spotify/spotifyApi';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
 import { SPOTIFY_SEED_GENRES } from '@/config/onboarding';
-
-const BackBtn = styled.TouchableOpacity`
-  padding: 8px;
-  margin-bottom: 8px;
-  align-self: flex-start;
-`;
 
 const Title = styled.Text`
   color: #fff;
@@ -158,14 +153,21 @@ export default function OnboardingStep5Screen() {
   };
 
   return (
-    <ScreenShell centerContent={false} gradientOpacity={0.65} edges={['top', 'left', 'right']}>
+    <ScreenShell
+      centerContent={false}
+      gradientOpacity={0.65}
+      edges={['top', 'left', 'right']}
+      topContentGap={8}
+    >
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 8,
+          paddingBottom: 56,
+        }}
         keyboardShouldPersistTaps="handled"
       >
-        <BackBtn onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color="#fff" />
-        </BackBtn>
+        <OnboardingScreenHeader onBack={() => router.back()} />
         <Title>Gustos musicales</Title>
         <Sub>
           Elegí hasta 5 artistas y hasta 5 géneros (semillas válidas para recomendaciones de Spotify).
