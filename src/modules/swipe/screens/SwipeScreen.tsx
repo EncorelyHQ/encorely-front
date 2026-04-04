@@ -216,9 +216,11 @@ export default function SwipeScreen() {
   return (
     <ScreenShell centerContent={false} gradientOpacity={0.6}>
       <Header>
-        <ProfileSmall>
-          <Ionicons name="person" size={20} color="#FFF" />
-        </ProfileSmall>
+        <TouchableOpacity onPress={() => router.push('/(main)/profile')}>
+          <ProfileSmall>
+            <Ionicons name="person" size={20} color="#FFF" />
+          </ProfileSmall>
+        </TouchableOpacity>
         <TitleContainer>
           <HeaderTitle>Sound-Swipe</HeaderTitle>
           <HeaderSubtitle>Discover</HeaderSubtitle>

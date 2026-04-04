@@ -427,7 +427,7 @@ export default function HomeScreen() {
           </GlassCard>
 
           {/* Swipe/Radar Action Card */}
-           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedThreshold ? '/(main)/radar' : '/(main)/swipe')}>
+           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedThreshold ? '/(main)/radar' : '/(main)/')}>
               <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <SpotifyStatusText>{hasReachedThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>

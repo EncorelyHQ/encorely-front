@@ -1,1 +1,1 @@
-export { default } from '@/modules/home/screens/HomeScreen';
+export { default } from '@/modules/swipe/screens/SwipeScreen';
