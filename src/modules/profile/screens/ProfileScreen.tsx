@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
+  Image,
   Animated,
-  Alert,
+  Linking,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
@@ -14,395 +18,447 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/shared/context/AuthContext';
 import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
-import { useVibeVector } from '@/shared/hooks/useVibeVector';
-import type { VibeVector } from '@/shared/types/vibe';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface UserProfile {
+  fullName: string;
+  age: string;
+  gender: string;
+  description: string;
+}
+
+interface CurrentlyPlaying {
+  trackName: string;
+  artistName: string;
+  albumArt: string | null;
+}
+
+interface RecentTrack {
+  id: string;
+  trackName: string;
+  artistName: string;
+  albumArt: string | null;
+  playedAt: string;
+  spotifyUrl: string;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `Hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `Hace ${hrs} h`;
+  const days = Math.floor(hrs / 24);
+  return `Hace ${days} d`;
+}
+
+const PROFILE_KEY = 'encorely_user_profile';
+const GENDER_OPTIONS = ['Hombre', 'Mujer', 'No binario', 'Prefiero no decir'];
 
 // ─── Styled Components ────────────────────────────────────────────────────────
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
-`;
-
-const BackgroundGradient = styled(LinearGradient)`
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  opacity: 0.6;
+  background-color: #181818;
 `;
 
 const StyledSafeArea = styled(SafeAreaView)`
   flex: 1;
 `;
 
-const ContentScroller = styled.ScrollView.attrs({
-  contentContainerStyle: { padding: 22, paddingTop: 10, gap: 20, paddingBottom: 110 },
-})``;
-
 // Header
-const HeaderContainer = styled.View`
+const HeaderRow = styled.View`
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  padding: 20px 22px 8px;
 `;
 
 const HeaderLeft = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+`;
+
+const AvatarWrap = styled.View`
+  position: relative;
 `;
 
 const AvatarImg = styled.Image`
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  background-color: ${({ theme }: any) => theme.colors.surface};
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  border-width: 2px;
+  border-color: #F366FF;
 `;
 
 const AvatarPlaceholder = styled.View`
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  background-color: #ffdcb5;
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: rgba(243, 102, 255, 0.2);
+  border-width: 2px;
+  border-color: #F366FF;
   align-items: center;
   justify-content: center;
 `;
 
-const AvatarInitial = styled.Text`
+const UserInfoCol = styled.View``;
+
+const UserNameText = styled.Text`
+  color: #FFFFFF;
   font-size: 20px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: #181818;
-`;
-
-const HeaderTextContainer = styled.View`
-  justify-content: center;
-`;
-
-const UserName = styled.Text`
-  font-size: 20px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
-`;
-
-const RankPill = styled.View`
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
-  border-radius: 99px;
-  padding-horizontal: 8px;
-  padding-vertical: 2px;
-  align-self: flex-start;
-  margin-top: 2px;
-`;
-
-const RankText = styled.Text`
-  font-size: 11px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
-  color: ${({ theme }: any) => theme.colors.primary};
-`;
-
-const SettingsBtn = styled.TouchableOpacity`
-  width: 38px;
-  height: 38px;
-  border-radius: 19px;
-  background-color: ${({ theme }: any) => theme.colors.glassLight};
-  align-items: center;
-  justify-content: center;
-`;
-
-// Glass Card Base
-const GlassCard = styled(BlurView)`
-  border-radius: 32px;
-  padding: 24px;
-  overflow: hidden;
-  border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
-  background-color: ${({ theme }: any) => theme.colors.glassDark};
-`;
-
-// Music DNA Section
-const DNATitle = styled.Text`
-  font-size: 24px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
-  margin-bottom: 24px;
-`;
-
-const DNADescription = styled.Text`
-  font-size: 14px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
-  text-align: center;
-  line-height: 22px;
-  margin-top: 24px;
-  margin-bottom: 20px;
-`;
-
-const ChipsContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  gap: 10px;
-`;
-
-const VibeChip = styled.View`
-  border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassNeon};
-  border-radius: 99px;
-  padding-horizontal: 16px;
-  padding-vertical: 8px;
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
-`;
-
-const VibeChipText = styled.Text`
-  color: ${({ theme }: any) => theme.colors.primary};
-  font-size: 13px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
-`;
-
-// Stats bars
-const SectionTitle = styled.Text`
-  font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
-  margin-bottom: 16px;
-`;
-
-const VibeBarContainer = styled.View`
-  margin-bottom: 16px;
-`;
-
-const VibeLabel = styled.Text`
-  color: rgba(255, 255, 255, 0.7);
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
-  font-size: 12px;
+  font-family: 'GolosText_700Bold';
   margin-bottom: 6px;
 `;
 
-const BarBg = styled.View`
-  width: 100%;
-  height: 8px;
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  overflow: hidden;
+const VibeBadge = styled.View`
+  background-color: rgba(243, 102, 255, 0.2);
+  border-radius: 99px;
+  padding-horizontal: 12px;
+  padding-vertical: 4px;
+  align-self: flex-start;
+  border-width: 1px;
+  border-color: rgba(243, 102, 255, 0.4);
 `;
 
-// Spotify connection
-const SpotifyStatusContainer = styled.View`
-  flex-direction: row;
-  gap: 12px;
-  align-items: center;
+const VibeBadgeText = styled.Text`
+  color: #F366FF;
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
 `;
 
-const SpotifyLogoWrap = styled.View`
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  background-color: #1db954;
+const SettingsBtn = styled.TouchableOpacity`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.06);
   align-items: center;
   justify-content: center;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.1);
+  align-self: flex-start;
+  margin-top: 4px;
 `;
 
-const SpotifyStatusText = styled.Text`
-  font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
+// Glass Card
+const GlassCard = styled(BlurView)`
+  border-radius: 24px;
+  overflow: hidden;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.03);
+  margin: 0 22px;
 `;
 
-const SpotifyStatusSub = styled.Text`
+const CardInner = styled.View`
+  padding: 20px;
+`;
+
+// Profile form
+const SectionLabel = styled.Text`
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  font-family: 'GolosText_700Bold';
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+`;
+
+const FieldLabel = styled.Text`
+  color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: 'Inter_500Medium';
+  margin-bottom: 6px;
 `;
 
-const ActionButton = styled.TouchableOpacity`
-  background-color: ${({ theme }: any) => theme.colors.glassLight};
-  padding-horizontal: 16px;
+const StyledInput = styled.TextInput`
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-family: 'Inter_500Medium';
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.1);
+  margin-bottom: 14px;
+`;
+
+const TextAreaInput = styled.TextInput`
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-family: 'Inter_500Medium';
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.1);
+  margin-bottom: 4px;
+  min-height: 80px;
+  text-align-vertical: top;
+`;
+
+const CharCount = styled.Text`
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
+  text-align: right;
+  margin-bottom: 14px;
+`;
+
+const ErrorText = styled.Text`
+  color: #FF4B4B;
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
+  margin-top: -10px;
+  margin-bottom: 10px;
+  margin-left: 4px;
+`;
+
+const GenderRow = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+`;
+
+const GenderChip = styled.TouchableOpacity<{ selected: boolean }>`
+  padding-horizontal: 14px;
   padding-vertical: 8px;
   border-radius: 99px;
+  border-width: 1px;
+  border-color: ${(p: any) => p.selected ? '#F366FF' : 'rgba(255,255,255,0.15)'};
+  background-color: ${(p: any) => p.selected ? 'rgba(243,102,255,0.15)' : 'transparent'};
 `;
 
-const ActionButtonText = styled.Text`
-  color: ${({ theme }: any) => theme.colors.text};
+const GenderChipText = styled.Text<{ selected: boolean }>`
+  color: ${(p: any) => p.selected ? '#F366FF' : 'rgba(255,255,255,0.6)'};
   font-size: 13px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+  font-family: 'Inter_500Medium';
 `;
 
-// Logout button
-const LogoutButton = styled.TouchableOpacity`
+const SaveButton = styled.TouchableOpacity`
+  background-color: #F366FF;
+  border-radius: 99px;
+  padding-vertical: 14px;
+  align-items: center;
+  margin-top: 4px;
+  elevation: 8;
+  shadow-color: #F366FF;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.4;
+  shadow-radius: 12px;
+`;
+
+const SaveButtonText = styled.Text`
+  color: #FFFFFF;
+  font-size: 15px;
+  font-family: 'GolosText_700Bold';
+`;
+
+const EditButton = styled.TouchableOpacity`
+  border-width: 1px;
+  border-color: rgba(243, 102, 255, 0.5);
+  border-radius: 99px;
+  padding-vertical: 10px;
+  align-items: center;
+  margin-top: 6px;
+`;
+
+const EditButtonText = styled.Text`
+  color: #F366FF;
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+`;
+
+const ReadField = styled.View`
+  margin-bottom: 12px;
+`;
+
+const ReadLabel = styled.Text`
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
+  margin-bottom: 2px;
+`;
+
+const ReadValue = styled.Text`
+  color: #FFFFFF;
+  font-size: 15px;
+  font-family: 'Inter_500Medium';
+`;
+
+const CTAText = styled.Text`
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 20px;
+`;
+
+// Currently Playing
+const NowPlayingPill = styled(BlurView)`
+  border-radius: 50px;
+  overflow: hidden;
+  margin: 0 22px;
+  border-width: 1px;
+  border-color: rgba(243, 102, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.04);
+`;
+
+const NowPlayingInner = styled.View`
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding-vertical: 16px;
-  border-radius: 99px;
+  padding: 14px 18px;
+  gap: 12px;
+`;
+
+const NowPlayingInfo = styled.View`
+  flex: 1;
+`;
+
+const NowPlayingTrack = styled.Text`
+  color: #FFFFFF;
+  font-size: 14px;
+  font-family: 'GolosText_700Bold';
+`;
+
+const NowPlayingArtist = styled.Text`
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  font-family: 'Inter_500Medium';
+  margin-top: 2px;
+`;
+
+const SpotifyBadge = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+`;
+
+const SpotifyBadgeText = styled.Text`
+  color: #1DB954;
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
+`;
+
+// Recent tracks
+const RecentHeader = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 22px;
+`;
+
+const RecentTitle = styled.Text`
+  color: #FFFFFF;
+  font-size: 16px;
+  font-family: 'GolosText_700Bold';
+`;
+
+const VerMasBtn = styled.TouchableOpacity``;
+
+const VerMasText = styled.Text`
+  color: #F366FF;
+  font-size: 13px;
+  font-family: 'Inter_500Medium';
+`;
+
+const RecentCard = styled(BlurView)`
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 0 22px;
   border-width: 1px;
-  border-color: rgba(255, 75, 75, 0.4);
-  background-color: rgba(255, 75, 75, 0.08);
+  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.03);
 `;
 
-const LogoutText = styled.Text`
-  color: #ff4b4b;
-  font-size: 15px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+const TrackRow = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 14px;
 `;
 
-// ─── Radar Chart Component ────────────────────────────────────────────────────
+const TrackSeparator = styled.View`
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.06);
+  margin-left: 78px;
+`;
 
-function RealRadarChart({ vibeVector }: { vibeVector: VibeVector }) {
-  const [opacity] = React.useState(new Animated.Value(0));
+const AlbumArt = styled.Image`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: rgba(255,255,255,0.05);
+`;
 
-  React.useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
+const AlbumArtPlaceholder = styled.View`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: rgba(243, 102, 255, 0.1);
+  align-items: center;
+  justify-content: center;
+`;
+
+const TrackInfo = styled.View`
+  flex: 1;
+`;
+
+const TrackName = styled.Text`
+  color: #FFFFFF;
+  font-size: 14px;
+  font-family: 'GolosText_700Bold';
+`;
+
+const TrackArtist = styled.Text`
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  font-family: 'Inter_500Medium';
+  margin-top: 2px;
+`;
+
+const TimePill = styled.View`
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  padding-horizontal: 10px;
+  padding-vertical: 5px;
+`;
+
+const TimePillText = styled.Text`
+  color: #F366FF;
+  font-size: 11px;
+  font-family: 'Inter_500Medium';
+`;
+
+// Pulsing headphone icon
+function PulsingIcon() {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.15, duration: 700, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
-  if (!vibeVector) return null;
-
-  const safeNum = (v: any, fallback = 0.5): number => {
-    const n = Number(v);
-    return isNaN(n) || n === null || n === undefined ? fallback : Math.max(0, Math.min(1, n));
-  };
-
-  const dimensions = [
-    { label: 'Energy', value: safeNum(vibeVector.energy), color: '#F366FF' },
-    { label: 'Dance', value: safeNum(vibeVector.danceability), color: '#A855F7' },
-    { label: 'Valence', value: safeNum(vibeVector.valence), color: '#8B5CF6' },
-    { label: 'Tempo', value: safeNum(vibeVector.tempo), color: '#EC4899' },
-  ];
-
-  const SIZE = 220;
-  const CENTER = SIZE / 2;
-  const MAX_R = SIZE * 0.38;
-
   return (
-    <Animated.View style={{ opacity, alignItems: 'center', marginVertical: 10 }}>
-      <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>
-        {/* Grid circles */}
-        {[0.25, 0.5, 0.75, 1].map((ring) => (
-          <View
-            key={ring}
-            style={{
-              position: 'absolute',
-              width: MAX_R * 2 * ring,
-              height: MAX_R * 2 * ring,
-              borderRadius: MAX_R * ring,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.08)',
-            }}
-          />
-        ))}
-
-        {/* Axis lines + bars */}
-        {dimensions.map((dim, i) => {
-          const angle = i * 90 - 90;
-          const barLength = MAX_R * dim.value;
-
-          return (
-            <React.Fragment key={dim.label}>
-              <View
-                style={{
-                  position: 'absolute',
-                  width: 1,
-                  height: MAX_R,
-                  backgroundColor: 'rgba(255,255,255,0.12)',
-                  bottom: CENTER,
-                  left: CENTER - 0.5,
-                  transformOrigin: 'bottom',
-                  transform: [{ rotate: `${angle}deg` }],
-                }}
-              />
-              <View
-                style={{
-                  position: 'absolute',
-                  width: 4,
-                  height: barLength,
-                  backgroundColor: dim.color,
-                  bottom: CENTER,
-                  left: CENTER - 2,
-                  borderRadius: 2,
-                  transformOrigin: 'bottom',
-                  transform: [{ rotate: `${angle}deg` }],
-                  shadowColor: dim.color,
-                  shadowOpacity: 0.8,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }}
-              />
-              <View
-                style={{
-                  position: 'absolute',
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: dim.color,
-                  left: CENTER - 4 + barLength * Math.cos((angle * Math.PI) / 180),
-                  top: CENTER - 4 + barLength * Math.sin((angle * Math.PI) / 180),
-                  shadowColor: dim.color,
-                  shadowOpacity: 1,
-                  shadowRadius: 6,
-                  elevation: 4,
-                }}
-              />
-            </React.Fragment>
-          );
-        })}
-
-        {/* Center glow dot */}
-        <View
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: '#F366FF',
-            shadowColor: '#F366FF',
-            shadowOpacity: 0.8,
-            shadowRadius: 10,
-            elevation: 4,
-          }}
-        />
-      </View>
-
-      {/* Labels */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12 }}>
-        {dimensions.map((dim) => (
-          <View key={dim.label} style={{ alignItems: 'center' }}>
-            <Text style={{ color: dim.color, fontSize: 12, fontFamily: 'Inter_500Medium' }}>
-              {dim.label}
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Inter_500Medium' }}>
-              {Math.round(dim.value * 100)}%
-            </Text>
-          </View>
-        ))}
-      </View>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Ionicons name="headset" size={24} color="#F366FF" />
     </Animated.View>
-  );
-}
-
-// ─── Vibe Bar ─────────────────────────────────────────────────────────────────
-
-function VibeBar({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <VibeBarContainer>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-        <VibeLabel>{label}</VibeLabel>
-        <VibeLabel>{Math.round(value * 100)}%</VibeLabel>
-      </View>
-      <BarBg>
-        <LinearGradient
-          colors={[color, '#A855F7']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ height: '100%', width: `${value * 100}%`, borderRadius: 4 }}
-        />
-      </BarBg>
-    </VibeBarContainer>
   );
 }
 
@@ -410,139 +466,346 @@ function VibeBar({ label, value, color }: { label: string; value: number; color:
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user: authUser, vibeVector, logout, setSession } = useAuth();
-  const { user: spotifyUser, logout: spotifyLogout, getValidToken } = useSpotifyAuth();
-  const { compute: computeVibe, isLoading: isComputing } = useVibeVector();
+  const { user: authUser } = useAuth();
+  const { user: spotifyUser, getValidToken } = useSpotifyAuth();
 
   const displayUser = spotifyUser ?? authUser;
 
-  const handleLogout = async () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que quieres salir?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar Sesión',
-          style: 'destructive',
-          onPress: async () => {
-            await spotifyLogout();
-            await logout();
-            router.replace('/(auth)/login');
-          },
-        },
-      ]
-    );
-  };
+  // Profile form state
+  const [profile, setProfile] = useState<UserProfile>({
+    fullName: '',
+    age: '',
+    gender: '',
+    description: '',
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [errors, setErrors] = useState<Partial<UserProfile>>({});
 
-  const handleSyncVibe = async () => {
+  // Spotify data
+  const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
+  const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+
+  // Load saved profile
+  useEffect(() => {
+    AsyncStorage.getItem(PROFILE_KEY).then((raw) => {
+      if (raw) {
+        const parsed: UserProfile = JSON.parse(raw);
+        setProfile(parsed);
+        const filled = parsed.fullName && parsed.age && parsed.gender;
+        setProfileSaved(!!filled);
+        setIsEditing(!filled);
+      } else {
+        setIsEditing(true);
+      }
+    });
+  }, []);
+
+  // Fetch Spotify data
+  const fetchSpotifyData = useCallback(async () => {
     const token = await getValidToken();
     if (!token) return;
-    const newVibe = await computeVibe(token);
-    if (newVibe && authUser) {
-      await setSession(authUser, token, newVibe);
-      Alert.alert('Éxito', 'Tu Vibe Vector ha sido actualizado con tus últimas escuchas.');
+
+    // Currently playing
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 200) {
+        const data = await res.json();
+        if (data?.item && data.is_playing) {
+          setNowPlaying({
+            trackName: data.item.name,
+            artistName: data.item.artists.map((a: any) => a.name).join(', '),
+            albumArt: data.item.album?.images?.[0]?.url ?? null,
+          });
+        } else {
+          setNowPlaying(null);
+        }
+      } else {
+        setNowPlaying(null);
+      }
+    } catch {
+      setNowPlaying(null);
     }
+
+    // Recently played
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const tracks: RecentTrack[] = (data.items ?? []).map((item: any) => ({
+          id: item.played_at,
+          trackName: item.track.name,
+          artistName: item.track.artists.map((a: any) => a.name).join(', '),
+          albumArt: item.track.album?.images?.[1]?.url ?? item.track.album?.images?.[0]?.url ?? null,
+          playedAt: item.played_at,
+          spotifyUrl: item.track.external_urls?.spotify ?? '',
+        }));
+        setRecentTracks(tracks);
+      }
+    } catch {
+      // keep cached data
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, [getValidToken]);
+
+  useEffect(() => {
+    fetchSpotifyData();
+    const interval = setInterval(fetchSpotifyData, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchSpotifyData]);
+
+  // Validation & save
+  const validate = (): boolean => {
+    const e: Partial<UserProfile> = {};
+    if (!profile.fullName.trim()) e.fullName = 'El nombre es obligatorio';
+    if (!profile.age.trim()) {
+      e.age = 'La edad es obligatoria';
+    } else {
+      const n = parseInt(profile.age, 10);
+      if (isNaN(n) || n < 13 || n > 99) e.age = 'Ingresa una edad entre 13 y 99';
+    }
+    if (!profile.gender) e.gender = 'Selecciona una opción';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  if (!displayUser) return null;
+  const handleSave = async () => {
+    if (!validate()) return;
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    setProfileSaved(true);
+    setIsEditing(false);
+  };
 
   return (
     <Container>
-      <BackgroundGradient
+      <LinearGradient
         colors={['#181818', '#2a1a3a', '#181818']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.6 }}
       />
       <StyledSafeArea>
-        <ContentScroller showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <HeaderContainer>
-            <HeaderLeft>
-              {spotifyUser?.avatar ? (
-                <AvatarImg source={{ uri: spotifyUser.avatar }} />
-              ) : (
-                <AvatarPlaceholder>
-                  <AvatarInitial>{displayUser.name?.[0]?.toUpperCase() ?? '?'}</AvatarInitial>
-                </AvatarPlaceholder>
-              )}
-              <HeaderTextContainer>
-                <UserName>{displayUser.name.split(' ')[0]}</UserName>
-                <RankPill>
-                  <RankText>Vibe Explorer</RankText>
-                </RankPill>
-              </HeaderTextContainer>
-            </HeaderLeft>
-            <SettingsBtn onPress={() => router.push('/(main)/settings')}>
-              <Ionicons name="settings-sharp" size={20} color="#fff" />
-            </SettingsBtn>
-          </HeaderContainer>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: 18, paddingBottom: 120 }}
+          >
 
-          {/* Music DNA Card */}
-          <GlassCard intensity={40} tint="dark">
-            <DNATitle>Tu Music DNA</DNATitle>
+            {/* ── SECCIÓN 1: HEADER ─────────────────────────── */}
+            <HeaderRow>
+              <HeaderLeft>
+                <AvatarWrap>
+                  {spotifyUser?.avatar ? (
+                    <AvatarImg source={{ uri: spotifyUser.avatar }} />
+                  ) : (
+                    <AvatarPlaceholder>
+                      <Ionicons name="person" size={36} color="#F366FF" />
+                    </AvatarPlaceholder>
+                  )}
+                </AvatarWrap>
+                <UserInfoCol>
+                  <UserNameText numberOfLines={1}>
+                    {displayUser?.name ?? 'Encorely User'}
+                  </UserNameText>
+                  <VibeBadge>
+                    <VibeBadgeText>✦ Encorely Vibe Explorer</VibeBadgeText>
+                  </VibeBadge>
+                </UserInfoCol>
+              </HeaderLeft>
+              <SettingsBtn onPress={() => router.push('/(main)/settings')}>
+                <Ionicons name="settings-outline" size={20} color="rgba(255,255,255,0.7)" />
+              </SettingsBtn>
+            </HeaderRow>
 
-            {vibeVector ? (
-              <View>
-                <RealRadarChart vibeVector={vibeVector} />
-              </View>
-            ) : (
-              <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                <Text style={{ color: 'rgba(255,255,255,0.5)' }}>Calculando ADN musical...</Text>
-              </View>
+            {/* ── SECCIÓN 2: DATOS DE PERFIL ────────────────── */}
+            <GlassCard intensity={20} tint="dark">
+              <CardInner>
+                <SectionLabel>
+                  {isEditing && !profileSaved ? 'Completa tu perfil' : 'Datos de perfil'}
+                </SectionLabel>
+
+                {isEditing ? (
+                  <>
+                    {!profileSaved && (
+                      <CTAText>
+                        Completa tu perfil para aparecer en el Radar 🎵
+                      </CTAText>
+                    )}
+
+                    {/* Nombre completo */}
+                    <FieldLabel>Nombre completo *</FieldLabel>
+                    <StyledInput
+                      placeholder="Tu nombre completo"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      value={profile.fullName}
+                      onChangeText={(t: string) => setProfile(p => ({ ...p, fullName: t }))}
+                      autoCapitalize="words"
+                    />
+                    {errors.fullName ? <ErrorText>{errors.fullName}</ErrorText> : null}
+
+                    {/* Edad */}
+                    <FieldLabel>Edad *</FieldLabel>
+                    <StyledInput
+                      placeholder="ej. 24"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      value={profile.age}
+                      onChangeText={(t: string) => setProfile(p => ({ ...p, age: t.replace(/[^0-9]/g, '') }))}
+                      keyboardType="numeric"
+                      maxLength={2}
+                    />
+                    {errors.age ? <ErrorText>{errors.age}</ErrorText> : null}
+
+                    {/* Género */}
+                    <FieldLabel>Género *</FieldLabel>
+                    <GenderRow>
+                      {GENDER_OPTIONS.map((opt) => (
+                        <GenderChip
+                          key={opt}
+                          selected={profile.gender === opt}
+                          onPress={() => setProfile(p => ({ ...p, gender: opt }))}
+                          activeOpacity={0.7}
+                        >
+                          <GenderChipText selected={profile.gender === opt}>{opt}</GenderChipText>
+                        </GenderChip>
+                      ))}
+                    </GenderRow>
+                    {errors.gender ? <ErrorText>{errors.gender}</ErrorText> : null}
+
+                    {/* Descripción */}
+                    <FieldLabel>Descripción (opcional)</FieldLabel>
+                    <TextAreaInput
+                      placeholder="Cuéntale a la comunidad quién eres... 🎵"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      value={profile.description}
+                      onChangeText={(t: string) => setProfile(p => ({ ...p, description: t.slice(0, 150) }))}
+                      multiline
+                      numberOfLines={3}
+                      maxLength={150}
+                    />
+                    <CharCount>{profile.description.length}/150</CharCount>
+
+                    <SaveButton onPress={handleSave} activeOpacity={0.8}>
+                      <SaveButtonText>Guardar perfil</SaveButtonText>
+                    </SaveButton>
+                  </>
+                ) : (
+                  <>
+                    <ReadField>
+                      <ReadLabel>Nombre completo</ReadLabel>
+                      <ReadValue>{profile.fullName}</ReadValue>
+                    </ReadField>
+                    <ReadField>
+                      <ReadLabel>Edad</ReadLabel>
+                      <ReadValue>{profile.age} años</ReadValue>
+                    </ReadField>
+                    <ReadField>
+                      <ReadLabel>Género</ReadLabel>
+                      <ReadValue>{profile.gender}</ReadValue>
+                    </ReadField>
+                    {profile.description ? (
+                      <ReadField>
+                        <ReadLabel>Sobre mí</ReadLabel>
+                        <ReadValue style={{ lineHeight: 22, color: 'rgba(255,255,255,0.8)' }}>
+                          {profile.description}
+                        </ReadValue>
+                      </ReadField>
+                    ) : null}
+                    <EditButton onPress={() => setIsEditing(true)} activeOpacity={0.7}>
+                      <EditButtonText>Editar perfil</EditButtonText>
+                    </EditButton>
+                  </>
+                )}
+              </CardInner>
+            </GlassCard>
+
+            {/* ── SECCIÓN 3: REPRODUCIENDO AHORA ───────────── */}
+            {nowPlaying && (
+              <NowPlayingPill intensity={30} tint="dark">
+                <NowPlayingInner>
+                  <PulsingIcon />
+                  <NowPlayingInfo>
+                    <NowPlayingTrack numberOfLines={1}>{nowPlaying.trackName}</NowPlayingTrack>
+                    <NowPlayingArtist numberOfLines={1}>{nowPlaying.artistName}</NowPlayingArtist>
+                    <SpotifyBadge>
+                      <Ionicons name="musical-note" size={12} color="#1DB954" />
+                      <SpotifyBadgeText>Reproduciendo ahora</SpotifyBadgeText>
+                    </SpotifyBadge>
+                  </NowPlayingInfo>
+                  {nowPlaying.albumArt ? (
+                    <Image
+                      source={{ uri: nowPlaying.albumArt }}
+                      style={{ width: 44, height: 44, borderRadius: 8 }}
+                    />
+                  ) : null}
+                </NowPlayingInner>
+              </NowPlayingPill>
             )}
 
-            <DNADescription>
-              Tu Music DNA se calcula basándose en tu historial de Spotify.{'\n'}
-              Analizamos estos datos para encontrar tus matches musicales perfectos.
-            </DNADescription>
+            {/* ── SECCIÓN 4: REPRODUCCIONES RECIENTES ──────── */}
+            {(loadingRecent || recentTracks.length > 0) && (
+              <>
+                <RecentHeader>
+                  <RecentTitle>Reproducciones recientes</RecentTitle>
+                  <VerMasBtn
+                    onPress={() =>
+                      Linking.openURL(`https://open.spotify.com/user/${spotifyUser?.id ?? ''}`)
+                    }
+                    activeOpacity={0.7}
+                  >
+                    <VerMasText>Ver más →</VerMasText>
+                  </VerMasBtn>
+                </RecentHeader>
 
-            <ChipsContainer>
-              <VibeChip><VibeChipText>Chill</VibeChipText></VibeChip>
-              <VibeChip><VibeChipText>Happy</VibeChipText></VibeChip>
-              <VibeChip><VibeChipText>Night Vibes</VibeChipText></VibeChip>
-            </ChipsContainer>
-          </GlassCard>
+                <RecentCard intensity={20} tint="dark">
+                  {loadingRecent ? (
+                    <View style={{ padding: 32, alignItems: 'center' }}>
+                      <ActivityIndicator color="#F366FF" />
+                    </View>
+                  ) : (
+                    recentTracks.slice(0, 10).map((track, idx) => (
+                      <React.Fragment key={track.id}>
+                        <TrackRow
+                          onPress={() =>
+                            track.spotifyUrl ? Linking.openURL(track.spotifyUrl) : null
+                          }
+                          activeOpacity={0.7}
+                        >
+                          {track.albumArt ? (
+                            <AlbumArt source={{ uri: track.albumArt }} />
+                          ) : (
+                            <AlbumArtPlaceholder>
+                              <Ionicons name="musical-note" size={20} color="#F366FF" />
+                            </AlbumArtPlaceholder>
+                          )}
+                          <TrackInfo>
+                            <TrackName numberOfLines={1}>{track.trackName}</TrackName>
+                            <TrackArtist numberOfLines={1}>{track.artistName}</TrackArtist>
+                          </TrackInfo>
+                          <TimePill>
+                            <TimePillText>{timeAgo(track.playedAt)}</TimePillText>
+                          </TimePill>
+                        </TrackRow>
+                        {idx < recentTracks.slice(0, 10).length - 1 && (
+                          <TrackSeparator />
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
+                </RecentCard>
+              </>
+            )}
 
-          {/* Stats Bars */}
-          <GlassCard intensity={40} tint="dark">
-            <SectionTitle>Estadísticas Musicales</SectionTitle>
-            <VibeBar label="Energy" value={vibeVector?.energy ?? 0} color="#F366FF" />
-            <VibeBar label="Danceability" value={vibeVector?.danceability ?? 0} color="#A855F7" />
-            <VibeBar label="Valence" value={vibeVector?.valence ?? 0} color="#8B5CF6" />
-            <VibeBar label="Tempo" value={vibeVector?.tempo ?? 0} color="#EC4899" />
-          </GlassCard>
-
-          {/* Spotify Connection */}
-          <GlassCard
-            intensity={40}
-            tint="dark"
-            style={{ borderRadius: 99, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            <SpotifyStatusContainer>
-              <SpotifyLogoWrap>
-                <Ionicons name="musical-notes" size={24} color="#000" />
-              </SpotifyLogoWrap>
-              <View>
-                <SpotifyStatusText>Conectado con{'\n'}Spotify</SpotifyStatusText>
-                <SpotifyStatusSub>Última actualización: Hoy</SpotifyStatusSub>
-              </View>
-            </SpotifyStatusContainer>
-            <ActionButton onPress={handleSyncVibe} disabled={isComputing}>
-              {isComputing ? (
-                <ActivityIndicator size="small" color="#F366FF" />
-              ) : (
-                <ActionButtonText>Actualizar</ActionButtonText>
-              )}
-            </ActionButton>
-          </GlassCard>
-
-          {/* Logout */}
-          <LogoutButton onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#FF4B4B" />
-            <LogoutText>Cerrar Sesión</LogoutText>
-          </LogoutButton>
-        </ContentScroller>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </StyledSafeArea>
     </Container>
   );
