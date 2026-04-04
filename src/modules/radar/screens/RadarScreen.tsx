@@ -5,6 +5,7 @@ import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 
 const Container = styled.View`
   flex: 1;
@@ -143,7 +144,7 @@ export default function RadarScreen() {
             <Text style={{ fontSize: 60, marginBottom: 16 }}>🌍</Text>
             <Title>Radar Social</Title>
             <Subtitle>
-              ¡Felicidades! Alcanzaste el umbral de los 100 swipes.
+              {`¡Felicidades! Alcanzaste el umbral de los ${RADAR_SWIPES_THRESHOLD} swipes. `}
               Tu Vibe ha sido calculado y el Radar Social está listo para futuras conexiones.
             </Subtitle>
 

@@ -13,6 +13,7 @@ import { theme } from '@/shared/theme/loginTheme';
 import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import { useVibeVector } from '@/shared/hooks/useVibeVector';
 import { useAuth } from '@/shared/context/AuthContext';
+import { ONBOARDING_SWIPES_REQUIRED, RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 
 function showFallbackToast() {
   Alert.alert(
@@ -73,7 +74,10 @@ export default function LoginScreen() {
           {[
             { icon: '⚡', text: 'Vector de Vibe desde tus canciones reales' },
             { icon: '🎯', text: 'Similitud coseno >70% = match garantizado' },
-            { icon: '📡', text: 'Radar social en conciertos (Umbral 100)' },
+            {
+              icon: '📡',
+              text: `Onboarding: ${ONBOARDING_SWIPES_REQUIRED} swipes · Radar: ${RADAR_SWIPES_THRESHOLD} swipes`,
+            },
           ].map((f) => (
             <View key={f.icon} style={styles.featureRow}>
               <Text style={styles.featureIcon}>{f.icon}</Text>
