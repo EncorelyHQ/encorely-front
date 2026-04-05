@@ -111,6 +111,36 @@ async function spotifyGet<T>(endpoint: string, accessToken: string): Promise<T> 
   return res.json();
 }
 
+export interface SpotifyArtistSearchItem {
+  id: string;
+  name: string;
+  images: { url: string }[];
+}
+
+export async function searchArtists(
+  accessToken: string,
+  query: string,
+  limit = 12
+): Promise<SpotifyArtistSearchItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  let parsedLimit = Math.round(Number(limit));
+  if (isNaN(parsedLimit) || parsedLimit < 1) parsedLimit = 12;
+  if (parsedLimit > 50) parsedLimit = 50;
+  const q = encodeURIComponent(trimmed);
+  const data = await spotifyGet<any>(
+    `/search?q=${q}&type=artist&limit=${parsedLimit}`,
+    accessToken
+  );
+  return (data.artists?.items ?? [])
+    .filter((a: any) => a?.id && a?.name)
+    .map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      images: a.images ?? [],
+    }));
+}
+
 export async function getCurrentUser(accessToken: string): Promise<SpotifyUser> {
   const data = await spotifyGet<any>('/me', accessToken);
   return {

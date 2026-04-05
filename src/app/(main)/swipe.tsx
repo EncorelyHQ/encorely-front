@@ -1,1 +1,5 @@
-export { default } from '@/modules/swipe/screens/SwipeScreen';
+import { Redirect } from 'expo-router';
+export default function Swipe() {
+  return <Redirect href="/(main)/" />;
+}
+

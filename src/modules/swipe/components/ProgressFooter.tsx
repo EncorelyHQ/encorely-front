@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import styled from 'styled-components/native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/shared/lib/haptics';
 
 const FooterContainer = styled.View`
   width: 100%;
@@ -67,9 +67,16 @@ interface ProgressFooterProps {
   swipesCount: number;
   threshold: number;
   onUnlockClick: () => void;
+  /** When false, only the progress bar is shown (e.g. onboarding step 6). */
+  showRadarButton?: boolean;
 }
 
-export function ProgressFooter({ swipesCount, threshold, onUnlockClick }: ProgressFooterProps) {
+export function ProgressFooter({
+  swipesCount,
+  threshold,
+  onUnlockClick,
+  showRadarButton = true,
+}: ProgressFooterProps) {
   const [showToast, setShowToast] = React.useState(false);
 
   useEffect(() => {
@@ -103,9 +110,13 @@ export function ProgressFooter({ swipesCount, threshold, onUnlockClick }: Progre
         <ProgressText>
           {swipesCount}/{threshold} swipes
         </ProgressText>
-        <RadarButton disabled={progress < 1} onPress={onUnlockClick}>
-          <RadarButtonText disabled={progress < 1}>Ver Radar</RadarButtonText>
-        </RadarButton>
+        {showRadarButton ? (
+          <RadarButton disabled={progress < 1} onPress={onUnlockClick}>
+            <RadarButtonText disabled={progress < 1}>Ver Radar</RadarButtonText>
+          </RadarButton>
+        ) : (
+          <View style={{ minWidth: 1 }} />
+        )}
       </ProgressInfoRow>
     </FooterContainer>
   );
