@@ -32,9 +32,9 @@ export function getSpotifyClientId(): string {
 /**
  * OAuth redirect URI (debe coincidir exactamente con Spotify Developer Dashboard).
  *
- * - **Web:** usa `extra.spotifyRedirectUriWeb` (p. ej. `http://localhost:8081/spotify-callback`).
- *   Registrá esa misma URL en el dashboard. Si cambiás de puerto, actualizá app.json y Spotify.
- *   Si no hay `spotifyRedirectUriWeb`, se usa `window.location.origin + /spotify-callback`.
+ * - **Web:** `window.location.origin + /spotify-callback` (Vercel, localhost, etc.).
+ *   Registrá cada origen que uses (ej. `https://tu-app.vercel.app/spotify-callback`).
+ *   Opcional: `extra.spotifyRedirectUriWeb` para forzar una URL fija (dev con puerto raro).
  * - **Native (Expo Go):** `extra.spotifyRedirectUri` (exp://… del túnel actual).
  * - **Dev build:** sin extra, `encorely://spotify-callback` (registralo en Spotify si aplica).
  */

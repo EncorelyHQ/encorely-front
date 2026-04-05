@@ -28,6 +28,8 @@ WebBrowser.maybeCompleteAuthSession();
 
 const SCOPES = [
   'user-read-recently-played',
+  'user-read-currently-playing',
+  'user-read-playback-state',
   'user-read-email',
   'user-read-private',
   'user-top-read',
