@@ -13,7 +13,7 @@ import styled from 'styled-components/native';
 import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { searchArtists, type SpotifyArtistSearchItem } from '@/clients/spotify/spotifyApi';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
 import { SPOTIFY_SEED_GENRES } from '@/config/onboarding';

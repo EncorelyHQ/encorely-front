@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
 
 export function NavigationGuard() {
@@ -23,7 +23,7 @@ export function NavigationGuard() {
 
     const hasSpotifySession = !!(spotifyUser && accessToken);
     const inOnboarding = group === '(onboarding)';
-    const inAuth = group === '(auth)';
+    const inAuth = group === '(auth)' || group === 'spotify-callback';
     const inMain = group === '(main)';
     const isAppAuthenticated = !!authUser || hasSpotifySession;
 
@@ -72,6 +72,11 @@ export function NavigationGuard() {
     }
 
     if (!isAppAuthenticated && !inAuth) {
+      router.replace('/(auth)/login');
+      return;
+    }
+
+    if (!isAppAuthenticated && group === 'spotify-callback') {
       router.replace('/(auth)/login');
       return;
     }

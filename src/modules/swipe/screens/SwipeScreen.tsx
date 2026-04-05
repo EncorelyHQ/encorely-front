@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { spotifySwipeService, type SwipeTrack } from '@/clients/spotify/swipeFeed';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
 import { SwipeStack } from '@/modules/swipe/components/SwipeStack';

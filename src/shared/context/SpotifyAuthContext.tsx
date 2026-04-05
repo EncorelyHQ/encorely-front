@@ -253,16 +253,18 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
 
       void secureSetItem(STORE_KEYS.codeVerifier, verifier);
 
+      // Extract the existing verifier before we do anything else
+      const currentVerifier = verifier;
+
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri, {
         showInRecents: true,
       });
-
-      await refreshPkcePair();
 
       if (result.type !== 'success') {
         if (result.type === 'cancel' || result.type === 'dismiss') {
           setError('Login cancelado');
         }
+        await refreshPkcePair();
         return;
       }
 
@@ -272,19 +274,20 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
 
       if (errorParam) {
         setError(`Spotify error: ${errorParam}`);
+        await refreshPkcePair();
         return;
       }
 
       if (!responseCode) {
         setError('No se recibió código de autorización');
+        await refreshPkcePair();
         return;
       }
 
-      const storedVerifier =
-        (await secureGetItem(STORE_KEYS.codeVerifier)) ?? verifier;
+      const exactStoredVerifier = await secureGetItem(STORE_KEYS.codeVerifier);
       const tokens = await exchangeCodeForTokens(
         responseCode,
-        storedVerifier,
+        exactStoredVerifier ?? currentVerifier,
         redirectUri
       );
       await persistSession(tokens);
@@ -295,6 +298,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
       setUser(spotifyUser);
       setAccessToken(tokens.accessToken);
       setStoredRefreshToken(tokens.refreshToken);
+      await refreshPkcePair();
     } catch (e: any) {
       console.error('[SpotifyAuth] Login error:', e);
       setError(e?.message ?? 'Error inesperado durante login');

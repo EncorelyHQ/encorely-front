@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import type { VibeVector } from '@/shared/types/vibe';
 import { useRouter } from 'expo-router';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
@@ -428,8 +428,8 @@ export default function HomeScreen() {
           </GlassCard>
 
           {/* Swipe/Radar Action Card */}
-           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedThreshold ? '/(main)/radar' : '/(main)/')}>
-              <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
+           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedRadarThreshold ? '/(main)/radar' : '/(main)/')}>
+              <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedRadarThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <SpotifyStatusText>{hasReachedRadarThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
                   <Ionicons name="chevron-forward" size={20} color="#fff" />

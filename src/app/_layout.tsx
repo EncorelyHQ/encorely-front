@@ -4,7 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '@/shared/context/AuthContext';
-import { SpotifyAuthProvider } from '@/shared/hooks/useSpotifyAuth';
+import { SpotifyAuthProvider } from '@/shared/context/SpotifyAuthContext';
 import { OnboardingProvider } from '@/shared/context/OnboardingContext';
 import { CustomThemeProvider } from '@/shared/theme/ThemeProvider';
 import { NavigationGuard } from '@/routes/NavigationGuard';

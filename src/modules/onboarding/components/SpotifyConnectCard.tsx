@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import styled, { useTheme } from 'styled-components/native';
 import { useRouter } from 'expo-router';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useVibeVector } from '@/shared/hooks/useVibeVector';
 import { useAuth } from '@/shared/context/AuthContext';
 import { BlurView } from 'expo-blur';

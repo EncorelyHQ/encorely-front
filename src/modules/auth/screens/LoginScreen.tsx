@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '@/shared/theme/loginTheme';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useVibeVector } from '@/shared/hooks/useVibeVector';
 import { useAuth } from '@/shared/context/AuthContext';
 import { ONBOARDING_SWIPES_REQUIRED, RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
