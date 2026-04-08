@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/shared/lib/haptics';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import styled from 'styled-components/native';

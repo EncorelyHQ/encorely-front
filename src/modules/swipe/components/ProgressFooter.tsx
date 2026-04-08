@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import styled from 'styled-components/native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/shared/lib/haptics';
 
 const FooterContainer = styled.View`
   width: 100%;
