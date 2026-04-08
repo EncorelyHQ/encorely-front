@@ -42,12 +42,12 @@ export function getSpotifyRedirectUri(): string {
   const extra = readExtra();
 
   if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return `${noTrailingSlash(window.location.origin)}/spotify-callback`;
+    }
     const fixed = extra.spotifyRedirectUriWeb?.trim();
     if (fixed) {
       return noTrailingSlash(fixed);
-    }
-    if (typeof window !== 'undefined' && window.location?.origin) {
-      return `${noTrailingSlash(window.location.origin)}/spotify-callback`;
     }
     return noTrailingSlash(
       AuthSession.makeRedirectUri({ path: 'spotify-callback' })
