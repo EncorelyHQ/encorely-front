@@ -22,10 +22,16 @@ export function NavigationGuard() {
     if (!group) return;
 
     const hasSpotifySession = !!(spotifyUser && accessToken);
+    const isAppAuthenticated = !!authUser || hasSpotifySession;
+
+    if (group === 'spotify-callback' && !isAppAuthenticated) {
+      // Do not interrupt the Spotify OAuth callback while it is exchanging tokens.
+      return;
+    }
+
     const inOnboarding = group === '(onboarding)';
     const inAuth = group === '(auth)' || group === 'spotify-callback';
     const inMain = group === '(main)';
-    const isAppAuthenticated = !!authUser || hasSpotifySession;
 
     const earlyOnboardingRoute =
       route === 'step-1' ||
@@ -76,12 +82,8 @@ export function NavigationGuard() {
       return;
     }
 
-    if (!isAppAuthenticated && group === 'spotify-callback') {
-      router.replace('/(auth)/login');
-      return;
-    }
-
     if (isAppAuthenticated && inAuth) {
+      // If we're authenticated, we shouldn't be in the auth group or spotify-callback.
       router.replace('/(main)');
       return;
     }
