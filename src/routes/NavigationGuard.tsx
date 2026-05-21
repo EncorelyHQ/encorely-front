@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
 
 export function NavigationGuard() {
@@ -22,10 +22,16 @@ export function NavigationGuard() {
     if (!group) return;
 
     const hasSpotifySession = !!(spotifyUser && accessToken);
-    const inOnboarding = group === '(onboarding)';
-    const inAuth = group === '(auth)';
-    const inMain = group === '(main)';
     const isAppAuthenticated = !!authUser || hasSpotifySession;
+
+    if (group === 'spotify-callback' && !isAppAuthenticated) {
+      // Do not interrupt the Spotify OAuth callback while it is exchanging tokens.
+      return;
+    }
+
+    const inOnboarding = group === '(onboarding)';
+    const inAuth = group === '(auth)' || group === 'spotify-callback';
+    const inMain = group === '(main)';
 
     const earlyOnboardingRoute =
       route === 'step-1' ||
@@ -77,6 +83,7 @@ export function NavigationGuard() {
     }
 
     if (isAppAuthenticated && inAuth) {
+      // If we're authenticated, we shouldn't be in the auth group or spotify-callback.
       router.replace('/(main)');
       return;
     }

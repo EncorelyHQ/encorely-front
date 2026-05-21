@@ -28,7 +28,7 @@
     },
     "extra": {
       "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c",
-      "spotifyRedirectUri": "exp://9y-jcfc-anonymous-8081.exp.direct"
+      "spotifyRedirectUriWeb": "http://localhost:8081/spotify-callback"
     },
     "ios": {
       "supportsTablet": false,

@@ -5,7 +5,7 @@ import * as Haptics from '@/shared/lib/haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { spotifySwipeService, type SwipeTrack } from '@/clients/spotify/swipeFeed';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
 import { SwipeStack } from '@/modules/swipe/components/SwipeStack';
@@ -85,7 +85,7 @@ export default function SwipeScreen({
   onOnboardingSwipesComplete,
 }: SwipeScreenProps) {
   const router = useRouter();
-  const { accessToken } = useSpotifyAuth();
+  const { getValidToken } = useSpotifyAuth();
   const {
     swipesCount,
     hasReachedRadarThreshold,
@@ -104,13 +104,15 @@ export default function SwipeScreen({
   const [tracks, setTracks] = useState<SwipeTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const hasFetchedInitialRef = React.useRef(false);
 
   const fetchMoreTracks = useCallback(async () => {
-    if (!accessToken) return;
+    const token = await getValidToken();
+    if (!token) return;
     setLoading(true);
     try {
       console.log('[SwipeScreen] Fetching swipe batch...');
-      const newTracks = await spotifySwipeService.getSwipeBatch(accessToken);
+      const newTracks = await spotifySwipeService.getSwipeBatch(token);
 
       if (newTracks.length > 0) {
         setTracks((prev) => [...prev, ...newTracks]);
@@ -123,16 +125,14 @@ export default function SwipeScreen({
       setLoading(false);
       setFetchAttempted(true);
     }
-  }, [accessToken]);
-
-  const hasFetchedInitialRef = React.useRef(false);
+  }, [getValidToken]);
 
   useEffect(() => {
-    if (accessToken && tracks.length === 0 && !hasFetchedInitialRef.current) {
+    if (tracks.length === 0 && !hasFetchedInitialRef.current) {
       hasFetchedInitialRef.current = true;
       fetchMoreTracks();
     }
-  }, [accessToken, fetchMoreTracks, tracks.length]);
+  }, [fetchMoreTracks, tracks.length]);
 
   const onboardingCompleteFired = React.useRef(false);
   const mainRadarScheduled = React.useRef(false);

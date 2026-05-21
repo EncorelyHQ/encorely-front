@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
@@ -104,21 +104,27 @@ export default function ChatScreen() {
     }, 100);
   };
 
-  return (
-    <Container>
-      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={StyleSheet.absoluteFillObject} />
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-        <Header intensity={20}>
-          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
-            <Ionicons name="chevron-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Image source={{ uri: match.avatar }} style={styles.avatar} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.matchName}>{match.name}</Text>
-            <Text style={styles.matchScore}>{match.score}% compatible</Text>
-          </View>
-        </Header>
+  const insets = useSafeAreaInsets();
 
+  return (
+    <Container style={{ paddingTop: Math.max(insets.top, 20) + 10, paddingBottom: insets.bottom }}>
+      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={StyleSheet.absoluteFillObject} />
+      
+      <Header intensity={20}>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
+          <Ionicons name="chevron-back" size={24} color="#FFF" />
+        </TouchableOpacity>
+        <Image source={{ uri: match.avatar }} style={styles.avatar} />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.matchName}>{match.name}</Text>
+        </View>
+      </Header>
+
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 20}
+      >
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -135,24 +141,19 @@ export default function ChatScreen() {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
-          <InputContainer intensity={20}>
-            <StyledInput 
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor="rgba(255,255,255,0.3)"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <TouchableOpacity onPress={sendMessage} style={styles.sendBtn}>
-              <Ionicons name="send" size={20} color="#FFF" />
-            </TouchableOpacity>
-          </InputContainer>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+        <InputContainer intensity={20}>
+          <StyledInput 
+            placeholder="Escribe un mensaje..."
+            placeholderTextColor="rgba(255,255,255,0.3)"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          <TouchableOpacity onPress={sendMessage} style={styles.sendBtn}>
+            <Ionicons name="send" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </InputContainer>
+      </KeyboardAvoidingView>
     </Container>
   );
 }

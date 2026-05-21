@@ -3,7 +3,7 @@ import { View, Text, FlatList, Dimensions, Animated, ActivityIndicator, Alert } 
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styled, { useTheme } from 'styled-components/native';
-import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
+import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useVibeVector } from '@/shared/hooks/useVibeVector';
 import { useAuth } from '@/shared/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';

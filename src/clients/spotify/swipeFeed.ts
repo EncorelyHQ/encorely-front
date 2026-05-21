@@ -67,19 +67,49 @@ async function fetchTopTracks(token: string): Promise<any[]> {
 }
 
 async function fetchFallbackPlaylist(token: string): Promise<any[]> {
-  const res = await fetch(
-    `${SPOTIFY_API_BASE}/playlists/${SPOTIFY_FALLBACK_PLAYLIST_ID}/tracks?limit=30&market=${SPOTIFY_SWIPE_MARKET}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  try {
+    const res = await fetch(
+      `${SPOTIFY_API_BASE}/playlists/${SPOTIFY_FALLBACK_PLAYLIST_ID}/tracks?limit=30&market=${SPOTIFY_SWIPE_MARKET}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  if (!res.ok) {
-    console.warn(`[SwipeService] /playlists fallback failed: ${res.status}`);
+    if (!res.ok) {
+      console.warn(`[SwipeService] /playlists fallback failed: ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    console.log('📦 Tracks response (fallback playlist):', data?.items?.length ?? 0);
+    return (data?.items || []).map((item: any) => item.track).filter(Boolean);
+  } catch (e) {
+    console.warn('[SwipeService] Playlist fallback error:', e);
     return [];
   }
+}
 
-  const data = await res.json();
-  console.log('📦 Tracks response (fallback playlist):', data?.items?.length ?? 0);
-  return (data?.items || []).map((item: any) => item.track).filter(Boolean);
+async function fetchGenericSearch(token: string): Promise<any[]> {
+  const genres = ['pop', 'rock', 'latin', 'reggaeton', 'hip-hop', 'electronic', 'indie'];
+  const randomGenre = genres[Math.floor(Math.random() * genres.length)];
+
+  try {
+    const res = await fetch(
+      `${SPOTIFY_API_BASE}/search?q=genre%3A${randomGenre}&type=track&limit=30&market=${SPOTIFY_SWIPE_MARKET}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!res.ok) {
+      console.warn(`[SwipeService] /search fallback failed: ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+    const items = data?.tracks?.items || [];
+    console.log(`📦 Tracks response (search "${randomGenre}"):`, items.length);
+    return items;
+  } catch (e) {
+    console.warn('[SwipeService] Search fallback error:', e);
+    return [];
+  }
 }
 
 function mapToSwipeTracks(rawTracks: any[]): SwipeTrack[] {
@@ -116,6 +146,7 @@ export const spotifySwipeService = {
       let allValid: SwipeTrack[] = [];
       let allMapped: SwipeTrack[] = [];
 
+      // Attempt 1: Recommendations
       console.log('[SwipeService] Attempt 1: /recommendations');
       const recTracks = await fetchRecommendations(accessToken, seedArtistIds);
       let mapped = mapToSwipeTracks(recTracks);
@@ -129,6 +160,7 @@ export const spotifySwipeService = {
         return allValid.slice(0, 20);
       }
 
+      // Attempt 2: Top Tracks
       console.log('[SwipeService] Attempt 2: /me/top/tracks');
       const topRaw = await fetchTopTracks(accessToken);
       mapped = mapToSwipeTracks(topRaw);
@@ -142,6 +174,7 @@ export const spotifySwipeService = {
         return allValid.slice(0, 20);
       }
 
+      // Attempt 3: Fallback Playlist
       console.log('[SwipeService] Attempt 3: fallback playlist');
       const playlistRaw = await fetchFallbackPlaylist(accessToken);
       mapped = mapToSwipeTracks(playlistRaw);
@@ -149,6 +182,20 @@ export const spotifySwipeService = {
       allValid.push(...filterWithPreview(mapped));
       console.log(
         `[SwipeService] After fallback playlist: ${allValid.length} with preview, ${allMapped.length} total`
+      );
+
+      if (allValid.length >= SPOTIFY_SWIPE_MIN_VALID_TRACKS) {
+        return allValid.slice(0, 20);
+      }
+
+      // Attempt 4 (NEW): Generic Search as last resort
+      console.log('[SwipeService] Attempt 4: generic search fallback');
+      const searchRaw = await fetchGenericSearch(accessToken);
+      mapped = mapToSwipeTracks(searchRaw);
+      allMapped.push(...mapped);
+      allValid.push(...filterWithPreview(mapped));
+      console.log(
+        `[SwipeService] After search fallback: ${allValid.length} with preview, ${allMapped.length} total`
       );
 
       if (allValid.length > 0) {
@@ -162,7 +209,7 @@ export const spotifySwipeService = {
         return allMapped.slice(0, 20);
       }
 
-      console.warn('[SwipeService] ⚠️ All 3 attempts returned 0 tracks');
+      console.warn('[SwipeService] ⚠️ All 4 attempts returned 0 tracks');
       return [];
     } catch (error: any) {
       console.error('[SwipeService] Fatal error in getSwipeBatch:', error?.message || error);
@@ -170,3 +217,4 @@ export const spotifySwipeService = {
     }
   },
 };
+
