@@ -96,13 +96,14 @@ export default function OnboardingStep5Screen() {
   }, [artists]);
 
   const runSearch = useCallback(async () => {
-    const token = accessToken ?? (await getValidToken());
-    if (!token || !query.trim()) {
+    if (!query.trim()) {
       setResults([]);
       return;
     }
     setSearching(true);
     try {
+      const token = await getValidToken();
+      if (!token) return;
       const found = await searchArtists(token, query.trim(), 15);
       setResults(found);
     } catch (e) {
@@ -111,7 +112,7 @@ export default function OnboardingStep5Screen() {
     } finally {
       setSearching(false);
     }
-  }, [accessToken, getValidToken, query]);
+  }, [getValidToken, query]);
 
   const toggleGenre = (g: string) => {
     setGenres((prev) =>

@@ -286,13 +286,25 @@ export function SwipeCard({ track, isFront, onSwipe }: SwipeCardProps) {
     };
   });
 
-  const likeOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, width / 4], [0, 1], Extrapolation.CLAMP),
-  }));
+  const likeStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(translateX.value, [0, width / 4], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        { rotate: '-15deg' },
+        { scale: interpolate(translateX.value, [0, width / 4], [0.5, 1.2], Extrapolation.CLAMP) }
+      ]
+    };
+  });
 
-  const nopeOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-width / 4, 0], [1, 0], Extrapolation.CLAMP),
-  }));
+  const nopeStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(translateX.value, [0, -width / 4], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        { rotate: '15deg' },
+        { scale: interpolate(translateX.value, [0, -width / 4], [0.5, 1.2], Extrapolation.CLAMP) }
+      ]
+    };
+  });
 
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
@@ -306,11 +318,11 @@ export function SwipeCard({ track, isFront, onSwipe }: SwipeCardProps) {
             locations={[0.4, 0.8, 1]}
           />
 
-          <Animated.View style={[styles.stamp, styles.stampLike, likeOpacity]}>
-            <Ionicons name="sparkles" size={60} color="#F366FF" />
+          <Animated.View style={[styles.stamp, styles.stampLike, likeStyle]}>
+            <Text style={styles.stampTextLike}>LIKE</Text>
           </Animated.View>
-          <Animated.View style={[styles.stamp, styles.stampNope, nopeOpacity]}>
-            <Ionicons name="close-circle" size={60} color="#ef4444" />
+          <Animated.View style={[styles.stamp, styles.stampNope, nopeStyle]}>
+            <Text style={styles.stampTextNope}>NOPE</Text>
           </Animated.View>
 
           <GlassOverlay intensity={60} tint="dark">
@@ -385,20 +397,35 @@ const styles = StyleSheet.create({
   stamp: {
     position: 'absolute',
     top: 60,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderWidth: 5,
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 4,
+    borderRadius: 12,
     backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 100,
   },
   stampLike: {
-    left: 40,
+    left: 30,
     borderColor: '#F366FF',
-    transform: [{ rotate: '-15deg' }],
   },
   stampNope: {
-    right: 40,
-    borderColor: '#A855F7',
-    transform: [{ rotate: '15deg' }],
+    right: 30,
+    borderColor: '#ef4444',
+  },
+  stampTextLike: {
+    color: '#F366FF',
+    fontSize: 42,
+    fontFamily: 'GolosText_700Bold',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(243, 102, 255, 0.5)',
+    textShadowRadius: 10,
+  },
+  stampTextNope: {
+    color: '#ef4444',
+    fontSize: 42,
+    fontFamily: 'GolosText_700Bold',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(239, 68, 68, 0.5)',
+    textShadowRadius: 10,
   },
 });
