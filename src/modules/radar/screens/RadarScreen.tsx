@@ -152,8 +152,8 @@ export default function RadarScreen() {
               <StatsText>📡 247 personas con tu vibe cerca</StatsText>
             </StatsPill>
             
-            <PrimaryButton onPress={() => router.push('/(main)/matches')}>
-              <PrimaryButtonText>Ver Mis Matches</PrimaryButtonText>
+            <PrimaryButton onPress={() => router.push('/(main)/radar-matches')}>
+              <PrimaryButtonText>Ver Personas Compatibles</PrimaryButtonText>
             </PrimaryButton>
           </GlassCard>
 
@@ -162,7 +162,7 @@ export default function RadarScreen() {
                Próximos Pasos
              </Text>
              
-             <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(main)/matches')}>
+             <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(main)/radar-matches')}>
                <NextStepCard intensity={20}>
                  <Ionicons name="people-outline" size={24} color="#F366FF" />
                  <StepTextContainer>

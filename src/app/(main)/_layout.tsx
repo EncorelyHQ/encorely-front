@@ -75,13 +75,33 @@ export default function MainTabsLayout() {
       <Tabs.Screen
         name="matches"
         options={{
-          tabBarButton: (props) => CustomTabButton(props, 'chatbubbles-outline', 'chatbubbles', 'Matches', isTabFocused('matches')),
+          tabBarButton: (props) => CustomTabButton(props, 'chatbubbles-outline', 'chatbubbles', 'Conexiones', isTabFocused('matches')),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           tabBarButton: (props) => CustomTabButton(props, 'person-outline', 'person', 'Perfil', isTabFocused('profile')),
+        }}
+      />
+      <Tabs.Screen
+        name="chat/[id]"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="radar-matches"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' }
         }}
       />
     </Tabs>
