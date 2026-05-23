@@ -24,7 +24,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
+import { useEncorelyAuth } from '@/modules/auth/hooks/useEncorelyAuth';
+import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import type { VibeVector } from '@/shared/types/vibe';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -530,6 +531,7 @@ function RadarChart({ vibeVector }: { vibeVector: VibeVector }) {
 export default function ProfileScreen() {
   const router = useRouter();
   const { vibeVector } = useAuth();
+  const { profile: encorelyProfile } = useEncorelyAuth();
   const { user: spotifyUser, getValidToken } = useSpotifyAuth();
 
   // Saved profile
@@ -644,11 +646,29 @@ export default function ProfileScreen() {
               )}
             </AvatarRing>
 
-            <UserName>{spotifyUser?.name ?? 'Encorely User'}</UserName>
+            <UserName>
+              {encorelyProfile?.displayName ?? spotifyUser?.name ?? 'Encorely User'}
+            </UserName>
 
             <VibeBadge>
-              <VibeBadgeText>✦ Vibe Explorer</VibeBadgeText>
+              <VibeBadgeText>
+                ✦ {encorelyProfile?.provider ?? 'Spotify'}
+                {encorelyProfile?.mood ? ` · ${encorelyProfile.mood}` : ''}
+              </VibeBadgeText>
             </VibeBadge>
+
+            {encorelyProfile?.email ? (
+              <Text
+                style={{
+                  color: 'rgba(255,255,255,0.45)',
+                  fontFamily: 'Inter_500Medium',
+                  fontSize: 12,
+                  marginTop: 6,
+                }}
+              >
+                {encorelyProfile.email} · {encorelyProfile.swipeCount} swipes
+              </Text>
+            ) : null}
 
             {/* Datos de perfil sutiles */}
             {hasProfileData ? (

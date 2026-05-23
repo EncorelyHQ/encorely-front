@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
+import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import type { VibeVector } from '@/shared/types/vibe';
 import { useRouter } from 'expo-router';
-import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
+import { useHomeProfile } from '@/modules/home/hooks/useHomeProfile';
+import { API_SWIPE_THRESHOLD } from '@/config/api';
 import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -70,7 +71,7 @@ const AvatarPlaceholder = styled.View`
 const AvatarInitial = styled.Text`
   font-size: 20px;
   font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: #181818;3
+  color: #181818;
 `;
 
 const HeaderTextContainer = styled.View`
@@ -345,7 +346,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user: authUser, vibeVector } = useAuth();
   const { user: spotifyUser } = useSpotifyAuth();
-  const { swipesCount, hasReachedRadarThreshold } = useSwipeEngine();
+  const { swipeCount: swipesCount } = useHomeProfile();
+  const hasApiRadarAccess = swipesCount >= API_SWIPE_THRESHOLD;
 
   const progressPercent = Math.min((swipesCount / RADAR_SWIPES_THRESHOLD) * 100, 100);
   const displayUser = spotifyUser ?? authUser;
@@ -388,10 +390,10 @@ export default function HomeScreen() {
           {/* Music DNA Card */}
           <GlassCard intensity={40} tint="dark">
             <DNATitle>Tu Music DNA</DNATitle>
-
+            
             {vibeVector ? (
               <View>
-                <RealRadarChart vibeVector={vibeVector} />
+                 <RealRadarChart vibeVector={vibeVector} />
               </View>
             ) : (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
@@ -422,32 +424,32 @@ export default function HomeScreen() {
                 <SpotifyStatusSub>Última actualización: Hoy</SpotifyStatusSub>
               </View>
             </SpotifyStatusContainer>
-            <ActionButton onPress={() => { }}>
+            <ActionButton onPress={() => {}}>
               <ActionButtonText>Actualizar</ActionButtonText>
             </ActionButton>
           </GlassCard>
 
           {/* Swipe/Radar Action Card */}
-          <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasReachedRadarThreshold ? '/(main)/radar' : '/(main)/')}>
-            <GlassCard intensity={40} tint="dark" style={{ borderColor: hasReachedRadarThreshold ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <SpotifyStatusText>{hasReachedRadarThreshold ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
-                <Ionicons name="chevron-forward" size={20} color="#fff" />
-              </View>
-              <SpotifyStatusSub style={{ marginBottom: 16 }}>
-                {hasReachedRadarThreshold
-                  ? 'Descubre fans de conciertos cerca de ti con tu mismo Vibe.'
-                  : `Evalúa tracks para desbloquear el radar de personas (${RADAR_SWIPES_THRESHOLD} swipes).`}
-              </SpotifyStatusSub>
+           <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(hasApiRadarAccess ? '/(main)/radar' : '/(main)/')}>
+              <GlassCard intensity={40} tint="dark" style={{ borderColor: hasApiRadarAccess ? '#F366FF' : 'rgba(255,255,255,0.1)' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <SpotifyStatusText>{hasApiRadarAccess ? 'Radar Social Activo' : 'Sound-Swipe'}</SpotifyStatusText>
+                  <Ionicons name="chevron-forward" size={20} color="#fff" />
+                </View>
+                <SpotifyStatusSub style={{ marginBottom: 16 }}>
+                  {hasApiRadarAccess
+                    ? 'Descubre fans en eventos con tu mismo vibe.'
+                    : `Evalúa tracks para desbloquear el radar (${API_SWIPE_THRESHOLD} swipes mínimos).`}
+                </SpotifyStatusSub>
 
-              <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
-                <View style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: '#F366FF', borderRadius: 99 }} />
-              </View>
-              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 8, textAlign: 'right' }}>
-                {swipesCount} / {RADAR_SWIPES_THRESHOLD} swipes
-              </Text>
-            </GlassCard>
-          </TouchableOpacity>
+                <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: `${progressPercent}%`, backgroundColor: '#F366FF', borderRadius: 99 }} />
+                </View>
+                <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 8, textAlign: 'right' }}>
+                  {swipesCount} / {RADAR_SWIPES_THRESHOLD} swipes · API: {API_SWIPE_THRESHOLD}+
+                </Text>
+              </GlassCard>
+           </TouchableOpacity>
 
         </ContentScroller>
       </StyledSafeArea>

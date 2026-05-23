@@ -8,7 +8,6 @@ import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { OnboardingStepFooter } from '@/modules/onboarding/components/OnboardingStepFooter';
 import { OnboardingFlowDots } from '@/modules/onboarding/components/OnboardingFlowDots';
-import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 
 const Root = styled.View`
   flex: 1;
@@ -144,7 +143,6 @@ export default function OnboardingStep2Screen() {
               ],
             }}
           >
-            <OnboardingScreenHeader onBack={() => router.back()} />
             <View style={{ marginBottom: 20 }}>
               <OnboardingFlowDots activeStep={2} />
             </View>

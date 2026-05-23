@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { useAuth } from '@/shared/context/AuthContext';
+import { useEncorelyAuth } from '@/modules/auth/hooks/useEncorelyAuth';
 import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
 
 export function NavigationGuard() {
-  const { user: authUser, isLoading: authLoading } = useAuth();
+  const { userId, isAuthenticated, isLoading: encorelyLoading } = useEncorelyAuth();
   const { user: spotifyUser, accessToken, isLoading: spotifyLoading } = useSpotifyAuth();
   const { isComplete: onboardingComplete, isLoaded: onboardingLoaded } = useOnboarding();
   const router = useRouter();
@@ -13,7 +13,7 @@ export function NavigationGuard() {
   const rootNavigationState = useRootNavigationState();
 
   useEffect(() => {
-    if (authLoading || spotifyLoading || !onboardingLoaded || !rootNavigationState?.key) {
+    if (encorelyLoading || spotifyLoading || !onboardingLoaded || !rootNavigationState?.key) {
       return;
     }
 
@@ -22,7 +22,7 @@ export function NavigationGuard() {
     if (!group) return;
 
     const hasSpotifySession = !!(spotifyUser && accessToken);
-    const isAppAuthenticated = !!authUser || hasSpotifySession;
+    const isAppAuthenticated = isAuthenticated;
 
     if (group === 'spotify-callback' && !isAppAuthenticated) {
       // Do not interrupt the Spotify OAuth callback while it is exchanging tokens.
@@ -88,14 +88,15 @@ export function NavigationGuard() {
       return;
     }
   }, [
-    authLoading,
+    encorelyLoading,
     spotifyLoading,
     onboardingLoaded,
     onboardingComplete,
     segments,
     rootNavigationState?.key,
     router,
-    authUser,
+    isAuthenticated,
+    userId,
     spotifyUser,
     accessToken,
   ]);

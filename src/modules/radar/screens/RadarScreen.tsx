@@ -1,15 +1,27 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
+import { API_SWIPE_THRESHOLD } from '@/config/api';
+import { useEncorelyAuth } from '@/modules/auth/hooks/useEncorelyAuth';
+import { useEventsFeed } from '@/modules/radar/hooks/useEventsFeed';
+import { useRadarMatches } from '@/modules/radar/hooks/useRadarMatches';
+import type { EventFeedItem } from '@/clients/encorely/types';
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
+  background-color: ${({ theme }: { theme?: { colors: { background: string } } }) =>
+    theme?.colors?.background ?? '#181818'};
 `;
 
 const BackgroundGradient = styled(LinearGradient)`
@@ -23,113 +35,56 @@ const BackgroundGradient = styled(LinearGradient)`
 
 const StyledSafeArea = styled(SafeAreaView)`
   flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
 `;
 
 const GlassCard = styled(BlurView)`
-  border-radius: 32px;
-  padding: 32px;
-  align-items: center;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 12px;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.primary};
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
-  width: 100%;
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.04);
 `;
 
 const Title = styled.Text`
-  font-size: 32px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: ${({ theme }: any) => theme.colors.text};
-  margin-bottom: 20px;
-  text-align: center;
-  text-shadow-color: ${({ theme }: any) => theme.colors.primary};
-  text-shadow-radius: 20px;
+  font-size: 28px;
+  font-family: GolosText_900Black;
+  color: #fff;
+  margin-bottom: 8px;
 `;
 
 const Subtitle = styled.Text`
-  font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
-  text-align: center;
-  margin-bottom: 40px;
-  line-height: 24px;
-`;
-
-const PrimaryButton = styled.TouchableOpacity`
-  background-color: ${({ theme }: any) => theme.colors.primary};
-  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
-  padding-horizontal: 30px;
-  padding-vertical: 16px;
-  elevation: 10;
-  shadow-color: ${({ theme }: any) => theme.colors.primary};
-  shadow-offset: 0px 4px;
-  shadow-opacity: 0.6;
-  shadow-radius: 16px;
-  width: 100%;
-  align-items: center;
-`;
-
-const PrimaryButtonText = styled.Text`
-  color: #FFFFFF;
-  font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-`;
-
-const NextStepsContainer = styled.View`
-  width: 100%;
-  margin-top: 30px;
-  gap: 12px;
-`;
-
-const NextStepCard = styled(BlurView)<{ disabled?: boolean }>`
-  border-radius: 16px;
-  padding: 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  border-width: 1px;
-  border-color: rgba(255,255,255,0.05);
-  background-color: rgba(255,255,255,0.03);
-  opacity: ${(props: { disabled?: boolean }) => props.disabled ? 0.5 : 1};
-`;
-
-const StepTextContainer = styled.View`
-  flex: 1;
-  margin-left: 12px;
-`;
-
-const StepTitle = styled.Text`
-  color: #FFF;
   font-size: 14px;
-  font-family: 'GolosText_700Bold';
-`;
-
-const StepSubtitle = styled.Text`
-  color: rgba(255,255,255,0.5);
-  font-size: 12px;
-  font-family: 'Inter_500Medium';
-`;
-
-const StatsPill = styled.View`
-  background-color: rgba(243, 102, 255, 0.1);
-  padding-horizontal: 12px;
-  padding-vertical: 6px;
-  border-radius: 99px;
-  border-width: 1px;
-  border-color: rgba(243, 102, 255, 0.3);
-  margin-bottom: 24px;
-`;
-
-const StatsText = styled.Text`
-  color: #F366FF;
-  font-size: 13px;
-  font-family: 'GolosText_700Bold';
+  font-family: Inter_500Medium;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 22px;
+  margin-bottom: 16px;
 `;
 
 export default function RadarScreen() {
   const router = useRouter();
+  const { profile } = useEncorelyAuth();
+  const swipeCount = profile?.swipeCount ?? 0;
+  const canUseRadar = swipeCount >= API_SWIPE_THRESHOLD;
+
+  const { events, loading: eventsLoading, error: eventsError, reload: reloadEvents } =
+    useEventsFeed();
+  const {
+    matches,
+    loading: matchesLoading,
+    error: matchesError,
+    thresholdBlocked,
+    loadMatches,
+    clearMatches,
+  } = useRadarMatches();
+
+  const [selectedEvent, setSelectedEvent] = useState<EventFeedItem | null>(null);
+
+  const handleSelectEvent = (event: EventFeedItem) => {
+    setSelectedEvent(event);
+    clearMatches();
+    void loadMatches(event.id);
+  };
 
   return (
     <Container>
@@ -139,62 +94,180 @@ export default function RadarScreen() {
         end={{ x: 0, y: 1 }}
       />
       <StyledSafeArea>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}>
-          <GlassCard intensity={40} tint="dark">
-            <Text style={{ fontSize: 60, marginBottom: 16 }}>🌍</Text>
-            <Title>Radar Social</Title>
-            <Subtitle>
-              {`¡Felicidades! Alcanzaste el umbral de los ${RADAR_SWIPES_THRESHOLD} swipes. `}
-              Tu Vibe ha sido calculado y el Radar Social está listo para futuras conexiones.
-            </Subtitle>
+        <ScrollView
+          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Title>Radar Social</Title>
+          <Subtitle>
+            {canUseRadar
+              ? 'Elegí un evento y descubrí personas con afinidad musical.'
+              : `Necesitás al menos ${API_SWIPE_THRESHOLD} swipes (${swipeCount}/${API_SWIPE_THRESHOLD}).`}
+          </Subtitle>
 
-            <StatsPill>
-              <StatsText>📡 247 personas con tu vibe cerca</StatsText>
-            </StatsPill>
-            
-            <PrimaryButton onPress={() => router.push('/(main)/radar-matches')}>
-              <PrimaryButtonText>Ver Personas Compatibles</PrimaryButtonText>
-            </PrimaryButton>
-          </GlassCard>
+          {!canUseRadar ? (
+            <GlassCard intensity={30} tint="dark">
+              <Text style={{ color: '#F366FF', fontFamily: 'Inter_500Medium' }}>
+                Seguí en Sound-Swipe para desbloquear el radar.
+              </Text>
+              <TouchableOpacity
+                style={{ marginTop: 16 }}
+                onPress={() => router.replace('/(main)')}
+              >
+                <Text style={{ color: '#fff', fontFamily: 'GolosText_700Bold' }}>
+                  Ir a swipes →
+                </Text>
+              </TouchableOpacity>
+            </GlassCard>
+          ) : null}
 
-          <NextStepsContainer>
-             <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: 'GolosText_700Bold', textTransform: 'uppercase', letterSpacing: 1, marginLeft: 4 }}>
-               Próximos Pasos
-             </Text>
-             
-             <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(main)/radar-matches')}>
-               <NextStepCard intensity={20}>
-                 <Ionicons name="people-outline" size={24} color="#F366FF" />
-                 <StepTextContainer>
-                   <StepTitle>Explorar Matches</StepTitle>
-                   <StepSubtitle>Conecta con personas compatibles</StepSubtitle>
-                 </StepTextContainer>
-                 <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.3)" />
-               </NextStepCard>
-             </TouchableOpacity>
+          {canUseRadar && (
+            <>
+              <Text
+                style={{
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 12,
+                  fontFamily: 'GolosText_700Bold',
+                  marginBottom: 8,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Eventos
+              </Text>
 
-             <NextStepCard intensity={20} disabled>
-               <Ionicons name="location-outline" size={24} color="#F366FF" />
-               <StepTextContainer>
-                 <StepTitle>Sincronizar Ubicación</StepTitle>
-                 <StepSubtitle>Próximamente para eventos en vivo</StepSubtitle>
-               </StepTextContainer>
-               <Ionicons name="lock-closed-outline" size={18} color="rgba(255,255,255,0.2)" />
-             </NextStepCard>
+              {eventsLoading ? (
+                <ActivityIndicator color="#F366FF" style={{ marginVertical: 24 }} />
+              ) : eventsError ? (
+                <GlassCard intensity={30} tint="dark">
+                  <Text style={{ color: '#ff6b6b', fontFamily: 'Inter_500Medium' }}>
+                    {eventsError}
+                  </Text>
+                  <TouchableOpacity onPress={() => void reloadEvents()} style={{ marginTop: 12 }}>
+                    <Text style={{ color: '#F366FF' }}>Reintentar</Text>
+                  </TouchableOpacity>
+                </GlassCard>
+              ) : (
+                events.map((event) => (
+                  <TouchableOpacity
+                    key={event.id}
+                    activeOpacity={0.85}
+                    onPress={() => handleSelectEvent(event)}
+                  >
+                    <GlassCard
+                      intensity={30}
+                      tint="dark"
+                      style={{
+                        borderColor:
+                          selectedEvent?.id === event.id ? '#F366FF' : 'rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      <Text style={{ color: '#fff', fontFamily: 'GolosText_700Bold', fontSize: 16 }}>
+                        {event.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: 'rgba(255,255,255,0.5)',
+                          fontFamily: 'Inter_500Medium',
+                          fontSize: 13,
+                          marginTop: 4,
+                        }}
+                      >
+                        {event.venue} · {event.mood}
+                      </Text>
+                    </GlassCard>
+                  </TouchableOpacity>
+                ))
+              )}
 
-             <NextStepCard intensity={20} disabled>
-               <Ionicons name="musical-notes-outline" size={24} color="#F366FF" />
-               <StepTextContainer>
-                 <StepTitle>Explorar Conciertos</StepTitle>
-                 <StepSubtitle>Busca fans en tus próximos shows</StepSubtitle>
-               </StepTextContainer>
-               <Ionicons name="lock-closed-outline" size={18} color="rgba(255,255,255,0.2)" />
-             </NextStepCard>
+              {selectedEvent ? (
+                <>
+                  <Text
+                    style={{
+                      color: 'rgba(255,255,255,0.4)',
+                      fontSize: 12,
+                      fontFamily: 'GolosText_700Bold',
+                      marginTop: 16,
+                      marginBottom: 8,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Candidatos
+                  </Text>
 
-             <TouchableOpacity style={{ marginTop: 12, alignSelf: 'center' }} onPress={() => router.replace('/(main)')}>
-                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter_500Medium' }}>Volver al Inicio</Text>
-             </TouchableOpacity>
-          </NextStepsContainer>
+                  {matchesLoading ? (
+                    <ActivityIndicator color="#F366FF" />
+                  ) : thresholdBlocked ? (
+                    <GlassCard intensity={30} tint="dark">
+                      <Text style={{ color: '#F366FF', fontFamily: 'Inter_500Medium' }}>
+                        Completá {API_SWIPE_THRESHOLD} swipes para ver matches en este evento.
+                      </Text>
+                    </GlassCard>
+                  ) : matchesError ? (
+                    <GlassCard intensity={30} tint="dark">
+                      <Text style={{ color: '#ff6b6b' }}>{matchesError}</Text>
+                    </GlassCard>
+                  ) : matches.length === 0 ? (
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter_500Medium' }}>
+                      No hay candidatos por ahora.
+                    </Text>
+                  ) : (
+                    matches.map((candidate) => (
+                      <TouchableOpacity
+                        key={candidate.id}
+                        activeOpacity={0.85}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/(main)/chat/[id]',
+                            params: { id: candidate.id, name: candidate.displayName },
+                          })
+                        }
+                      >
+                        <GlassCard intensity={30} tint="dark">
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{ color: '#fff', fontFamily: 'GolosText_700Bold' }}
+                              >
+                                {candidate.displayName}
+                              </Text>
+                              <Text
+                                style={{
+                                  color: 'rgba(255,255,255,0.5)',
+                                  fontFamily: 'Inter_500Medium',
+                                  fontSize: 12,
+                                }}
+                              >
+                                {candidate.mood}
+                                {candidate.isHighPriority ? ' · Prioridad alta' : ''}
+                              </Text>
+                            </View>
+                            <Text style={{ color: '#F366FF', fontFamily: 'GolosText_700Bold' }}>
+                              {Math.round(candidate.affinity * 100)}%
+                            </Text>
+                          </View>
+                        </GlassCard>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </>
+              ) : null}
+
+              <TouchableOpacity
+                style={{ marginTop: 24, alignSelf: 'center' }}
+                onPress={() => router.push('/(main)/matches')}
+              >
+                <Text style={{ color: '#F366FF', fontFamily: 'GolosText_700Bold' }}>
+                  Ver matches pendientes →
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </StyledSafeArea>
     </Container>

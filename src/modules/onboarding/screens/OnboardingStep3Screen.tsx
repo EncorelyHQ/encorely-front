@@ -5,7 +5,6 @@ import styled from 'styled-components/native';
 import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { SpotifyConnectCard } from '@/modules/onboarding/components/SpotifyConnectCard';
-import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 
 const Wrap = styled.View`
   width: 100%;
@@ -143,7 +142,6 @@ export default function OnboardingStep3Screen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <OnboardingScreenHeader onBack={() => router.back()} />
         <Wrap>
           <SpotifyConnectCard
             tag="NUEVO AQUÍ"

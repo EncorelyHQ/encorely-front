@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 import { ScreenShell } from '@/layout';
 import { Ionicons } from '@expo/vector-icons';
-import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import { searchArtists, type SpotifyArtistSearchItem } from '@/clients/spotify/spotifyApi';
 import { useOnboarding } from '@/shared/context/OnboardingContext';
@@ -168,7 +167,6 @@ export default function OnboardingStep5Screen() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <OnboardingScreenHeader onBack={() => router.back()} />
         <Title>Gustos musicales</Title>
         <Sub>
           Elegí hasta 5 artistas y hasta 5 géneros (semillas válidas para recomendaciones de Spotify).

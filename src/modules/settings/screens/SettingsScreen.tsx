@@ -23,8 +23,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/shared/context/AuthContext';
-import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
+import { useEncorelyAuth } from '@/modules/auth/hooks/useEncorelyAuth';
+import { useSpotifyAuth } from '@/shared/hooks/useSpotifyAuth';
 import { useVibeVector } from '@/shared/hooks/useVibeVector';
+import { useConcertMood } from '@/modules/settings/hooks/useConcertMood';
+import { ConcertMood } from '@/clients/encorely/types';
+import { concertMoodToLabel } from '@/modules/auth/utils/mapMood';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -320,8 +324,16 @@ const LogoutText = styled.Text`
 export default function SettingsScreen() {
   const router = useRouter();
   const { user: authUser, logout, setSession, vibeVector } = useAuth();
+  const { logout: encorelyLogout } = useEncorelyAuth();
   const { user: spotifyUser, logout: spotifyLogout, getValidToken } = useSpotifyAuth();
   const { compute: computeVibe, isLoading: isComputing } = useVibeVector();
+  const { mood, updateMood, saving: moodSaving, error: moodError } = useConcertMood();
+
+  const MOOD_OPTIONS: { value: ConcertMood; label: string }[] = [
+    { value: ConcertMood.Moshpit, label: concertMoodToLabel(ConcertMood.Moshpit) },
+    { value: ConcertMood.Chill, label: concertMoodToLabel(ConcertMood.Chill) },
+    { value: ConcertMood.VIP, label: concertMoodToLabel(ConcertMood.VIP) },
+  ];
 
   // Profile form
   const [profile, setProfile] = useState<UserProfile>({
@@ -407,6 +419,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             await spotifyLogout();
+            await encorelyLogout();
             await logout();
             router.replace('/(auth)/login');
           },
@@ -510,7 +523,32 @@ export default function SettingsScreen() {
               </CardPad>
             </GlassCard>
 
-            {/* ── SECCIÓN 2: PRIVACIDAD ───────────────────────────────────── */}
+            {/* ── SECCIÓN 2: MOOD DE CONCIERTO ─────────────────────────────── */}
+            <View style={{ height: 10 }} />
+            <SectionLabel>Mood de concierto</SectionLabel>
+            <GlassCard intensity={20} tint="dark">
+              <CardPad>
+                <ToggleSub style={{ marginBottom: 12 }}>
+                  Cómo te gusta vivir los shows (se guarda en el servidor)
+                </ToggleSub>
+                <GenderRow>
+                  {MOOD_OPTIONS.map((opt) => (
+                    <GenderChip
+                      key={opt.value}
+                      selected={mood === opt.value}
+                      onPress={() => void updateMood(opt.value)}
+                      activeOpacity={0.7}
+                      disabled={moodSaving}
+                    >
+                      <GenderChipText selected={mood === opt.value}>{opt.label}</GenderChipText>
+                    </GenderChip>
+                  ))}
+                </GenderRow>
+                {moodError ? <ErrorMsg style={{ marginTop: 8 }}>{moodError}</ErrorMsg> : null}
+              </CardPad>
+            </GlassCard>
+
+            {/* ── SECCIÓN 3: PRIVACIDAD ───────────────────────────────────── */}
             <View style={{ height: 10 }} />
             <SectionLabel>Privacidad</SectionLabel>
             <GlassCard intensity={20} tint="dark">
@@ -543,7 +581,7 @@ export default function SettingsScreen() {
               </CardPad>
             </GlassCard>
 
-            {/* ── SECCIÓN 3: SPOTIFY ──────────────────────────────────────── */}
+            {/* ── SECCIÓN 4: SPOTIFY ──────────────────────────────────────── */}
             <View style={{ height: 10 }} />
             <SectionLabel>Cuenta Spotify</SectionLabel>
             <GlassCard intensity={20} tint="dark">
@@ -567,7 +605,7 @@ export default function SettingsScreen() {
               </CardPad>
             </GlassCard>
 
-            {/* ── SECCIÓN 4: CUENTA ───────────────────────────────────────── */}
+            {/* ── SECCIÓN 5: CUENTA ───────────────────────────────────────── */}
             <View style={{ height: 10 }} />
             <SectionLabel>Cuenta</SectionLabel>
             <GlassCard intensity={20} tint="dark">

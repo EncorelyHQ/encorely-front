@@ -23,6 +23,8 @@ import {
   type SpotifyUser,
   type SpotifyTokens,
 } from '@/clients/spotify/spotifyApi';
+import { notifySpotifyTokenReady } from '@/modules/auth/lib/spotifyBridge';
+import { getEncorelyUserId } from '@/clients/encorely/lib/session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -121,6 +123,14 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
           setStoredRefreshToken(refresh);
           setExpiresAt(expires ? parseInt(expires, 10) : 0);
           setUser(JSON.parse(storedUser));
+          const encorelyId = await getEncorelyUserId();
+          if (!encorelyId) {
+            try {
+              await notifySpotifyTokenReady(token);
+            } catch (e) {
+              console.warn('[SpotifyAuth] Encorely link on restore:', e);
+            }
+          }
         }
       } catch (e) {
         console.warn('[SpotifyAuth] Load session error:', e);
@@ -139,6 +149,25 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
     ]);
     setExpiresAt(expires);
   }, []);
+
+  const completeSpotifyLogin = useCallback(
+    async (tokens: SpotifyTokens) => {
+      await persistSession(tokens);
+      const spotifyUser = await getCurrentUser(tokens.accessToken);
+      await secureSetItem(STORE_KEYS.user, JSON.stringify(spotifyUser));
+      setUser(spotifyUser);
+      setAccessToken(tokens.accessToken);
+      setStoredRefreshToken(tokens.refreshToken);
+      try {
+        await notifySpotifyTokenReady(tokens.accessToken);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Error al vincular con Encorely';
+        setError(msg);
+        throw e;
+      }
+    },
+    [persistSession]
+  );
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
@@ -185,12 +214,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
         if (finished) return;
         sessionStorage.removeItem(WEB_VERIFIER_STORAGE_KEY);
         sessionStorage.removeItem(WEB_REDIRECT_STORAGE_KEY);
-        await persistSession(tokens);
-        const spotifyUser = await getCurrentUser(tokens.accessToken);
-        await secureSetItem(STORE_KEYS.user, JSON.stringify(spotifyUser));
-        setUser(spotifyUser);
-        setAccessToken(tokens.accessToken);
-        setStoredRefreshToken(tokens.refreshToken);
+        await completeSpotifyLogin(tokens);
         await refreshPkcePair();
       } catch (e: any) {
         if (!finished) {
@@ -205,7 +229,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
     return () => {
       finished = true;
     };
-  }, [persistSession, refreshPkcePair]);
+  }, [completeSpotifyLogin, refreshPkcePair]);
 
   const logout = useCallback(async () => {
     await secureDeleteItems(Object.values(STORE_KEYS));
@@ -221,6 +245,13 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
     setIsLoggingIn(true);
     const clientId = getSpotifyClientId();
     const redirectUri = getSpotifyRedirectUri();
+
+    if (__DEV__) {
+      console.log(
+        '[Spotify] Redirect URI (debe estar en Spotify Dashboard → Redirect URIs):',
+        redirectUri
+      );
+    }
 
     try {
       let pair = pkceRef.current;
@@ -292,22 +323,14 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
         exactStoredVerifier ?? currentVerifier,
         redirectUri
       );
-      await persistSession(tokens);
-
-      const spotifyUser = await getCurrentUser(tokens.accessToken);
-      await secureSetItem(STORE_KEYS.user, JSON.stringify(spotifyUser));
-
-      setUser(spotifyUser);
-      setAccessToken(tokens.accessToken);
-      setStoredRefreshToken(tokens.refreshToken);
-      await refreshPkcePair();
+      await completeSpotifyLogin(tokens);
     } catch (e: any) {
       console.error('[SpotifyAuth] Login error:', e);
       setError(e?.message ?? 'Error inesperado durante login');
     } finally {
       setIsLoggingIn(false);
     }
-  }, [persistSession, refreshPkcePair]);
+  }, [completeSpotifyLogin, refreshPkcePair]);
 
   const getValidToken = useCallback(async (): Promise<string | null> => {
     if (!storedRefreshToken) return null;

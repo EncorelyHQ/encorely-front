@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 import { ScreenShell } from '@/layout';
 import { SpotifyConnectCard } from '@/modules/onboarding/components/SpotifyConnectCard';
-import { OnboardingScreenHeader } from '@/modules/onboarding/components/OnboardingScreenHeader';
 
 const Wrap = styled.View`
   width: 100%;
@@ -38,7 +37,6 @@ export default function OnboardingStep4Screen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <OnboardingScreenHeader onBack={() => router.back()} />
         <Wrap>
           <SpotifyConnectCard
             tag="YA TENÉS CUENTA"

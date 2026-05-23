@@ -5,9 +5,11 @@ import * as Haptics from '@/shared/lib/haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
-import { spotifySwipeService, type SwipeTrack } from '@/clients/spotify/swipeFeed';
+import type { SwipeTrack } from '@/clients/spotify/swipeFeed';
+import { useEncorelyAuth } from '@/modules/auth/hooks/useEncorelyAuth';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
+import { useSwipeFeed } from '@/modules/swipe/hooks/useSwipeFeed';
+import { useSwipeActions } from '@/modules/swipe/hooks/useSwipeActions';
 import { SwipeStack } from '@/modules/swipe/components/SwipeStack';
 import { ProgressFooter } from '@/modules/swipe/components/ProgressFooter';
 import { ScreenShell } from '@/layout';
@@ -85,16 +87,19 @@ export default function SwipeScreen({
   onOnboardingSwipesComplete,
 }: SwipeScreenProps) {
   const router = useRouter();
-  const { getValidToken } = useSpotifyAuth();
+  const { userId, isLoading: encorelyLoading } = useEncorelyAuth();
   const {
     swipesCount,
     hasReachedRadarThreshold,
     hasCompletedOnboardingSwipes,
-    like,
-    dislike,
+    like: saveLocalLike,
+    dislike: saveLocalDislike,
     resetSwipes,
     isLoaded,
   } = useSwipeEngine();
+  const { fetchBatch, loading: feedLoading, fetchAttempted, setFetchAttempted } =
+    useSwipeFeed();
+  const { like: recordLike, dislike: recordDislike } = useSwipeActions();
 
   const isOnboardingMode = mode === 'onboarding';
   const progressThreshold = isOnboardingMode
@@ -102,37 +107,24 @@ export default function SwipeScreen({
     : RADAR_SWIPES_THRESHOLD;
 
   const [tracks, setTracks] = useState<SwipeTrack[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchAttempted, setFetchAttempted] = useState(false);
-  const hasFetchedInitialRef = React.useRef(false);
+  const loading = feedLoading;
 
   const fetchMoreTracks = useCallback(async () => {
-    const token = await getValidToken();
-    if (!token) return;
-    setLoading(true);
-    try {
-      console.log('[SwipeScreen] Fetching swipe batch...');
-      const newTracks = await spotifySwipeService.getSwipeBatch(token);
-
-      if (newTracks.length > 0) {
-        setTracks((prev) => [...prev, ...newTracks]);
-      } else {
-        console.warn('[SwipeScreen] getSwipeBatch returned 0 tracks after all fallbacks.');
-      }
-    } catch (e) {
-      console.warn('[SwipeScreen] Fetch tracks failed:', e);
-    } finally {
-      setLoading(false);
-      setFetchAttempted(true);
+    if (!userId) return;
+    const newTracks = await fetchBatch();
+    if (newTracks.length > 0) {
+      setTracks((prev) => [...prev, ...newTracks]);
     }
-  }, [getValidToken]);
+  }, [userId, fetchBatch]);
+
+  const hasFetchedInitialRef = React.useRef(false);
 
   useEffect(() => {
-    if (tracks.length === 0 && !hasFetchedInitialRef.current) {
+    if (userId && tracks.length === 0 && !hasFetchedInitialRef.current) {
       hasFetchedInitialRef.current = true;
       fetchMoreTracks();
     }
-  }, [fetchMoreTracks, tracks.length]);
+  }, [userId, fetchMoreTracks, tracks.length]);
 
   const onboardingCompleteFired = React.useRef(false);
   const mainRadarScheduled = React.useRef(false);
@@ -175,9 +167,11 @@ export default function SwipeScreen({
     setTracks((prev) => prev.slice(1));
 
     if (direction === 'right') {
-      await like(currentTrack.id);
+      await recordLike(currentTrack.id);
+      await saveLocalLike(currentTrack.id);
     } else {
-      await dislike(currentTrack.id);
+      await recordDislike(currentTrack.id);
+      await saveLocalDislike(currentTrack.id);
     }
 
     if (tracks.length < 5) {
@@ -189,12 +183,12 @@ export default function SwipeScreen({
     ? hasCompletedOnboardingSwipes
     : hasReachedRadarThreshold;
 
-  if (!isLoaded || (loading && tracks.length === 0 && !thresholdMet)) {
+  if (encorelyLoading || !userId || !isLoaded || (loading && tracks.length === 0 && !thresholdMet)) {
     return (
       <ScreenShell centerContent gradientOpacity={0.6}>
         <ActivityIndicator size="large" color="#F366FF" />
         <Text style={{ color: '#fff', marginTop: 10, fontFamily: 'Inter_500Medium' }}>
-          Preparando tracks...
+          {!userId && !encorelyLoading ? 'Conectá tu cuenta Encorely…' : 'Preparando tracks...'}
         </Text>
       </ScreenShell>
     );

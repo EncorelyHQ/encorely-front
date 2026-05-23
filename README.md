@@ -76,16 +76,25 @@ src/
 ├── layout/              # Shells de UI (p. ej. ScreenShell)
 ├── routes/              # NavigationGuard y lógica de enrutado global
 └── modules/
-    ├── auth/screens/
-    ├── onboarding/screens/
-    ├── home/screens/
-    ├── swipe/           # screens, components, hooks
-    ├── radar/screens/
-    ├── matches/screens/
-    ├── profile/screens/
-    ├── settings/screens/
-    └── chat/screens/
+    ├── auth/            # screens + hooks, context, lib, types, services, utils
+    ├── onboarding/
+    ├── home/
+    ├── swipe/           # screens, components, hooks, services, …
+    ├── radar/
+    ├── matches/
+    ├── profile/
+    ├── settings/
+    └── chat/
 ```
+
+Cada módulo incluye carpetas reservadas: `utils/`, `hooks/`, `context/`, `lib/`, `types/`, `services/` (además de `screens/` y `components/` cuando aplique).
+
+### Integración Encorely API
+
+- **Config:** [`src/config/api.ts`](src/config/api.ts) — `extra.apiBaseUrl` en `app.json`.
+- **HTTP + DTOs:** [`src/clients/http/`](src/clients/http/), [`src/clients/encorely/`](src/clients/encorely/).
+- **Dominio:** `modules/<feature>/services/` → clientes REST (sin `fetch` en pantallas).
+- Guía de endpoints: [`docs/api.md`](docs/api.md).
 
 ### 5.1 `app/` — Núcleo de rutas
 
@@ -182,7 +191,8 @@ layout / routes son consumidos por app o modules según necesidad
 Posibles siguientes pasos (no obligatorios):
 
 - Capa **`application/`** o casos de uso si la orquestación entre varios clientes crece.
-- **Backend propio** y nuevos `clients/` + tipos en `shared`.
+- Conectar pantallas a `modules/*/services` (Encorely API ya scaffolded en `clients/encorely`).
+- SignalR (`notificationHub`, `venueHub`) en `clients/encorely/signalr.ts` (TODO).
 - Extraer módulos a workspaces npm/pnpm si el tamaño del equipo o del código lo justifica.
 - Module Federation es propio del **ecosistema web**; en React Native el paralelo suele ser **monorepo + packages** o múltiples apps, no el mismo mecanismo.
 
