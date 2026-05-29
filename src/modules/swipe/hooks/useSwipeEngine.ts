@@ -5,6 +5,8 @@ import {
   ONBOARDING_SWIPES_REQUIRED,
   RADAR_SWIPES_THRESHOLD,
 } from '@/config/onboarding';
+import { useAuth } from '@/shared/context/AuthContext';
+import { registerSwipe, SwipeDirection } from '@/clients/api';
 
 const STORAGE_KEY = '@encorely_swipe_state';
 
@@ -15,10 +17,19 @@ export interface SwipeData {
 }
 
 export function useSwipeEngine() {
+  const { backendUserId } = useAuth();
   const [swipesCount, setSwipesCount] = useState(0);
   const [likes, setLikes] = useState<string[]>([]);
   const [dislikes, setDislikes] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  /** Registra el swipe en el backend (best-effort: no bloquea ni rompe la UI). */
+  const syncSwipe = (trackId: string, direction: SwipeDirection) => {
+    if (!backendUserId) return;
+    registerSwipe(backendUserId, trackId, direction).catch((e) =>
+      console.warn('[useSwipeEngine] registerSwipe falló:', e?.message ?? e)
+    );
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,6 +64,7 @@ export function useSwipeEngine() {
     const newCount = swipesCount + 1;
     setLikes(newLikes);
     setSwipesCount(newCount);
+    syncSwipe(trackId, SwipeDirection.Like);
     await saveState({ swipesCount: newCount, likes: newLikes, dislikes });
   };
 
@@ -61,6 +73,7 @@ export function useSwipeEngine() {
     const newCount = swipesCount + 1;
     setDislikes(newDislikes);
     setSwipesCount(newCount);
+    syncSwipe(trackId, SwipeDirection.Dislike);
     await saveState({ swipesCount: newCount, likes, dislikes: newDislikes });
   };
 

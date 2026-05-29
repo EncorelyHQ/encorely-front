@@ -1,103 +1,76 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import type { VibeVector } from '@/shared/types/vibe';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/shared/context/AuthContext';
+import { getPendingMatches, acceptMatch, ApiError, type PendingMatch } from '@/clients/api';
 
-type MatchUser = {
-  id: string;
-  name: string;
-  avatar: string;
-  compatibilityScore: number;
-  topGenres: string[];
-  vibeVector: VibeVector;
-  status: 'pending' | 'accepted';
-  hasChatted: boolean;
-};
+/** Avatar placeholder determinista (el backend aún no expone avatares). */
+const avatarFor = (seed: string) => `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
 
-const initialMatches: MatchUser[] = [
-  {
-    id: 'u1',
-    name: 'Valeria',
-    avatar: 'https://i.pravatar.cc/150?u=valeria',
-    compatibilityScore: 0.95,
-    topGenres: ['Indie Rock', 'Synthpop', 'Alternative'],
-    vibeVector: { energy: 0.8, danceability: 0.7, valence: 0.6, tempo: 0.75 },
-    status: 'accepted',
-    hasChatted: false
-  },
-  {
-    id: 'u2',
-    name: 'Carlos',
-    avatar: 'https://i.pravatar.cc/150?u=carlos',
-    compatibilityScore: 0.92,
-    topGenres: ['Techno', 'House', 'Electronic'],
-    vibeVector: { energy: 0.9, danceability: 0.85, valence: 0.5, tempo: 0.9 },
-    status: 'accepted',
-    hasChatted: true
-  },
-  {
-    id: 'u3',
-    name: 'Andrea',
-    avatar: 'https://i.pravatar.cc/150?u=andrea',
-    compatibilityScore: 0.88,
-    topGenres: ['Pop', 'R&B', 'Hip Hop'],
-    vibeVector: { energy: 0.7, danceability: 0.9, valence: 0.8, tempo: 0.6 },
-    status: 'accepted',
-    hasChatted: false
-  },
-  {
-    id: 'u4',
-    name: 'Diego',
-    avatar: 'https://i.pravatar.cc/150?u=diego',
-    compatibilityScore: 0.81,
-    topGenres: ['Rock', 'Metal', 'Grunge'],
-    vibeVector: { energy: 0.95, danceability: 0.4, valence: 0.3, tempo: 0.8 },
-    status: 'accepted',
-    hasChatted: true
-  },
-  {
-    id: 'u5',
-    name: 'Lucía',
-    avatar: 'https://i.pravatar.cc/150?u=lucia',
-    compatibilityScore: 0.75,
-    topGenres: ['Acoustic', 'Folk', 'Indie Pop'],
-    vibeVector: { energy: 0.4, danceability: 0.5, valence: 0.7, tempo: 0.5 },
-    status: 'accepted',
-    hasChatted: false
-  }
-];
+/** AffinityScore llega 0–100; lo normalizamos a 0–1 para la UI. */
+const toScore01 = (compatibility: number) => (compatibility > 1 ? compatibility / 100 : compatibility);
 
 export default function MatchesScreen() {
   const router = useRouter();
-  const [matches, setMatches] = useState<MatchUser[]>(initialMatches);
+  const { backendUserId } = useAuth();
+
+  const [matches, setMatches] = useState<PendingMatch[]>([]);
+  const [openedRooms, setOpenedRooms] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'matches' | 'chats'>('matches');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const pendingMatches = matches.filter(m => !m.hasChatted);
-  const activeChats = matches.filter(m => m.hasChatted);
+  const loadMatches = useCallback(async () => {
+    if (!backendUserId) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getPendingMatches(backendUserId);
+      setMatches(data);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'No se pudieron cargar tus matches';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [backendUserId]);
 
-  const handleConnect = (id: string) => {
-    setMatches(prev => prev.map(m => m.id === id ? { ...m, status: 'pending' } : m));
-    setTimeout(() => {
-       // After connecting, we can consider them a chat
-       setMatches(prev => prev.map(m => m.id === id ? { ...m, hasChatted: true, status: 'accepted' } : m));
-       router.push({ pathname: '/(main)/chat/[id]', params: { id } });
-    }, 800);
+  useEffect(() => {
+    loadMatches();
+  }, [loadMatches]);
+
+  const pendingMatches = matches.filter((m) => !openedRooms.has(m.matchId));
+  const activeChats = matches.filter((m) => openedRooms.has(m.matchId));
+
+  const handleConnect = async (matchId: string) => {
+    if (!backendUserId) return;
+    try {
+      const { roomId } = await acceptMatch(matchId, backendUserId);
+      setOpenedRooms((prev) => new Set(prev).add(matchId));
+      router.push({ pathname: '/(main)/chat/[id]', params: { id: roomId } });
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'No se pudo aceptar el match';
+      setError(msg);
+    }
   };
 
-  const renderMatchItem = ({ item }: { item: MatchUser }) => {
-    const isCertified = item.compatibilityScore > 0.90;
-    
+  const renderMatchItem = ({ item }: { item: PendingMatch }) => {
+    const isCertified = toScore01(item.compatibility) > 0.9;
     return (
-      <TouchableOpacity activeOpacity={0.8} onPress={() => handleConnect(item.id)}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => handleConnect(item.matchId)}>
         <BlurView intensity={20} tint="dark" style={styles.chatCard}>
-          <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+          <Image source={{ uri: avatarFor(item.matchId) }} style={styles.chatAvatar} />
           <View style={styles.chatInfo}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Text style={styles.chatName}>{item.name}</Text>
+              <Text style={styles.chatName}>{item.displayName}</Text>
               {isCertified && <Text style={{ fontSize: 12 }}>🌟</Text>}
             </View>
             <Text style={[styles.chatPreview, { color: '#F366FF' }]} numberOfLines={1}>¡Nuevo Match! Toca para saludar 👋</Text>
@@ -107,13 +80,13 @@ export default function MatchesScreen() {
     );
   };
 
-  const renderChatItem = ({ item }: { item: MatchUser }) => {
+  const renderChatItem = ({ item }: { item: PendingMatch }) => {
     return (
-      <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(main)/chat/[id]', params: { id: item.id } })}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => router.push({ pathname: '/(main)/chat/[id]', params: { id: item.matchId } })}>
         <BlurView intensity={20} tint="dark" style={styles.chatCard}>
-          <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+          <Image source={{ uri: avatarFor(item.matchId) }} style={styles.chatAvatar} />
           <View style={styles.chatInfo}>
-            <Text style={styles.chatName}>{item.name}</Text>
+            <Text style={styles.chatName}>{item.displayName}</Text>
             <Text style={styles.chatPreview} numberOfLines={1}>Toca para ver la conversación...</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.3)" />
@@ -122,11 +95,13 @@ export default function MatchesScreen() {
     );
   };
 
+  const listData = activeTab === 'matches' ? pendingMatches : activeChats;
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]} />
       <SafeAreaView style={styles.safeArea}>
-        
+
         {/* Header without Back Button */}
         <View style={styles.header}>
           <View>
@@ -137,14 +112,14 @@ export default function MatchesScreen() {
 
         {/* Top Tabs */}
         <View style={styles.tabsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.tabButton, activeTab === 'matches' && styles.tabButtonActive]}
             onPress={() => setActiveTab('matches')}
           >
             <Text style={[styles.tabButtonText, activeTab === 'matches' && styles.tabButtonTextActive]}>Matches ({pendingMatches.length})</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.tabButton, activeTab === 'chats' && styles.tabButtonActive]}
             onPress={() => setActiveTab('chats')}
           >
@@ -153,20 +128,30 @@ export default function MatchesScreen() {
         </View>
 
         {/* List Content */}
-        <FlatList
-          data={activeTab === 'matches' ? pendingMatches : activeChats}
-          keyExtractor={item => item.id}
-          renderItem={activeTab === 'matches' ? renderMatchItem : renderChatItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <Text style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter_500Medium' }}>
-                No tienes {activeTab === 'matches' ? 'matches pendientes' : 'chats activos'}.
-              </Text>
-            </View>
-          }
-        />
+        {loading ? (
+          <ActivityIndicator color="#F366FF" style={{ marginTop: 40 }} />
+        ) : (
+          <FlatList
+            data={listData}
+            keyExtractor={(item) => item.matchId}
+            renderItem={activeTab === 'matches' ? renderMatchItem : renderChatItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={loadMatches}
+            ListEmptyComponent={
+              <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 24 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter_500Medium', textAlign: 'center' }}>
+                  {error
+                    ? error
+                    : !backendUserId
+                    ? 'Conecta tu cuenta para ver tus matches.'
+                    : `No tienes ${activeTab === 'matches' ? 'matches pendientes' : 'chats activos'}.`}
+                </Text>
+              </View>
+            }
+          />
+        )}
       </SafeAreaView>
     </View>
   );

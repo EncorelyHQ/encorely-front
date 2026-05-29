@@ -1,11 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/shared/context/AuthContext';
+import { getChatMessages, sendChatMessage, ApiError, type ChatMessage } from '@/clients/api';
+
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+const fmtTime = (iso: string) => {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 const Container = styled.View`
   flex: 1;
@@ -56,14 +64,6 @@ const StyledInput = styled.TextInput`
   max-height: 100px;
 `;
 
-const DUMMY_MATCHES: Record<string, any> = {
-  u1: { name: 'Valeria', avatar: 'https://i.pravatar.cc/150?u=valeria', score: 95 },
-  u2: { name: 'Carlos', avatar: 'https://i.pravatar.cc/150?u=carlos', score: 92 },
-  u3: { name: 'Andrea', avatar: 'https://i.pravatar.cc/150?u=andrea', score: 88 },
-  u4: { name: 'Diego', avatar: 'https://i.pravatar.cc/150?u=diego', score: 81 },
-  u5: { name: 'Lucía', avatar: 'https://i.pravatar.cc/150?u=lucia', score: 75 },
-};
-
 type Message = {
   id: string;
   text: string;
@@ -73,35 +73,74 @@ type Message = {
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
+  const roomId = String(id);
   const router = useRouter();
-  const match = DUMMY_MATCHES[id as string] || { name: 'Usuario', avatar: 'https://i.pravatar.cc/150?u=anon', score: 0 };
-  
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: '¡Hola! Vi que tenemos un vibe muy parecido 🎵', isMe: false, time: '10:00 AM' },
-    { id: '2', text: '¡Sii! Me encantó tu top de Indie Rock. ¿Fuiste al concierto de ayer?', isMe: true, time: '10:02 AM' },
-    { id: '3', text: '¡No pude! Estaba trabajando, pero dicen que estuvo increíble. ¿Qué tal estuvo?', isMe: false, time: '10:05 AM' },
-  ]);
-  
+  const { backendUserId } = useAuth();
+
+  // Cabecera: el backend no expone el perfil del otro usuario por sala todavía.
+  const match = {
+    name: `Match ${roomId.slice(0, 4)}`,
+    avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(roomId)}`,
+  };
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const sendMessage = () => {
-    if (inputText.trim().length === 0) return;
-    
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
+  const mapMessage = useCallback(
+    (m: ChatMessage, idx: number): Message => ({
+      id: m.id ?? `${m.timestamp}-${idx}`,
+      text: m.content,
+      isMe: !!backendUserId && m.senderId === backendUserId,
+      time: fmtTime(m.timestamp),
+    }),
+    [backendUserId]
+  );
+
+  const loadMessages = useCallback(async () => {
+    if (!backendUserId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getChatMessages(roomId, backendUserId);
+      setMessages(data.map(mapMessage));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'No se pudieron cargar los mensajes');
+    } finally {
+      setLoading(false);
+    }
+  }, [roomId, backendUserId, mapMessage]);
+
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
+  const sendMessage = async () => {
+    const text = inputText.trim();
+    if (text.length === 0 || !backendUserId) return;
+
+    const optimistic: Message = {
+      id: `local-${Date.now()}`,
+      text,
       isMe: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, optimistic]);
     setInputText('');
-    
-    // Auto-scroll to bottom
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+    try {
+      await sendChatMessage(roomId, backendUserId, text);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'No se pudo enviar el mensaje');
+      // Revertir el mensaje optimista si falló el envío.
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+    }
   };
 
   const insets = useSafeAreaInsets();
@@ -125,21 +164,32 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 20}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <MessageBubble isMe={item.isMe}>
-              <MessageText isMe={item.isMe}>{item.text}</MessageText>
-              <Text style={[styles.timeText, { alignSelf: item.isMe ? 'flex-end' : 'flex-start' }]}>
-                {item.time}
-              </Text>
-            </MessageBubble>
-          )}
-          contentContainerStyle={{ padding: 16 }}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        />
+        {loading ? (
+          <ActivityIndicator color="#F366FF" style={{ marginTop: 40 }} />
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <MessageBubble isMe={item.isMe}>
+                <MessageText isMe={item.isMe}>{item.text}</MessageText>
+                <Text style={[styles.timeText, { alignSelf: item.isMe ? 'flex-end' : 'flex-start' }]}>
+                  {item.time}
+                </Text>
+              </MessageBubble>
+            )}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            ListEmptyComponent={
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 60 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter_500Medium', textAlign: 'center' }}>
+                  {error ?? 'Aún no hay mensajes. ¡Saluda primero! 👋'}
+                </Text>
+              </View>
+            }
+          />
+        )}
 
         <InputContainer intensity={20}>
           <StyledInput 

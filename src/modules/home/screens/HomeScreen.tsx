@@ -8,6 +8,7 @@ import { useSpotifyAuth } from '@/shared/context/SpotifyAuthContext';
 import type { VibeVector } from '@/shared/types/vibe';
 import { useRouter } from 'expo-router';
 import { useSwipeEngine } from '@/modules/swipe/hooks/useSwipeEngine';
+import { useBackendUser } from '@/shared/hooks/useBackendUser';
 import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -345,7 +346,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user: authUser, vibeVector } = useAuth();
   const { user: spotifyUser } = useSpotifyAuth();
-  const { swipesCount, hasReachedRadarThreshold } = useSwipeEngine();
+  const { swipesCount: localSwipes, hasReachedRadarThreshold: localReached } = useSwipeEngine();
+  const { user: backendUser } = useBackendUser();
+
+  // El backend es la fuente de verdad del swipeCount cuando hay identidad vinculada.
+  const swipesCount = backendUser?.swipeCount ?? localSwipes;
+  const hasReachedRadarThreshold = swipesCount >= RADAR_SWIPES_THRESHOLD || localReached;
 
   const progressPercent = Math.min((swipesCount / RADAR_SWIPES_THRESHOLD) * 100, 100);
   const displayUser = spotifyUser ?? authUser;

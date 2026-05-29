@@ -23,6 +23,8 @@ import {
   type SpotifyUser,
   type SpotifyTokens,
 } from '@/clients/spotify/spotifyApi';
+import { authWithSpotify } from '@/clients/api';
+import { useAuth } from '@/shared/context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -86,6 +88,25 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
   const [error, setError] = useState<string | null>(null);
 
   const pkceRef = useRef<{ verifier: string; challenge: string } | null>(null);
+
+  const { setBackendIdentity } = useAuth();
+
+  /**
+   * Intercambia el access token de Spotify por la identidad del backend (GUID).
+   * No bloquea el login de Spotify si el backend está caído (solo loguea el error).
+   */
+  const linkBackendIdentity = useCallback(
+    async (spotifyAccessToken: string) => {
+      try {
+        const res = await authWithSpotify(spotifyAccessToken);
+        await setBackendIdentity(res.userId, res.accessToken);
+        if (__DEV__) console.log('[Encorely] Backend userId vinculado:', res.userId);
+      } catch (e) {
+        console.warn('[SpotifyAuth] No se pudo vincular identidad de backend:', e);
+      }
+    },
+    [setBackendIdentity]
+  );
 
   useEffect(() => {
     if (__DEV__) {
@@ -191,6 +212,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
         setUser(spotifyUser);
         setAccessToken(tokens.accessToken);
         setStoredRefreshToken(tokens.refreshToken);
+        await linkBackendIdentity(tokens.accessToken);
         await refreshPkcePair();
       } catch (e: any) {
         if (!finished) {
@@ -205,7 +227,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
     return () => {
       finished = true;
     };
-  }, [persistSession, refreshPkcePair]);
+  }, [persistSession, refreshPkcePair, linkBackendIdentity]);
 
   const logout = useCallback(async () => {
     await secureDeleteItems(Object.values(STORE_KEYS));
@@ -300,6 +322,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
       setUser(spotifyUser);
       setAccessToken(tokens.accessToken);
       setStoredRefreshToken(tokens.refreshToken);
+      await linkBackendIdentity(tokens.accessToken);
       await refreshPkcePair();
     } catch (e: any) {
       console.error('[SpotifyAuth] Login error:', e);
@@ -307,7 +330,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
     } finally {
       setIsLoggingIn(false);
     }
-  }, [persistSession, refreshPkcePair]);
+  }, [persistSession, refreshPkcePair, linkBackendIdentity]);
 
   const getValidToken = useCallback(async (): Promise<string | null> => {
     if (!storedRefreshToken) return null;

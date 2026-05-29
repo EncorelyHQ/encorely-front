@@ -1,101 +1,115 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import type { VibeVector } from '@/shared/types/vibe';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/shared/context/AuthContext';
+import {
+  getEventsFeed,
+  getEventMatches,
+  moodEnumToString,
+  ApiError,
+  type RadarMatch,
+} from '@/clients/api';
 
-type MatchUser = {
-  id: string;
-  name: string;
-  avatar: string;
-  compatibilityScore: number;
-  topGenres: string[];
-  vibeVector: VibeVector;
-  status: 'pending' | 'accepted' | 'new';
-};
-
-const initialMatches: MatchUser[] = [
-  {
-    id: 'u1',
-    name: 'Valeria',
-    avatar: 'https://i.pravatar.cc/150?u=valeria',
-    compatibilityScore: 0.95,
-    topGenres: ['Indie Rock', 'Synthpop', 'Alternative'],
-    vibeVector: { energy: 0.8, danceability: 0.7, valence: 0.6, tempo: 0.75 },
-    status: 'new'
-  },
-  {
-    id: 'u2',
-    name: 'Carlos',
-    avatar: 'https://i.pravatar.cc/150?u=carlos',
-    compatibilityScore: 0.92,
-    topGenres: ['Techno', 'House', 'Electronic'],
-    vibeVector: { energy: 0.9, danceability: 0.85, valence: 0.5, tempo: 0.9 },
-    status: 'new'
-  },
-  {
-    id: 'u3',
-    name: 'Andrea',
-    avatar: 'https://i.pravatar.cc/150?u=andrea',
-    compatibilityScore: 0.88,
-    topGenres: ['Pop', 'R&B', 'Hip Hop'],
-    vibeVector: { energy: 0.7, danceability: 0.9, valence: 0.8, tempo: 0.6 },
-    status: 'new'
-  }
-];
+const avatarFor = (seed: string) => `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
 
 export default function RadarMatchesScreen() {
   const router = useRouter();
-  const [matches, setMatches] = useState<MatchUser[]>(initialMatches);
+  const { eventId: eventIdParam } = useLocalSearchParams<{ eventId?: string }>();
+  const { backendUserId } = useAuth();
+
+  const [matches, setMatches] = useState<RadarMatch[]>([]);
+  const [requested, setRequested] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!backendUserId) {
+      setError('Conecta tu cuenta para usar el radar.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      // El radar del backend es por evento; si no llega eventId usamos el primero del feed.
+      let eventId = eventIdParam;
+      if (!eventId) {
+        const feed = await getEventsFeed();
+        eventId = feed[0]?.id;
+      }
+      if (!eventId) {
+        setMatches([]);
+        setError('No hay eventos disponibles para el radar.');
+        return;
+      }
+      const data = await getEventMatches(eventId, backendUserId);
+      setMatches(data);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 403) {
+        setError('Completá 25 swipes para desbloquear el radar.');
+      } else {
+        setError(e instanceof ApiError ? e.message : 'No se pudo cargar el radar.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [backendUserId, eventIdParam]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleConnect = (id: string) => {
-    setMatches(prev => prev.map(m => m.id === id ? { ...m, status: 'pending' } : m));
-    // Here we just mark as pending to simulate sending a connection request.
+    // El backend genera matches vía el pipeline de swipes; aquí solo marcamos
+    // localmente la solicitud (no hay endpoint de "conectar" desde el radar).
+    setRequested((prev) => new Set(prev).add(id));
   };
 
-  const renderItem = ({ item }: { item: MatchUser }) => {
-    const isCertified = item.compatibilityScore > 0.90;
-    
+  const renderItem = ({ item }: { item: RadarMatch }) => {
+    const score01 = item.affinity > 1 ? item.affinity / 100 : item.affinity;
+    const isCertified = item.isHighPriority || score01 > 0.9;
+    const isPending = requested.has(item.id);
+    const moodLabel = moodEnumToString(item.mood);
+
     return (
       <TouchableOpacity activeOpacity={0.9}>
         <BlurView intensity={40} tint="dark" style={styles.card}>
           <View style={styles.cardHeader}>
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
+            <Image source={{ uri: avatarFor(item.id) }} style={styles.avatar} />
             <View style={styles.headerInfo}>
-              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.name}>{item.displayName}</Text>
               {isCertified && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>🌟 Match Certificado</Text>
                 </View>
               )}
               <Text style={styles.scoreText}>
-                <Text style={styles.scoreHighlight}>{Math.round(item.compatibilityScore * 100)}%</Text> compatible
+                <Text style={styles.scoreHighlight}>{Math.round(score01 * 100)}%</Text> compatible
               </Text>
             </View>
           </View>
 
           <View style={styles.genresContainer}>
-            {item.topGenres.map(genre => (
-              <View key={genre} style={styles.genrePill}>
-                <Text style={styles.genreText}>{genre}</Text>
-              </View>
-            ))}
+            <View style={styles.genrePill}>
+              <Text style={styles.genreText}>{moodLabel}</Text>
+            </View>
           </View>
 
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={styles.btnPass}>
               <Text style={styles.btnPassText}>Pasar</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.btnConnect, item.status === 'pending' && styles.btnPending]}
+            <TouchableOpacity
+              style={[styles.btnConnect, isPending && styles.btnPending]}
               onPress={() => handleConnect(item.id)}
-              disabled={item.status === 'pending'}
+              disabled={isPending}
             >
               <Text style={styles.btnConnectText}>
-                {item.status === 'pending' ? 'Solicitud enviada ✓' : 'Conectar 🎵'}
+                {isPending ? 'Solicitud enviada ✓' : 'Conectar 🎵'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -117,13 +131,26 @@ export default function RadarMatchesScreen() {
             <Text style={styles.subtitle}>{matches.length} personas cerca de ti</Text>
           </View>
         </View>
-        <FlatList
-          data={matches}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <ActivityIndicator color="#F366FF" style={{ marginTop: 40 }} />
+        ) : (
+          <FlatList
+            data={matches}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={load}
+            ListEmptyComponent={
+              <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: 24 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter_500Medium', textAlign: 'center' }}>
+                  {error ?? 'No hay personas compatibles por ahora.'}
+                </Text>
+              </View>
+            }
+          />
+        )}
       </SafeAreaView>
     </View>
   );
