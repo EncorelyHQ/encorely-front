@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { VibeVector } from '@/shared/types/vibe';
 import {
   ONBOARDING_SWIPES_REQUIRED,
   RADAR_SWIPES_THRESHOLD,
@@ -26,9 +25,7 @@ export function useSwipeEngine() {
   /** Registra el swipe en el backend (best-effort: no bloquea ni rompe la UI). */
   const syncSwipe = (trackId: string, direction: SwipeDirection) => {
     if (!backendUserId) return;
-    registerSwipe(backendUserId, trackId, direction).catch((e) =>
-      console.warn('[useSwipeEngine] registerSwipe falló:', e?.message ?? e)
-    );
+    registerSwipe(backendUserId, trackId, direction).catch(() => undefined);
   };
 
   useEffect(() => {
@@ -41,8 +38,7 @@ export function useSwipeEngine() {
           setLikes(data.likes || []);
           setDislikes(data.dislikes || []);
         }
-      } catch (e) {
-        console.error('[useSwipeEngine] Error loading state from AsyncStorage:', e);
+      } catch {
       } finally {
         setIsLoaded(true);
       }
@@ -54,8 +50,7 @@ export function useSwipeEngine() {
     try {
       const jsonValue = JSON.stringify(data);
       await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
-    } catch (e) {
-      console.error('[useSwipeEngine] Error saving state to AsyncStorage:', e);
+    } catch {
     }
   };
 
@@ -100,12 +95,3 @@ export function useSwipeEngine() {
   };
 }
 
-export function computeUserVibe(likes: string[]): VibeVector {
-  console.log(`[useSwipeEngine] Computando vibe en base a ${likes.length} likes...`);
-  return {
-    energy: 0.8,
-    danceability: 0.7,
-    valence: 0.6,
-    tempo: 0.75,
-  };
-}

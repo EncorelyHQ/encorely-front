@@ -40,8 +40,7 @@ export function useOnboardingState() {
             genres: Array.isArray(parsed.genres) ? parsed.genres : [],
           });
         }
-      } catch (e) {
-        console.warn('[useOnboardingState] load error:', e);
+      } catch {
       } finally {
         setIsLoaded(true);
       }
@@ -56,8 +55,7 @@ export function useOnboardingState() {
       } else {
         await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEYS.complete);
       }
-    } catch (e) {
-      console.warn('[useOnboardingState] persist complete error:', e);
+    } catch {
     }
   }, []);
 
@@ -68,8 +66,7 @@ export function useOnboardingState() {
         ONBOARDING_STORAGE_KEYS.preferences,
         JSON.stringify(next)
       );
-    } catch (e) {
-      console.warn('[useOnboardingState] persist preferences error:', e);
+    } catch {
     }
   }, []);
 

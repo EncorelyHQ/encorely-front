@@ -12,14 +12,14 @@ const GlassCard = styled(BlurView)`
   padding: 24px;
   overflow: hidden;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
-  background-color: ${({ theme }: any) => theme.colors.glassDark};
+  border-color: ${({ theme }) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassDark};
 `;
 
 const SectionTag = styled.Text`
   font-size: 11px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.primary};
   letter-spacing: 2px;
   margin-bottom: 12px;
   text-align: center;
@@ -28,8 +28,8 @@ const SectionTag = styled.Text`
 const Title = styled.Text`
   width: 100%;
   font-size: 28px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }) => theme.colors.text};
   text-align: center;
   margin-bottom: 12px;
 `;
@@ -37,8 +37,8 @@ const Title = styled.Text`
 const Body = styled.Text`
   width: 100%;
   font-size: 15px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  color: ${({ theme }) => theme.colors.textDim};
   text-align: center;
   line-height: 22px;
   margin-bottom: 24px;
@@ -46,7 +46,7 @@ const Body = styled.Text`
 
 const SpotifyButton = styled.TouchableOpacity`
   background-color: #1db954;
-  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  border-radius: ${({ theme }) => theme.components.button.radiusCircle}px;
   padding-vertical: 16px;
   align-items: center;
   flex-direction: row;
@@ -57,7 +57,7 @@ const SpotifyButton = styled.TouchableOpacity`
 const BtnText = styled.Text`
   color: #ffffff;
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
 `;
 
 interface SpotifyConnectCardProps {

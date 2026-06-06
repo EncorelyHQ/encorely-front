@@ -106,8 +106,7 @@ export default function OnboardingStep5Screen() {
       if (!token) return;
       const found = await searchArtists(token, query.trim(), 15);
       setResults(found);
-    } catch (e) {
-      console.warn('[OnboardingStep5] search failed', e);
+    } catch {
       setResults([]);
     } finally {
       setSearching(false);

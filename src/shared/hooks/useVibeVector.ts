@@ -27,16 +27,10 @@ export function useVibeVector(): UseVibeVectorResult {
       setVibeVector(vector);
       setUsedFallback(fell);
 
-      console.log('[Encorely] VibeVector:', JSON.stringify(vector, null, 2));
-      if (fell) {
-        console.warn('[Encorely] Fallback usado — audio-features no disponibles');
-      }
-
       return vector;
     } catch (e: any) {
       const msg = e?.message ?? 'Error calculando Vector de Vibe';
       setError(msg);
-      console.error('[Encorely] useVibeVector error:', e);
       return null;
     } finally {
       setIsLoading(false);

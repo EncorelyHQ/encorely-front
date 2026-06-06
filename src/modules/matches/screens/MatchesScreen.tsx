@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/shared/context/AuthContext';
-import { getPendingMatches, acceptMatch, ApiError, type PendingMatch } from '@/clients/api';
+import { getPendingMatches, acceptMatch, formatApiError, type PendingMatch } from '@/clients/api';
 
 /** Avatar placeholder determinista (el backend aún no expone avatares). */
 const avatarFor = (seed: string) => `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
@@ -36,7 +36,7 @@ export default function MatchesScreen() {
       const data = await getPendingMatches(backendUserId);
       setMatches(data);
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'No se pudieron cargar tus matches';
+      const msg = formatApiError(e, 'No se pudieron cargar tus matches');
       setError(msg);
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export default function MatchesScreen() {
       setOpenedRooms((prev) => new Set(prev).add(matchId));
       router.push({ pathname: '/(main)/chat/[id]', params: { id: roomId } });
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'No se pudo aceptar el match';
+      const msg = formatApiError(e, 'No se pudo aceptar el match');
       setError(msg);
     }
   };

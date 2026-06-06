@@ -172,8 +172,6 @@ export async function getRecommendations(
 
     const query = encodeURIComponent(`genre:pop`);
 
-    console.log(`[SpotifyAPI] Enviando busqueda con limite ${parsedLimit}`);
-
     const data = await spotifyGet<any>(
       `/search?q=${query}&type=track&limit=${parsedLimit}`,
       accessToken
@@ -184,8 +182,7 @@ export async function getRecommendations(
     return data.tracks.items
       .filter((track: any) => track && track.id)
       .map((track: any) => track as SpotifyTrack);
-  } catch (err: any) {
-    console.error('[SpotifyAPI] getRecommendations (Search Fallback) error:', err.message);
+  } catch {
     return [];
   }
 }
@@ -254,9 +251,7 @@ export async function computeVibeVector(
     };
 
     return { vector, usedFallback: false };
-  } catch (e: any) {
-    console.warn('[Encorely] Audio Features 403 — usando fallback de metadata:', e?.message);
-
+  } catch {
     const safe = (val: number, fallback = 0.5) =>
       isNaN(val) || val === null || val === undefined ? fallback : val;
 

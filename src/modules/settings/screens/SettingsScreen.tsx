@@ -369,7 +369,7 @@ export default function SettingsScreen() {
       e.age = 'La edad es obligatoria';
     } else {
       const n = parseInt(profile.age, 10);
-      if (isNaN(n) || n < 13 || n > 99) e.age = 'Ingresa una edad válida (13–99)';
+      if (isNaN(n) || n < 1 || n > 120) e.age = 'Ingresa una edad válida (1–120)';
     }
     if (!profile.gender) e.gender = 'Selecciona tu género';
     setErrors(e);
@@ -378,7 +378,9 @@ export default function SettingsScreen() {
 
   const handleSave = async () => {
     if (!validate()) return;
-    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    const clean = { ...profile, fullName: profile.fullName.trim() };
+    setProfile(clean);
+    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(clean));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -466,7 +468,7 @@ export default function SettingsScreen() {
                     value={profile.age}
                     onChangeText={(t: string) => setProfile((p) => ({ ...p, age: t.replace(/[^0-9]/g, '') }))}
                     keyboardType="numeric"
-                    maxLength={2}
+                    maxLength={3}
                   />
                   {errors.age ? <ErrorMsg>{errors.age}</ErrorMsg> : null}
                 </FieldGroup>

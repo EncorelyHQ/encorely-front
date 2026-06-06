@@ -9,7 +9,7 @@ import { RADAR_SWIPES_THRESHOLD } from '@/config/onboarding';
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const BackgroundGradient = styled(LinearGradient)`
@@ -33,37 +33,37 @@ const GlassCard = styled(BlurView)`
   padding: 32px;
   align-items: center;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.primary};
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
+  border-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.glassNeon};
   width: 100%;
 `;
 
 const Title = styled.Text`
   font-size: 32px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }) => theme.colors.text};
   margin-bottom: 20px;
   text-align: center;
-  text-shadow-color: ${({ theme }: any) => theme.colors.primary};
+  text-shadow-color: ${({ theme }) => theme.colors.primary};
   text-shadow-radius: 20px;
 `;
 
 const Subtitle = styled.Text`
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  color: ${({ theme }) => theme.colors.textDim};
   text-align: center;
   margin-bottom: 40px;
   line-height: 24px;
 `;
 
 const PrimaryButton = styled.TouchableOpacity`
-  background-color: ${({ theme }: any) => theme.colors.primary};
-  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.components.button.radiusCircle}px;
   padding-horizontal: 30px;
   padding-vertical: 16px;
   elevation: 10;
-  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  shadow-color: ${({ theme }) => theme.colors.primary};
   shadow-offset: 0px 4px;
   shadow-opacity: 0.6;
   shadow-radius: 16px;
@@ -74,7 +74,7 @@ const PrimaryButton = styled.TouchableOpacity`
 const PrimaryButtonText = styled.Text`
   color: #FFFFFF;
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
 `;
 
 const NextStepsContainer = styled.View`

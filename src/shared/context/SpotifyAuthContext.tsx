@@ -101,8 +101,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
         const res = await authWithSpotify(spotifyAccessToken);
         await setBackendIdentity(res.userId, res.accessToken);
         if (__DEV__) console.log('[Encorely] Backend userId vinculado:', res.userId);
-      } catch (e) {
-        console.warn('[SpotifyAuth] No se pudo vincular identidad de backend:', e);
+      } catch {
       }
     },
     [setBackendIdentity]
@@ -143,8 +142,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
           setExpiresAt(expires ? parseInt(expires, 10) : 0);
           setUser(JSON.parse(storedUser));
         }
-      } catch (e) {
-        console.warn('[SpotifyAuth] Load session error:', e);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -216,7 +214,6 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
         await refreshPkcePair();
       } catch (e: any) {
         if (!finished) {
-          console.error('[SpotifyAuth] Web OAuth completion error:', e);
           setError(e?.message ?? 'Error al completar login con Spotify');
         }
       } finally {
@@ -325,7 +322,6 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
       await linkBackendIdentity(tokens.accessToken);
       await refreshPkcePair();
     } catch (e: any) {
-      console.error('[SpotifyAuth] Login error:', e);
       setError(e?.message ?? 'Error inesperado durante login');
     } finally {
       setIsLoggingIn(false);
@@ -343,8 +339,7 @@ export function SpotifyAuthProvider({ children }: { children: React.ReactNode })
       setAccessToken(tokens.accessToken);
       setStoredRefreshToken(tokens.refreshToken);
       return tokens.accessToken;
-    } catch (e) {
-      console.error('[SpotifyAuth] Refresh failed, logging out:', e);
+    } catch {
       await logout();
       return null;
     }

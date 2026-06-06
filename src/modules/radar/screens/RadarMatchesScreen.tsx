@@ -10,6 +10,7 @@ import {
   getEventsFeed,
   getEventMatches,
   moodEnumToString,
+  formatApiError,
   ApiError,
   type RadarMatch,
 } from '@/clients/api';
@@ -52,7 +53,7 @@ export default function RadarMatchesScreen() {
       if (e instanceof ApiError && e.status === 403) {
         setError('Completá 25 swipes para desbloquear el radar.');
       } else {
-        setError(e instanceof ApiError ? e.message : 'No se pudo cargar el radar.');
+        setError(formatApiError(e, 'No se pudo cargar el radar.'));
       }
     } finally {
       setLoading(false);

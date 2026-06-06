@@ -7,7 +7,7 @@ import styled from 'styled-components/native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/shared/context/AuthContext';
-import { getChatMessages, sendChatMessage, ApiError, type ChatMessage } from '@/clients/api';
+import { getChatMessages, sendChatMessage, formatApiError, type ChatMessage } from '@/clients/api';
 
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 const fmtTime = (iso: string) => {
@@ -110,7 +110,7 @@ export default function ChatScreen() {
       const data = await getChatMessages(roomId, backendUserId);
       setMessages(data.map(mapMessage));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'No se pudieron cargar los mensajes');
+      setError(formatApiError(e, 'No se pudieron cargar los mensajes'));
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ export default function ChatScreen() {
     try {
       await sendChatMessage(roomId, backendUserId, text);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'No se pudo enviar el mensaje');
+      setError(formatApiError(e, 'No se pudo enviar el mensaje'));
       // Revertir el mensaje optimista si falló el envío.
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     }

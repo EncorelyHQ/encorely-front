@@ -13,7 +13,7 @@ const { width } = Dimensions.get('window');
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const BackgroundGradient = styled(LinearGradient)`
@@ -53,14 +53,14 @@ const LogoEmoji = styled.Text`
 
 const LogoText = styled.Text`
   font-size: 24px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const HeroTitle = styled.Text`
   font-size: 42px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }) => theme.colors.text};
   letter-spacing: -1.5px;
   text-align: center;
   margin-bottom: 16px;
@@ -68,8 +68,8 @@ const HeroTitle = styled.Text`
 
 const HeroSub = styled.Text`
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  color: ${({ theme }) => theme.colors.textDim};
   text-align: center;
   line-height: 24px;
   margin-bottom: 40px;
@@ -77,12 +77,12 @@ const HeroSub = styled.Text`
 `;
 
 const PrimaryButton = styled.TouchableOpacity`
-  background-color: ${({ theme }: any) => theme.colors.primary};
-  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.components.button.radiusCircle}px;
   padding-vertical: 16px;
   align-items: center;
   margin-bottom: 20px;
-  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  shadow-color: ${({ theme }) => theme.colors.primary};
   shadow-offset: 0px 4px;
   shadow-opacity: 0.6;
   shadow-radius: 16px;
@@ -92,22 +92,22 @@ const PrimaryButton = styled.TouchableOpacity`
 const PrimaryButtonText = styled.Text`
   color: #ffffff;
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
 `;
 
 const SecondaryButton = styled.TouchableOpacity`
   background-color: transparent;
-  border-radius: ${({ theme }: any) => theme.components.button.radiusCircle}px;
+  border-radius: ${({ theme }) => theme.components.button.radiusCircle}px;
   padding-vertical: 16px;
   align-items: center;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
+  border-color: ${({ theme }) => theme.colors.glassLight};
 `;
 
 const SecondaryButtonText = styled.Text`
-  color: ${({ theme }: any) => theme.colors.text};
+  color: ${({ theme }) => theme.colors.text};
   font-size: 14px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyMedium};
 `;
 
 const GlassCard = styled(BlurView)`
@@ -115,15 +115,15 @@ const GlassCard = styled(BlurView)`
   padding: 24px;
   overflow: hidden;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
-  background-color: ${({ theme }: any) => theme.colors.glassDark};
+  border-color: ${({ theme }) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassDark};
   margin-bottom: 40px;
 `;
 
 const SectionTag = styled.Text`
   font-size: 11px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.primary};
   letter-spacing: 2px;
   margin-bottom: 12px;
   text-align: center;
@@ -131,8 +131,8 @@ const SectionTag = styled.Text`
 
 const SlideTitle = styled.Text`
   font-size: 32px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
+  color: ${({ theme }) => theme.colors.text};
   text-align: center;
   margin-bottom: 16px;
 `;
@@ -151,14 +151,14 @@ const DimRow = styled.View`
 const DimLabel = styled.Text`
   width: 64px;
   font-size: 12px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyBold};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyBold};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const BarTrack = styled.View`
   flex: 1;
   height: 6px;
-  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassLight};
   border-radius: 99px;
   overflow: hidden;
 `;
@@ -171,14 +171,14 @@ const BarFillWrapper = styled(Animated.View)`
 const DimVal = styled.Text<{ color: string }>`
   width: 34px;
   font-size: 12px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyBold};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyBold};
   text-align: right;
   color: ${({ color }: { color: string }) => color};
 `;
 
 const SpotifyButton = styled(PrimaryButton)`
-  background-color: ${({ theme }: any) => theme.colors.primary};
-  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.primary};
+  shadow-color: ${({ theme }) => theme.colors.primary};
   flex-direction: row;
   justify-content: center;
   gap: 10px;

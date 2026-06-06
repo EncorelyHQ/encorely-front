@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const Root = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const GradientLayer = styled(LinearGradient)`

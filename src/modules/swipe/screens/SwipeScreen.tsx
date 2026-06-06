@@ -111,16 +111,12 @@ export default function SwipeScreen({
     if (!token) return;
     setLoading(true);
     try {
-      console.log('[SwipeScreen] Fetching swipe batch...');
       const newTracks = await spotifySwipeService.getSwipeBatch(token);
 
       if (newTracks.length > 0) {
         setTracks((prev) => [...prev, ...newTracks]);
-      } else {
-        console.warn('[SwipeScreen] getSwipeBatch returned 0 tracks after all fallbacks.');
       }
-    } catch (e) {
-      console.warn('[SwipeScreen] Fetch tracks failed:', e);
+    } catch {
     } finally {
       setLoading(false);
       setFetchAttempted(true);

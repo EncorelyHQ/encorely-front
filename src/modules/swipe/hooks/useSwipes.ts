@@ -15,8 +15,7 @@ export function useSwipes() {
         if (stored !== null) {
           setSwipeCount(parseInt(stored, 10));
         }
-      } catch (e) {
-        console.error('[useSwipes] Error loading count:', e);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -27,13 +26,10 @@ export function useSwipes() {
     try {
       setSwipeCount((prev) => {
         const newCount = prev + 1;
-        AsyncStorage.setItem(SWIPES_KEY, String(newCount)).catch((e) =>
-          console.error('[useSwipes] Error saving count:', e)
-        );
+        AsyncStorage.setItem(SWIPES_KEY, String(newCount)).catch(() => undefined);
         return newCount;
       });
-    } catch (e) {
-      console.error('[useSwipes] Exception in increment:', e);
+    } catch {
     }
   }, []);
 
@@ -41,8 +37,7 @@ export function useSwipes() {
     try {
       await AsyncStorage.removeItem(SWIPES_KEY);
       setSwipeCount(0);
-    } catch (e) {
-      console.error('[useSwipes] Error resetting:', e);
+    } catch {
     }
   }, []);
 

@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const Container = styled.View`
   flex: 1;
-  background-color: ${({ theme }: any) => theme.colors.background};
+  background-color: ${({ theme }) => theme.colors.background};
 `;
 
 const BackgroundGradient = styled(LinearGradient)`
@@ -56,7 +56,7 @@ const AvatarImg = styled.Image`
   width: 44px;
   height: 44px;
   border-radius: 22px;
-  background-color: ${({ theme }: any) => theme.colors.surface};
+  background-color: ${({ theme }) => theme.colors.surface};
 `;
 
 const AvatarPlaceholder = styled.View`
@@ -70,7 +70,7 @@ const AvatarPlaceholder = styled.View`
 
 const AvatarInitial = styled.Text`
   font-size: 20px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
   color: #181818;3
 `;
 
@@ -80,12 +80,12 @@ const HeaderTextContainer = styled.View`
 
 const Greeting = styled.Text`
   font-size: 20px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const SubGreetingPill = styled.View`
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
+  background-color: ${({ theme }) => theme.colors.glassNeon};
   border-radius: 99px;
   padding-horizontal: 8px;
   padding-vertical: 2px;
@@ -95,15 +95,15 @@ const SubGreetingPill = styled.View`
 
 const SubGreetingText = styled.Text`
   font-size: 11px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
-  color: ${({ theme }: any) => theme.colors.primary};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyMedium};
+  color: ${({ theme }) => theme.colors.primary};
 `;
 
 const SettingsBtn = styled.TouchableOpacity`
   width: 38px;
   height: 38px;
   border-radius: 19px;
-  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassLight};
   align-items: center;
   justify-content: center;
 `;
@@ -114,22 +114,22 @@ const GlassCard = styled(BlurView)`
   padding: 24px;
   overflow: hidden;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
-  background-color: ${({ theme }: any) => theme.colors.glassDark};
+  border-color: ${({ theme }) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassDark};
 `;
 
 // Music DNA Section
 const DNATitle = styled.Text`
   font-size: 24px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.text};
   margin-bottom: 24px;
 `;
 
 const DNADescription = styled.Text`
   font-size: 14px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  color: ${({ theme }) => theme.colors.textDim};
   text-align: center;
   line-height: 22px;
   margin-top: 24px;
@@ -144,17 +144,17 @@ const ChipsContainer = styled.View`
 
 const VibeChip = styled.View`
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassNeon};
+  border-color: ${({ theme }) => theme.colors.glassNeon};
   border-radius: 99px;
   padding-horizontal: 16px;
   padding-vertical: 8px;
-  background-color: ${({ theme }: any) => theme.colors.glassNeon};
+  background-color: ${({ theme }) => theme.colors.glassNeon};
 `;
 
 const VibeChipText = styled.Text`
-  color: ${({ theme }: any) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.primary};
   font-size: 13px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyMedium};
 `;
 
 const RadarContainer = styled(GlassCard)`
@@ -181,27 +181,27 @@ const SpotifyLogoWrap = styled.View`
 
 const SpotifyStatusText = styled.Text`
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
-  color: ${({ theme }: any) => theme.colors.text};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const SpotifyStatusSub = styled.Text`
   font-size: 12px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.body};
-  color: ${({ theme }: any) => theme.colors.textDim};
+  font-family: ${({ theme }) => theme.typography.fontFamily.body};
+  color: ${({ theme }) => theme.colors.textDim};
 `;
 
 const ActionButton = styled.TouchableOpacity`
-  background-color: ${({ theme }: any) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassLight};
   padding-horizontal: 16px;
   padding-vertical: 8px;
   border-radius: 99px;
 `;
 
 const ActionButtonText = styled.Text`
-  color: ${({ theme }: any) => theme.colors.text};
+  color: ${({ theme }) => theme.colors.text};
   font-size: 13px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.bodyMedium};
+  font-family: ${({ theme }) => theme.typography.fontFamily.bodyMedium};
 `;
 
 function RealRadarChart({ vibeVector }: { vibeVector: VibeVector }) {

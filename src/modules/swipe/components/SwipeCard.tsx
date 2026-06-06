@@ -43,16 +43,16 @@ const TrackInfoContainer = styled.View`
 const TrackTitle = styled.Text`
   color: #ffffff;
   font-size: 28px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBlack};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBlack};
   margin-bottom: 4px;
   text-shadow-color: rgba(0, 0, 0, 0.5);
   text-shadow-radius: 10px;
 `;
 
 const TrackArtist = styled.Text`
-  color: ${({ theme }: any) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.primary};
   font-size: 16px;
-  font-family: ${({ theme }: any) => theme.typography.fontFamily.headingBold};
+  font-family: ${({ theme }) => theme.typography.fontFamily.headingBold};
   text-shadow-color: rgba(0, 0, 0, 0.5);
   text-shadow-radius: 4px;
 `;
@@ -61,12 +61,12 @@ const PlayButton = styled.TouchableOpacity`
   width: 60px;
   height: 60px;
   border-radius: 30px;
-  background-color: ${({ theme }: any) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.primary};
   justify-content: center;
   align-items: center;
   margin-left: 16px;
   elevation: 8;
-  shadow-color: ${({ theme }: any) => theme.colors.primary};
+  shadow-color: ${({ theme }) => theme.colors.primary};
   shadow-offset: 0px 4px;
   shadow-opacity: 0.6;
   shadow-radius: 12px;
@@ -80,8 +80,8 @@ const NoPreviewBadge = styled(BlurView)`
   padding-vertical: 6px;
   border-radius: 99px;
   border-width: 1px;
-  border-color: ${({ theme }: any) => theme.colors.glassLight};
-  background-color: ${({ theme }: any) => theme.colors.glassDark};
+  border-color: ${({ theme }) => theme.colors.glassLight};
+  background-color: ${({ theme }) => theme.colors.glassDark};
   overflow: hidden;
 `;
 
@@ -225,8 +225,7 @@ export function SwipeCard({ track, isFront, onSwipe }: SwipeCardProps) {
               }
             }
           });
-        } catch (e) {
-          console.warn('[SwipeCard] Audio load error:', e);
+        } catch {
         }
       };
       loadAudio();
