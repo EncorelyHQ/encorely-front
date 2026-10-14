@@ -1,151 +1,47 @@
-// Tipos del contrato v1. Mientras el back publica contracts/openapi.v1.json se escriben a mano siguiendo
-// el acuerdo; cuando exista, `pnpm gen:api` genera schema.d.ts y estos tipos pasan a ser alias de él.
+// Alias legibles sobre los tipos generados del contrato (../encorly_back/contracts/openapi.v1.json).
+// No escribir tipos de API a mano: si el contrato cambia, `pnpm gen:api` y ajustar aquí solo los nombres.
+import type { components } from './schema'
 
-export type Role = 'user' | 'admin'
+type S = components['schemas']
 
-export type SessionUser = {
-  id: string
-  email: string
-  displayName: string
-  onboardingCompleted: boolean
-  role: Role
-}
+export type Role = S['UserRole']
+export type SessionUser = S['AuthUserDto']
+export type AuthResponse = S['AuthResponse']
+export type RegisterRequest = S['RegisterRequest']
+export type LoginRequest = S['LoginRequest']
+export type LegalCurrent = S['LegalResponse']
 
-export type AuthResponse = {
-  accessToken: string
-  refreshToken: string
-  expiresIn: number
-  user: SessionUser
-}
+export type Me = S['MeResponse']
+export type UpdateMeRequest = S['UpdateMeRequest']
+export type Genre = S['GenreDto']
 
-export type RegisterRequest = {
-  email: string
-  password: string
-  displayName: string
-  acceptTerms: boolean
-  consentVersion: string
-}
+export type Song = S['SongDto']
+export type SwipeDirection = S['SwipeDirection']
+export type SwipeResult = S['SwipeResponse']
+export type Dna = S['DnaResponse']
+export type DnaGenre = S['DnaGenreDto']
 
-export type LoginRequest = { email: string; password: string }
+export type EventSummary = S['EventDto']
+export type RadarPerson = S['RadarEntryDto']
 
-export type LegalCurrent = { version: string; termsUrl?: string | null; privacyUrl?: string | null }
+export type LikeResult = S['LikeResponse']
+export type MatchSummary = S['MatchDto']
+export type MatchStatus = S['MatchStatus']
 
-export type Me = {
-  id: string
-  email: string
-  displayName: string
-  birthDate: string | null
-  age: number | null
-  city: string | null
-  genres: string[]
-  bio?: string | null
-  onboardingCompleted: boolean
-  role: Role
-}
+export type KeyBundle = S['UploadKeysRequest']
+export type PeerKeyBundle = S['KeyBundleDto']
+export type HistoricalBoxKey = S['BoxKeyDto']
 
-export type UpdateMeRequest = Partial<{
-  displayName: string
-  birthDate: string
-  city: string
-  genres: string[]
-  bio: string | null
-}>
+export type OutgoingMessage = S['SendMessageRequest']
+export type SentMessage = S['MessageAcceptedDto']
+export type StoredMessage = S['MessageDto']
+export type MessagePage = S['MessagePage']
 
-export type Genre = { id: string; slug: string; name: string }
+export type BlockedUser = S['BlockedUserDto']
+export type ReportReason = S['ReportReason']
+export type ReportRequest = S['ReportRequest']
+export type ReportCreated = S['ReportCreatedDto']
 
-export type Song = {
-  id: string
-  title: string
-  artist: string
-  genre: string
-  coverUrl: string
-  previewUrl: string | null
-}
-
-export type SwipeDirection = 'like' | 'dislike'
-export type SwipeResult = { counted: boolean; swipeCount: number }
-
-export type Dna = {
-  genres: { genre: string; weight: number }[]
-  swipeCount: number
-  radarThreshold: number
-  radarUnlocked: boolean
-}
-
-export type EventSummary = {
-  id: string
-  name: string
-  artistLineup: string
-  venue: string
-  city: string
-  startsAt: string
-  imageUrl?: string | null
-  attendeeCount: number
-  iAmGoing: boolean
-}
-
-export type RadarPerson = {
-  userId: string
-  displayName: string
-  age: number | null
-  city: string | null
-  affinity: number
-  sharedGenres: string[]
-  likedByMe: boolean
-  matched: boolean
-}
-
-export type LikeResult = { matched: boolean; matchId?: string | null }
-
-export type MatchSummary = {
-  id: string
-  status: 'active' | 'closed'
-  peer: { id: string; displayName: string }
-  eventName?: string | null
-  sharedGenres: string[]
-  createdAt: string
-  lastMessageAt?: string | null
-}
-
-export type KeyBundle = {
-  identityKey: string
-  boxKey: string
-  boxKeyId: number
-  boxKeySig: string
-}
-
-export type PeerKeyBundle = KeyBundle & { userId: string; updatedAt: string }
-
-export type OutgoingMessage = {
-  id: string
-  version: number
-  senderBoxKeyId: number
-  recipientBoxKeyId: number
-  nonce: string
-  ciphertext: string
-  frankingTag?: string
-}
-
-export type SentMessage = { id: string; seq: number; createdAt: string }
-
-export type StoredMessage = OutgoingMessage & {
-  seq: number
-  senderId: string
-  createdAt: string
-}
-
-export type MessagePage = { items: StoredMessage[]; nextCursor: number | null }
-
-export type BlockedUser = { userId: string; displayName: string; blockedAt: string }
-
-export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'fakeProfile' | 'underage' | 'other'
-
-export type ReportRequest = {
-  userId: string
-  reason: ReportReason
-  detail?: string
-  matchId?: string
-  evidence?: { messageId: string; plaintext: string; frankingKey: string }[]
-}
-
-export type SpotifyImportRequest = { topArtists: { name: string; genres: string[] }[] }
+export type SpotifyImportRequest = S['SpotifyImportRequest']
+export type DevicePlatform = S['DevicePlatform']
+export type DataExport = S['DataExportResponse']

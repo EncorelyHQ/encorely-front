@@ -5,6 +5,10 @@ import type {
   Dna,
   EventSummary,
   Genre,
+  HistoricalBoxKey,
+  DataExport,
+  DevicePlatform,
+  ReportCreated,
   KeyBundle,
   LegalCurrent,
   LikeResult,
@@ -38,6 +42,8 @@ export const meApi = {
   get: () => api<Me>('GET', '/me'),
   update: (body: UpdateMeRequest) => api<Me>('PATCH', '/me', { body }),
   remove: () => api<void>('DELETE', '/me'),
+  export: () => api<DataExport>('GET', '/me/export'),
+  consent: (version: string) => api<void>('POST', '/me/consents', { body: { version } }),
   dna: () => api<Dna>('GET', '/me/dna'),
   importSpotify: (body: SpotifyImportRequest) => api<Dna>('POST', '/me/spotify/import', { body }),
 }
@@ -51,8 +57,11 @@ export const catalogApi = {
 
 export const eventsApi = {
   list: (city?: string) => api<EventSummary[]>('GET', '/events', { query: { city } }),
-  attend: (eventId: string) => api<void>('PUT', `/events/${id(eventId)}/attendance`),
-  unattend: (eventId: string) => api<void>('DELETE', `/events/${id(eventId)}/attendance`),
+  get: (eventId: string) => api<EventSummary>('GET', `/events/${id(eventId)}`),
+  mine: () => api<EventSummary[]>('GET', '/me/events'),
+  // Devuelven el evento actualizado (asistencia y conteo reales) para reemplazar la caché sin refetch.
+  attend: (eventId: string) => api<EventSummary>('PUT', `/events/${id(eventId)}/attendance`),
+  unattend: (eventId: string) => api<EventSummary>('DELETE', `/events/${id(eventId)}/attendance`),
   radar: (eventId: string) => api<RadarPerson[]>('GET', `/events/${id(eventId)}/radar`),
 }
 
@@ -60,15 +69,16 @@ export const matchesApi = {
   like: (targetUserId: string, eventId?: string) =>
     api<LikeResult>('POST', '/likes', { body: { targetUserId, eventId } }),
   list: () => api<MatchSummary[]>('GET', '/matches'),
+  get: (matchId: string) => api<MatchSummary>('GET', `/matches/${id(matchId)}`),
   unmatch: (matchId: string) => api<void>('DELETE', `/matches/${id(matchId)}`),
 }
 
 export const keysApi = {
   publish: (bundle: KeyBundle) => api<void>('PUT', '/keys/me', { body: bundle }),
-  mine: () => api<KeyBundle>('GET', '/keys/me'),
+  mine: () => api<PeerKeyBundle>('GET', '/keys/me'),
   peer: (matchId: string) => api<PeerKeyBundle>('GET', `/matches/${id(matchId)}/peer-keys`),
   peerBox: (matchId: string, boxKeyId: number) =>
-    api<PeerKeyBundle>('GET', `/matches/${id(matchId)}/peer-keys/box/${boxKeyId}`),
+    api<HistoricalBoxKey>('GET', `/matches/${id(matchId)}/peer-keys/box/${boxKeyId}`),
 }
 
 export const chatApi = {
@@ -82,11 +92,11 @@ export const safetyApi = {
   block: (userId: string) => api<void>('POST', '/blocks', { body: { userId } }),
   blocks: () => api<BlockedUser[]>('GET', '/blocks'),
   unblock: (userId: string) => api<void>('DELETE', `/blocks/${id(userId)}`),
-  report: (body: ReportRequest) => api<void>('POST', '/reports', { body }),
+  report: (body: ReportRequest) => api<ReportCreated>('POST', '/reports', { body }),
 }
 
 export const devicesApi = {
-  registerPush: (token: string, platform: 'android' | 'ios') =>
+  registerPush: (token: string, platform: DevicePlatform) =>
     api<void>('PUT', '/devices/push-token', { body: { token, platform } }),
   unregisterPush: (token: string) => api<void>('DELETE', '/devices/push-token', { body: { token } }),
 }
