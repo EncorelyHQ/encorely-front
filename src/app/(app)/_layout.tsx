@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router'
+import { ConsentGate } from '@/features/account'
 import { ChatBootstrap } from '@/features/chat'
 import { PushBootstrap } from '@/features/push'
 import { font, useTheme } from '@/ui'
@@ -12,6 +13,7 @@ export default function AppLayout() {
     <>
       <ChatBootstrap />
       <PushBootstrap />
+      <ConsentGate />
       <Stack
         screenOptions={{
           headerShadowVisible: false,
@@ -27,6 +29,7 @@ export default function AppLayout() {
           name="match/[matchId]"
           options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
         />
+        <Stack.Screen name="consent" options={{ headerShown: false, gestureEnabled: false }} />
       </Stack>
     </>
   )

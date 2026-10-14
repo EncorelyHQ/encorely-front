@@ -1,0 +1,23 @@
+# Borra una cuenta recién creada (nunca una demo del seed).
+appId: com.encorely.app
+name: Borrar cuenta
+tags:
+  - cuenta
+---
+- runFlow:
+    file: subflows/registrar.yaml
+    env:
+      PASSWORD: ${MAESTRO_E2E_NEW_PASSWORD}
+- tapOn: "Tú"
+- scrollUntilVisible:
+    element: "Borrar cuenta"
+    direction: DOWN
+- tapOn: "Borrar cuenta"
+- tapOn: "Escribe BORRAR para confirmar"
+- inputText: "BORRAR"
+- hideKeyboard
+- tapOn: "Borrar mi cuenta"
+- extendedWaitUntil:
+    visible: "Crear cuenta"
+    timeout: 20000
+- assertVisible: "Ya tengo cuenta"

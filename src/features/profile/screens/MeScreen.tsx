@@ -30,6 +30,8 @@ import {
   type Theme,
 } from '@/ui'
 import { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple'
+import { LegalRow, SessionsRow } from '@/features/account'
+import { AdminEntryRow } from '@/features/admin'
 import { SpotifyConnectCard } from '@/features/spotify'
 import { GenreBars } from '../components/GenreBars'
 import { computeGenreBars } from '../genreBars'
@@ -42,6 +44,7 @@ export function MeScreen() {
   const toast = useToast()
   const user = useUser()
   const { signOut } = useSession()
+  const isAdmin = user.role === 'admin'
   const me = useMeQuery()
   const dna = useDnaQuery()
   const [confirmSignOut, setConfirmSignOut] = useState(false)
@@ -115,7 +118,7 @@ export function MeScreen() {
           <ListRow title="Editar perfil" icon={UserIcon} onPress={() => router.push('/profile/edit')} />
           <ListRow
             title="Descargar mis datos"
-            subtitle="Una copia de tu información para guardarla o enviarla. No incluye mensajes: no los podemos leer."
+            subtitle="Una copia de tu información. Sin mensajes: no los podemos leer."
             icon={DownloadSimpleIcon}
             chevron={!exportData.isPending}
             trailing={exportData.isPending ? <ActivityIndicator color={theme.textMuted} /> : undefined}
@@ -132,7 +135,15 @@ export function MeScreen() {
             icon={LockKeyIcon}
             onPress={() => router.push('/settings/privacy')}
           />
+          <SessionsRow />
+          <LegalRow />
         </ListSection>
+
+        {isAdmin ? (
+          <ListSection title="Administración">
+            <AdminEntryRow />
+          </ListSection>
+        ) : null}
 
         <ListSection title="Sesión">
           <ListRow title="Cerrar sesión" icon={SignOutIcon} chevron={false} onPress={() => setConfirmSignOut(true)} />
