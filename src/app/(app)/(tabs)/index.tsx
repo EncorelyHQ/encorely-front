@@ -1,10 +1,3 @@
-import { Screen, Text } from '@/ui'
+import { DiscoverScreen } from '@/features/discover'
 
-// Placeholder: lo reemplaza el corte de su módulo.
-export default function IndexRoute() {
-  return (
-    <Screen>
-      <Text variant="title1">Index</Text>
-    </Screen>
-  )
-}
+export default DiscoverScreen
