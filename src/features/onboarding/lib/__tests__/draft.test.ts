@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/api/errors'
-import { cityChoiceFor, cityError, resolveCity } from '../city'
+import { cityChoiceFor, cityError, resolveCity } from '@/features/shared/profileRules'
 import { applyProfile, draftFor, emptyDraft, onboardingSubmitErrors } from '../draft'
 import { knownGenres, MAX_GENRES, toggleGenre } from '../genres'
 
