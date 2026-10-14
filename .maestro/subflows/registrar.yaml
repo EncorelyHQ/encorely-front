@@ -1,0 +1,52 @@
+# Crea una cuenta nueva desechable (correo único por corrida) y completa el onboarding.
+# Requiere env PASSWORD (la de cuentas nuevas de prueba, MAESTRO_E2E_NEW_PASSWORD).
+appId: com.encorely.app
+---
+- runFlow: abrir-limpio.yaml
+- evalScript: ${output.email = 'e2e-' + Date.now() + '@encorely.test'}
+- tapOn: "Crear cuenta"
+- extendedWaitUntil:
+    visible: "Crea tu cuenta"
+    timeout: 10000
+- tapOn:
+    text: "Tu nombre"
+    index: 1
+- inputText: "Prueba E2E"
+- tapOn: "nombre@correo.com"
+- inputText: ${output.email}
+- tapOn:
+    text: "Contraseña"
+    index: 1
+- inputText: ${PASSWORD}
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Acepto los términos.*"
+    direction: DOWN
+- tapOn: "Acepto los términos.*"
+- tapOn: "Crear cuenta"
+
+# Onboarding paso 1: fecha (18+) y ciudad.
+- extendedWaitUntil:
+    visible: "Cuéntanos de ti"
+    timeout: 20000
+- tapOn: "Día de nacimiento"
+- inputText: "15"
+- tapOn: "Mes de nacimiento, en número"
+- inputText: "06"
+- tapOn: "Año de nacimiento"
+- inputText: "1998"
+- hideKeyboard
+- tapOn: "Bogotá"
+- tapOn: "Seguir"
+
+# Paso 2: géneros (nombres reales del seed del back).
+- extendedWaitUntil:
+    visible: "Salsa"
+    timeout: 20000
+- tapOn: "Salsa"
+- tapOn: "Reguetón"
+- tapOn: "Terminar"
+- runFlow: descartar-avisos.yaml
+- extendedWaitUntil:
+    visible: "Descubrir"
+    timeout: 20000

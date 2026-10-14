@@ -1,0 +1,29 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, rebuild/v1]
+  pull_request:
+    branches: [main, rebuild/v1]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:expo
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test --silent
+      - run: pnpm build:bundles
+        env:
+          EXPO_PUBLIC_API_URL: https://api.example.invalid

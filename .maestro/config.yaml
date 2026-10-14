@@ -1,0 +1,13 @@
+# Workspace de Maestro: `maestro test .maestro` corre los flujos del nivel superior en este orden.
+# Las credenciales llegan SIEMPRE por variables MAESTRO_E2E_* del entorno (ver docs/e2e.md); ningún flujo las trae escritas.
+flows:
+  - "*"
+executionOrder:
+  continueOnFailure: false
+  flowsOrder:
+    - 01-registro-onboarding
+    - 02-descubrir-swipe
+    - 03-asistencia-radar
+    - 04-chat-mensaje
+    - 05-bloquear
+    - 06-borrar-cuenta

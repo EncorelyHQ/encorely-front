@@ -1,13 +1,23 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router'
+import { useTheme } from '@/ui'
+
+export const unstable_settings = { initialRouteName: 'about-you' }
 
 export default function OnboardingLayout() {
+  const theme = useTheme()
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        contentStyle: { backgroundColor: '#181818' },
+        headerShadowVisible: false,
+        headerTitle: '',
+        headerTintColor: theme.text,
+        headerStyle: { backgroundColor: theme.bg },
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: theme.bg },
       }}
-    />
-  );
+    >
+      <Stack.Screen name="about-you" options={{ headerBackVisible: false }} />
+      <Stack.Screen name="genres" />
+    </Stack>
+  )
 }

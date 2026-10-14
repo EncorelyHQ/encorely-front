@@ -1,0 +1,21 @@
+# Califica canciones con los botones (la alternativa accesible al gesto).
+appId: com.encorely.app
+name: Descubrir con botones
+tags:
+  - descubrir
+---
+- runFlow:
+    file: subflows/entrar.yaml
+    env:
+      EMAIL: ${MAESTRO_E2E_EMAIL}
+      PASSWORD: ${MAESTRO_E2E_PASSWORD}
+- tapOn: "Descubrir"
+- extendedWaitUntil:
+    visible: "Me gusta"
+    timeout: 20000
+- tapOn: "Me gusta"
+- tapOn: "Paso"
+- tapOn: "Me gusta"
+# Si el catálogo se acabó, la pantalla lo dice; si no, siguen los botones.
+- assertVisible:
+    text: "Me gusta|Ya calificaste todo el catálogo por ahora"
