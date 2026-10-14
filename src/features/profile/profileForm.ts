@@ -1,19 +1,18 @@
 import type { Me, UpdateMeRequest } from '@/lib/api/types'
 import {
-  parseBirthDate,
+  cityChoiceFor,
+  cityError,
+  resolveCity as resolveCityChoice,
   splitIsoDate,
-  todayLocal,
+  todayParts,
   validateBio,
-  validateCity,
+  validateBirthDate,
   validateDisplayName,
-  validateGenres,
   type BirthDateParts,
   type CalendarDate,
-} from './validation'
-
-export const CITY_OPTIONS = ['Bogotá', 'Medellín'] as const
-export type CityOption = (typeof CITY_OPTIONS)[number]
-export type CityChoice = CityOption | 'other'
+  type CityChoice,
+} from '@/features/shared/profileRules'
+import { validateGenres } from './validation'
 
 export type ProfileDraft = {
   displayName: string
@@ -35,20 +34,6 @@ export type ProfileValues = {
   bio: string
 }
 
-const fold = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim()
-    .toLowerCase()
-
-// "bogota" o "MEDELLÍN" guardados a mano siguen cayendo en la opción correcta.
-export function cityChoiceFor(city: string | null | undefined): { choice: CityChoice | null; other: string } {
-  if (!city || !city.trim()) return { choice: null, other: '' }
-  const known = CITY_OPTIONS.find((option) => fold(option) === fold(city))
-  return known ? { choice: known, other: '' } : { choice: 'other', other: city.trim() }
-}
-
 export function draftFromMe(me: Me): ProfileDraft {
   const { choice, other } = cityChoiceFor(me.city)
   return {
@@ -62,8 +47,7 @@ export function draftFromMe(me: Me): ProfileDraft {
 }
 
 export function resolveCity(draft: Pick<ProfileDraft, 'cityChoice' | 'otherCity'>): string {
-  if (draft.cityChoice === 'other') return draft.otherCity.trim()
-  return draft.cityChoice ?? ''
+  return resolveCityChoice(draft.cityChoice, draft.otherCity) ?? ''
 }
 
 const sameSet = (a: readonly string[], b: readonly string[]) => {
@@ -88,23 +72,18 @@ export function isDraftDirty(initial: ProfileDraft, draft: ProfileDraft): boolea
 
 export function validateDraft(
   draft: ProfileDraft,
-  today: CalendarDate = todayLocal(),
+  today: CalendarDate = todayParts(),
 ): { values: ProfileValues | null; errors: ProfileErrors } {
   const errors: ProfileErrors = {}
   const nameError = validateDisplayName(draft.displayName)
   if (nameError) errors.displayName = nameError
 
-  const birth = parseBirthDate(draft.birth, today)
-  if (!birth.ok) errors.birthDate = birth.error
+  const birth = validateBirthDate(draft.birth, today)
+  if (!birth.ok) errors.birthDate = birth.message
 
   const city = resolveCity(draft)
-  const cityError =
-    draft.cityChoice === null
-      ? 'Elige tu ciudad.'
-      : draft.cityChoice === 'other' && !city
-        ? 'Escribe el nombre de tu ciudad.'
-        : validateCity(city)
-  if (cityError) errors.city = cityError
+  const cityMessage = cityError(draft.cityChoice, draft.otherCity)
+  if (cityMessage) errors.city = cityMessage
 
   const genresError = validateGenres(draft.genres)
   if (genresError) errors.genres = genresError

@@ -1,14 +1,11 @@
 import { useRef, type RefObject } from 'react'
 import { StyleSheet, View, type TextInput } from 'react-native'
 import { space, Text, TextField, useStyles, type Theme } from '@/ui'
-
-export type DatePart = 'day' | 'month' | 'year'
+import { onlyDigits, type BirthDateParts } from './profileRules'
 
 type BirthDateFieldsProps = {
-  day: string
-  month: string
-  year: string
-  onChange: (part: DatePart, value: string) => void
+  value: BirthDateParts
+  onChange: (value: BirthDateParts) => void
   error?: string | null
   helper?: string
   editable?: boolean
@@ -19,16 +16,17 @@ const MAX = { day: 2, month: 2, year: 4 } as const
 
 // Tres campos numéricos en orden colombiano (día/mes/año): sin selector nativo ni dependencias,
 // y el foco salta solo al completar cada parte.
-export function BirthDateFields({ day, month, year, onChange, error, helper, editable = true, dayRef }: BirthDateFieldsProps) {
+export function BirthDateFields({ value, onChange, error, helper, editable = true, dayRef }: BirthDateFieldsProps) {
   const styles = useStyles(makeStyles)
   const monthRef = useRef<TextInput>(null)
   const yearRef = useRef<TextInput>(null)
   const hint = error ?? helper
 
-  const handle = (part: DatePart, raw: string) => {
-    const value = raw.replace(/\D/g, '').slice(0, MAX[part])
-    onChange(part, value)
-    if (value.length < MAX[part]) return
+  const handle = (part: keyof BirthDateParts, raw: string) => {
+    const digits = onlyDigits(raw).slice(0, MAX[part])
+    onChange({ ...value, [part]: digits })
+    // Salta al siguiente campo solo cuando se acaba de completar escribiendo, no al borrar o corregir.
+    if (digits.length < MAX[part] || value[part].length >= MAX[part]) return
     if (part === 'day') monthRef.current?.focus()
     else if (part === 'month') yearRef.current?.focus()
   }
@@ -43,7 +41,7 @@ export function BirthDateFields({ day, month, year, onChange, error, helper, edi
 
   return (
     <View style={styles.wrap}>
-      <Text variant="callout" color="textMuted">
+      <Text variant="callout" color="textMuted" accessibilityRole="header">
         Fecha de nacimiento
       </Text>
       <View style={styles.row}>
@@ -55,7 +53,7 @@ export function BirthDateFields({ day, month, year, onChange, error, helper, edi
             accessibilityLabel="Día de nacimiento"
             accessibilityHint={hint}
             placeholder="DD"
-            value={day}
+            value={value.day}
             maxLength={MAX.day}
             onChangeText={(value) => handle('day', value)}
             textContentType="birthdateDay"
@@ -73,7 +71,7 @@ export function BirthDateFields({ day, month, year, onChange, error, helper, edi
             accessibilityLabel="Mes de nacimiento, en número"
             accessibilityHint={hint}
             placeholder="MM"
-            value={month}
+            value={value.month}
             maxLength={MAX.month}
             onChangeText={(value) => handle('month', value)}
             textContentType="birthdateMonth"
@@ -91,7 +89,7 @@ export function BirthDateFields({ day, month, year, onChange, error, helper, edi
             accessibilityLabel="Año de nacimiento"
             accessibilityHint={hint}
             placeholder="AAAA"
-            value={year}
+            value={value.year}
             maxLength={MAX.year}
             onChangeText={(value) => handle('year', value)}
             textContentType="birthdateYear"

@@ -3,8 +3,7 @@ import { StyleSheet, View, type TextInput } from 'react-native'
 import { useMutation } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { useSession } from '@/lib/session/SessionContext'
-import { Button, haptics, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
-import { FormAlert } from '../components/FormAlert'
+import { Alert, Button, haptics, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
 import { PasswordField } from '../components/PasswordField'
 import { TextLink } from '../components/TextLink'
 import { loginErrors, type LoginField } from '../lib/errors'
@@ -64,7 +63,7 @@ export function LoginScreen() {
         <Text variant="title1" accessibilityRole="header">
           Entra a tu cuenta
         </Text>
-        {notice ? <FormAlert tone="info" message={notice} /> : null}
+        {notice ? <Alert tone="info" message={notice} /> : null}
       </View>
 
       <View style={styles.fields}>
@@ -105,7 +104,7 @@ export function LoginScreen() {
       <View style={styles.spacer} />
 
       <View style={styles.actions}>
-        {general ? <FormAlert message={general} /> : null}
+        {general ? <Alert message={general} /> : null}
         <Button label="Entrar" size="lg" loading={login.isPending} onPress={submit} />
         <View style={styles.switch}>
           <Text variant="callout" color="textMuted">

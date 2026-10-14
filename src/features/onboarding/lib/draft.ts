@@ -1,7 +1,6 @@
 import { ApiError, isApiError, userMessage } from '@/lib/api/errors'
 import type { Me } from '@/lib/api/types'
-import { MIN_AGE, parseIsoDate } from './birthDate'
-import { cityChoiceFor, type CityChoice } from './city'
+import { cityChoiceFor, parseIsoDate, UNDERAGE_MESSAGE, type CityChoice } from '@/features/shared/profileRules'
 import { MAX_GENRES } from './genres'
 
 export type StepOneField = 'displayName' | 'birthDate' | 'city'
@@ -74,7 +73,7 @@ export type SubmitErrors = {
 export function onboardingSubmitErrors(error: unknown): SubmitErrors {
   const out: SubmitErrors = { stepOne: {}, genres: null, general: null }
   if (isApiError(error, 'under_age')) {
-    out.stepOne.birthDate = `Encorely es solo para mayores de ${MIN_AGE} años.`
+    out.stepOne.birthDate = UNDERAGE_MESSAGE
     return out
   }
   if (isApiError(error, 'unknown_genre')) {

@@ -7,9 +7,7 @@ import { userMessage } from '@/lib/api/errors'
 import { authApi } from '@/lib/api/endpoints'
 import { queryKeys } from '@/lib/query'
 import { useSession } from '@/lib/session/SessionContext'
-import { Button, haptics, Screen, space, Text, TextField, useStyles, useTheme, useToast, type Theme } from '@/ui'
-import { ConsentCheckbox } from '../components/ConsentCheckbox'
-import { FormAlert } from '../components/FormAlert'
+import { Alert, Button, Checkbox, haptics, Screen, space, Text, TextField, useStyles, useTheme, useToast, type Theme } from '@/ui'
 import { PasswordField } from '../components/PasswordField'
 import { TextLink } from '../components/TextLink'
 import { registerErrors, type RegisterField } from '../lib/errors'
@@ -171,7 +169,7 @@ export function RegisterScreen() {
         />
 
         <View style={styles.consent}>
-          <ConsentCheckbox
+          <Checkbox
             checked={accepted}
             onChange={(value) => {
               setAccepted(value)
@@ -195,7 +193,7 @@ export function RegisterScreen() {
           ) : null}
           {legal.isError ? (
             <View style={styles.legalError}>
-              <FormAlert message="No pudimos cargar los términos. Sin ellos no podemos crear la cuenta." />
+              <Alert message="No pudimos cargar los términos. Sin ellos no podemos crear la cuenta." />
               <TextLink label="Reintentar" role="button" onPress={() => void legal.refetch()} />
             </View>
           ) : null}
@@ -205,7 +203,7 @@ export function RegisterScreen() {
       <View style={styles.spacer} />
 
       <View style={styles.actions}>
-        {general ? <FormAlert message={general} /> : null}
+        {general ? <Alert message={general} /> : null}
         <Button label="Crear cuenta" size="lg" loading={busy} onPress={submit} />
         <View style={styles.switch}>
           <Text variant="callout" color="textMuted">

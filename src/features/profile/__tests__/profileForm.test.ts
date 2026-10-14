@@ -1,5 +1,6 @@
 import type { Me } from '@/lib/api/types'
-import { buildProfilePatch, cityChoiceFor, draftFromMe, isDraftDirty, validateDraft, type ProfileDraft } from '../profileForm'
+import { cityChoiceFor } from '@/features/shared/profileRules'
+import { buildProfilePatch, draftFromMe, isDraftDirty, validateDraft, type ProfileDraft } from '../profileForm'
 
 const today = { year: 2026, month: 10, day: 14 }
 

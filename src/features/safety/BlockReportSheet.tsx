@@ -8,12 +8,14 @@ import type { ReportReason, ReportRequest } from '@/lib/api/types'
 import { queryKeys } from '@/lib/query'
 import {
   Button,
+  Checkbox,
   FlagIcon,
   Icon,
   ListRow,
   ListSection,
   ProhibitIcon,
   radius,
+  RadioGroup,
   Sheet,
   space,
   Text,
@@ -24,8 +26,6 @@ import {
   WarningIcon,
   type Theme,
 } from '@/ui'
-import { Checkbox } from './components/Checkbox'
-import { RadioGroup } from './components/RadioGroup'
 import { evidenceLabel, REPORT_DETAIL_MAX, REPORT_EVIDENCE_MAX, REPORT_REASONS } from './reportReasons'
 
 export type ReportEvidence = NonNullable<ReportRequest['evidence']>[number]

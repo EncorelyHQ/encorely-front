@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native'
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { router } from 'expo-router'
 import { useSession } from '@/lib/session/SessionContext'
-import { Button, motion, Screen, space, Text, type, useStyles, type Theme } from '@/ui'
-import { FormAlert } from '../components/FormAlert'
+import { Alert, Button, motion, Screen, space, Text, type, useStyles, type Theme } from '@/ui'
+
 
 // El logotipo es el "headliner" del cartel: 2.4× el display para que ENCORELY ocupe el ancho como en un afiche.
 const LOGO_SCALE = 2.4
@@ -52,7 +52,7 @@ export function WelcomeScreen() {
       </View>
 
       <View style={styles.actions}>
-        {notice ? <FormAlert tone="info" message={notice} /> : null}
+        {notice ? <Alert tone="info" message={notice} /> : null}
         <Button label="Crear cuenta" size="lg" onPress={() => router.push('/register')} />
         <Button label="Ya tengo cuenta" variant="secondary" size="lg" onPress={() => router.push('/login')} />
         <Text variant="footnote" color="textSubtle" align="center">

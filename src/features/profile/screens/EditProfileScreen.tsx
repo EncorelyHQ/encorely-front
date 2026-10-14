@@ -14,6 +14,7 @@ import {
   haptics,
   LoadingState,
   Screen,
+  RadioGroup,
   Skeleton,
   space,
   Text,
@@ -23,23 +24,20 @@ import {
   useToast,
   type Theme,
 } from '@/ui'
-import { RadioGroup } from '@/features/safety/components/RadioGroup'
-import { BirthDateFields } from '../components/BirthDateFields'
+import { BirthDateFields } from '@/features/shared/BirthDateFields'
+import { BIO_MAX, charCount, CITY_CHOICES } from '@/features/shared/profileRules'
 import {
   buildProfilePatch,
-  CITY_OPTIONS,
   draftFromMe,
   isDraftDirty,
   validateDraft,
-  type CityChoice,
   type ProfileDraft,
   type ProfileErrors,
   type ProfileField,
 } from '../profileForm'
 import { useGenresQuery, useMeQuery } from '../queries'
-import { BIO_MAX, charCount, GENRES_MAX } from '../validation'
+import { GENRES_MAX } from '../validation'
 
-const CITY_RADIO = [...CITY_OPTIONS.map((c) => ({ value: c as CityChoice, label: c })), { value: 'other' as CityChoice, label: 'Otra' }]
 const FIELDS: ProfileField[] = ['displayName', 'birthDate', 'city', 'genres', 'bio']
 
 export function EditProfileScreen() {
@@ -181,6 +179,7 @@ function EditProfileForm({ me }: { me: Me }) {
           value={draft.birth}
           onChange={(v) => edit('birth', v, 'birthDate')}
           error={errorFor('birthDate')}
+          helper="Necesitas tener 18 años o más. Los demás solo ven tu edad, no la fecha."
           editable={!save.isPending}
         />
 
@@ -191,7 +190,7 @@ function EditProfileForm({ me }: { me: Me }) {
           <RadioGroup
             label="Ciudad"
             direction="row"
-            options={CITY_RADIO}
+            options={CITY_CHOICES}
             value={draft.cityChoice}
             onChange={(v) => edit('cityChoice', v, 'city')}
             disabled={save.isPending}

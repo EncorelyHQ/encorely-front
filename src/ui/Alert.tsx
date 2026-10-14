@@ -1,8 +1,12 @@
 import { StyleSheet, View } from 'react-native'
 import Animated, { Easing, FadeIn, ReduceMotion } from 'react-native-reanimated'
-import { Icon, InfoIcon, motion, radius, space, Text, useStyles, WarningCircleIcon, type Theme } from '@/ui'
+import { Icon } from './Icon'
+import { InfoIcon, WarningCircleIcon } from './icons'
+import { Text } from './Text'
+import { useStyles } from './theme'
+import { motion, radius, space, type Theme } from './tokens'
 
-type FormAlertProps = {
+type AlertProps = {
   message: string
   tone?: 'danger' | 'info'
 }
@@ -12,7 +16,7 @@ const entering = FadeIn.duration(motion.duration.fast)
   .reduceMotion(ReduceMotion.System)
 
 // Error general del formulario: se queda visible junto al botón (un toast se iría antes de leerlo).
-export function FormAlert({ message, tone = 'danger' }: FormAlertProps) {
+export function Alert({ message, tone = 'danger' }: AlertProps) {
   const styles = useStyles(makeStyles)
   return (
     <Animated.View entering={entering}>

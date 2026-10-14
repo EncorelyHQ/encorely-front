@@ -2,8 +2,6 @@
 export const PASSWORD_MIN_LENGTH = 12
 export const PASSWORD_MAX_BYTES = 72
 export const EMAIL_MAX_LENGTH = 254
-export const DISPLAY_NAME_MIN = 2
-export const DISPLAY_NAME_MAX = 50
 
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/
 
@@ -42,10 +40,5 @@ export function loginPasswordError(value: string): string | null {
   return value ? null : 'Escribe tu contraseña.'
 }
 
-export function displayNameError(value: string): string | null {
-  const name = value.trim()
-  if (!name) return 'Escribe cómo quieres que te vean.'
-  if (name.length < DISPLAY_NAME_MIN) return `Usa al menos ${DISPLAY_NAME_MIN} letras.`
-  if (name.length > DISPLAY_NAME_MAX) return `Usa máximo ${DISPLAY_NAME_MAX} caracteres.`
-  return null
-}
+// El nombre se valida igual en registro, onboarding y perfil.
+export { validateDisplayName as displayNameError } from '@/features/shared/profileRules'

@@ -7,13 +7,10 @@ import { catalogApi, meApi } from '@/lib/api/endpoints'
 import type { Me } from '@/lib/api/types'
 import { queryKeys } from '@/lib/query'
 import { useSession } from '@/lib/session/SessionContext'
-import { Button, Chip, EmptyState, ErrorState, haptics, MusicNotesIcon, Screen, Skeleton, space, Text, touch, useStyles, type Theme } from '@/ui'
-import { FormAlert } from '@/features/auth/components/FormAlert'
-import { displayNameError } from '@/features/auth/lib/validation'
+import { Alert, Button, Chip, EmptyState, ErrorState, haptics, MusicNotesIcon, Screen, Skeleton, space, Text, touch, useStyles, type Theme } from '@/ui'
+import { cityError, resolveCity, validateBirthDate, validateDisplayName } from '@/features/shared/profileRules'
 import { StepStub } from '../components/StepStub'
 import { getDraft, resetDraft, updateDraft } from '../draftStore'
-import { birthDateMessage, validateBirthDate } from '../lib/birthDate'
-import { cityError, resolveCity } from '../lib/city'
 import { onboardingSubmitErrors, type StepOneField } from '../lib/draft'
 import { knownGenres, MAX_GENRES, MIN_GENRES, toggleGenre } from '../lib/genres'
 import { useSeededDraft } from '../useOnboardingDraft'
@@ -86,13 +83,13 @@ export function GenresScreen() {
     }
 
     // Si se llegó aquí sin pasar por el paso 1 (o con datos viejos), el paso 1 se corrige allá.
-    const birth = validateBirthDate(current.day, current.month, current.year)
+    const birth = validateBirthDate(current)
     const city = resolveCity(current.cityChoice, current.otherCity)
     const stepOne: Partial<Record<StepOneField, string>> = {}
-    const nameMsg = displayNameError(current.displayName)
+    const nameMsg = validateDisplayName(current.displayName)
     const cityMsg = cityError(current.cityChoice, current.otherCity)
     if (nameMsg) stepOne.displayName = nameMsg
-    if (!birth.ok) stepOne.birthDate = birthDateMessage(birth.reason)
+    if (!birth.ok) stepOne.birthDate = birth.message
     if (cityMsg) stepOne.city = cityMsg
     if (!birth.ok || !city || Object.keys(stepOne).length) {
       haptics.warning()
@@ -115,7 +112,7 @@ export function GenresScreen() {
 
   const footer = (
     <>
-      {general ? <FormAlert message={general} /> : null}
+      {general ? <Alert message={general} /> : null}
       <View style={styles.counter}>
         <Text
           variant="footnote"

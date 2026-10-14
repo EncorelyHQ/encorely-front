@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef, useState, type ReactNode } from 'react'
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native'
 import { Text } from './Text'
 import { useStyles, useTheme } from './theme'
@@ -8,10 +8,12 @@ type TextFieldProps = TextInputProps & {
   label: string
   helper?: string
   error?: string | null
+  // Accesorio dentro del campo, a la derecha (p. ej. el ojo de la contraseña); centrado en la caja del input.
+  trailing?: ReactNode
 }
 
 export const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
-  { label, helper, error, style, onFocus, onBlur, ...rest },
+  { label, helper, error, trailing, style, onFocus, onBlur, ...rest },
   ref,
 ) {
   const theme = useTheme()
@@ -24,25 +26,28 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
       <Text variant="callout" color="textMuted" nativeID={`${label}-label`}>
         {label}
       </Text>
-      <TextInput
-        ref={ref}
-        accessibilityLabel={label}
-        accessibilityLabelledBy={`${label}-label`}
-        accessibilityHint={error ?? helper}
-        placeholderTextColor={theme.textSubtle}
-        selectionColor={theme.accent}
-        cursorColor={theme.accent}
-        onFocus={(e) => {
-          setFocused(true)
-          onFocus?.(e)
-        }}
-        onBlur={(e) => {
-          setFocused(false)
-          onBlur?.(e)
-        }}
-        style={[styles.input, { borderColor, borderWidth: focused || error ? 2 : 1.5 }, style]}
-        {...rest}
-      />
+      <View>
+        <TextInput
+          ref={ref}
+          accessibilityLabel={label}
+          accessibilityLabelledBy={`${label}-label`}
+          accessibilityHint={error ?? helper}
+          placeholderTextColor={theme.textSubtle}
+          selectionColor={theme.accent}
+          cursorColor={theme.accent}
+          onFocus={(e) => {
+            setFocused(true)
+            onFocus?.(e)
+          }}
+          onBlur={(e) => {
+            setFocused(false)
+            onBlur?.(e)
+          }}
+          style={[styles.input, { borderColor, borderWidth: focused || error ? 2 : 1.5 }, trailing ? styles.inputWithTrailing : null, style]}
+          {...rest}
+        />
+        {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+      </View>
       {error ? (
         <Text variant="footnote" color="danger" accessibilityLiveRegion="polite">
           {error}
@@ -68,4 +73,6 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.surface,
       color: t.text,
     },
+    inputWithTrailing: { paddingRight: touch.min + space.sm },
+    trailing: { position: 'absolute', top: 0, bottom: 0, right: space.xs, justifyContent: 'center' },
   })

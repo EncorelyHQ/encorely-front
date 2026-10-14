@@ -1,22 +1,20 @@
 import { useRef, useState } from 'react'
 import { StyleSheet, View, type TextInput } from 'react-native'
 import { router } from 'expo-router'
-import { Button, haptics, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
-import { FormAlert } from '@/features/auth/components/FormAlert'
-import { displayNameError } from '@/features/auth/lib/validation'
-import { BirthDateFields, type DatePart } from '../components/BirthDateFields'
-import { ChoiceGroup } from '../components/ChoiceGroup'
+import { Alert, Button, haptics, RadioGroup, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
+import { BirthDateFields } from '@/features/shared/BirthDateFields'
+import {
+  CITY_CHOICES,
+  CITY_MAX,
+  cityError,
+  validateBirthDate,
+  validateDisplayName,
+  type BirthDateParts,
+} from '@/features/shared/profileRules'
 import { StepStub } from '../components/StepStub'
 import { updateDraft } from '../draftStore'
-import { birthDateMessage, validateBirthDate } from '../lib/birthDate'
-import { CITY_MAX, CITY_OPTIONS, cityError, type CityChoice } from '../lib/city'
 import type { StepOneField } from '../lib/draft'
 import { useSeededDraft } from '../useOnboardingDraft'
-
-const CITY_CHOICES: readonly { value: CityChoice; label: string }[] = [
-  ...CITY_OPTIONS.map((city) => ({ value: city, label: city })),
-  { value: 'other', label: 'Otra' },
-]
 
 type Errors = Partial<Record<StepOneField, string>>
 
@@ -42,17 +40,17 @@ export function AboutYouScreen() {
     }
   }
 
-  const onDateChange = (part: DatePart, value: string) => {
-    updateDraft({ [part]: value })
+  const onDateChange = (value: BirthDateParts) => {
+    updateDraft(value)
     clear('birthDate')
   }
 
   const next = () => {
     const local: Errors = {}
-    const nameMsg = displayNameError(draft.displayName)
+    const nameMsg = validateDisplayName(draft.displayName)
     if (nameMsg) local.displayName = nameMsg
-    const birth = validateBirthDate(draft.day, draft.month, draft.year)
-    if (!birth.ok) local.birthDate = birthDateMessage(birth.reason)
+    const birth = validateBirthDate(draft)
+    if (!birth.ok) local.birthDate = birth.message
     const cityMsg = cityError(draft.cityChoice, draft.otherCity)
     if (cityMsg) local.city = cityMsg
     setErrors(local)
@@ -77,7 +75,7 @@ export function AboutYouScreen() {
         <Text variant="body" color="textMuted">
           Con tu fecha confirmamos que tienes 18 años o más, y con tu ciudad te mostramos los conciertos cercanos.
         </Text>
-        {hasServerErrors ? <FormAlert message="Hay un dato por corregir antes de terminar. Lo marcamos abajo." /> : null}
+        {hasServerErrors ? <Alert message="Hay un dato por corregir antes de terminar. Lo marcamos abajo." /> : null}
       </View>
 
       <View style={styles.fields}>
@@ -102,17 +100,17 @@ export function AboutYouScreen() {
 
         <BirthDateFields
           dayRef={dayRef}
-          day={draft.day}
-          month={draft.month}
-          year={draft.year}
+          value={draft}
           onChange={onDateChange}
           error={errorFor('birthDate')}
           helper="Los demás solo ven tu edad, nunca la fecha."
         />
 
         <View style={styles.city}>
-          <ChoiceGroup
+          <RadioGroup
             label="Ciudad"
+            showLabel
+            direction="row"
             options={CITY_CHOICES}
             value={draft.cityChoice}
             onChange={(value) => {
