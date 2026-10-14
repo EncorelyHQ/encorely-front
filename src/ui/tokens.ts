@@ -89,7 +89,7 @@ export const themes: Record<'venue' | 'papel', Theme> = {
     accentPressed: palette.band400,
     onAccent: palette.inkDark,
     accentText: palette.band700,
-    ticket: palette.paper,
+    ticket: '#FFFFFF',
     onTicket: palette.inkDark,
     onTicketMuted: palette.inkDarkMuted,
     ticketAccent: palette.bandOnPaper,

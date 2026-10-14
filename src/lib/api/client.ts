@@ -69,7 +69,7 @@ export async function api<T>(method: Method, path: string, opts: RequestOptions 
       return send<T>(method, path, opts)
     }
     // Un GET es idempotente: un solo reintento ante un corte de red momentáneo.
-    if (method === 'GET' && error instanceof ApiError && error.kind === 'network') {
+    if (method === 'GET' && error instanceof ApiError && error.kind === 'network' && !opts.signal?.aborted) {
       return send<T>(method, path, opts)
     }
     throw error

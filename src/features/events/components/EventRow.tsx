@@ -104,7 +104,8 @@ const makeStyles = (t: Theme) =>
     // Confirma el toque sin esperar a la navegación.
     pressed: { backgroundColor: t.surface2, transform: [{ scale: 0.98 }] },
     date: {
-      minWidth: space.xxxl + space.lg,
+      // Ancho fijo: la línea divisoria queda alineada en toda la lista aunque la hora sea "8:30 p. m.".
+      width: space.xxxl * 2,
       alignItems: 'flex-start',
       gap: space.xs,
       paddingRight: space.lg,

@@ -31,6 +31,7 @@ describe('frases en español', () => {
     expect(joinSpanish([])).toBe('')
     expect(joinSpanish(['salsa'])).toBe('salsa')
     expect(joinSpanish(['salsa', 'rock'])).toBe('salsa y rock')
+    expect(joinSpanish(['rock en español', 'indie y alternativo'])).toBe('rock en español · indie y alternativo')
     expect(joinSpanish(['salsa', 'rock', 'jazz'])).toBe('salsa, rock y jazz')
   })
 

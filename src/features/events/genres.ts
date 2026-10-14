@@ -26,6 +26,8 @@ export function inSentence(name: string): string {
 export function joinSpanish(items: readonly string[]): string {
   if (items.length === 0) return ''
   if (items.length === 1) return items[0]
+  // Con nombres que ya traen "y" ("indie y alternativo") la conjunción vuelve ambigua la lista: se separa con punto medio.
+  if (items.some((item) => / (y|e) /.test(item))) return items.join(' · ')
   const last = items[items.length - 1]
   const conj = /^(i|hi)(?!e)/i.test(last) || /^(í|hí)/i.test(last) ? 'e' : 'y'
   return `${items.slice(0, -1).join(', ')} ${conj} ${last}`

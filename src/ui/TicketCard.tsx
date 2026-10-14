@@ -50,7 +50,14 @@ export function TicketCard({ children, stub, style }: TicketCardProps) {
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
-    card: { backgroundColor: t.ticket, borderRadius: radius.md, overflow: 'hidden' },
+    card: {
+      backgroundColor: t.ticket,
+      borderRadius: radius.md,
+      overflow: 'hidden',
+      // En Papel la boleta blanca sobre fondo crema necesita un filo para leerse como objeto.
+      borderWidth: t.scheme === 'papel' ? StyleSheet.hairlineWidth : 0,
+      borderColor: t.border,
+    },
     body: { padding: space.lg + 4, gap: space.sm },
     perforation: { height: NOTCH * 2, justifyContent: 'center' },
     line: { position: 'absolute', left: 0 },
