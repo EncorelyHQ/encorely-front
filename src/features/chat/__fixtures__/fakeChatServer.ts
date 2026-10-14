@@ -20,6 +20,7 @@ export function createFakeChatServer() {
   const messages = new Map<string, StoredMessage[]>()
   const sendLog: { matchId: string; id: string; recipientBoxKeyId: number; ok: boolean }[] = []
   const pageLog: { matchId: string; before?: number; after?: number; limit: number }[] = []
+  const ackLog: { matchId: string; userId: string; upToSeq: number }[] = []
   const sendFailures: ApiError[] = []
   let seq = 0
   let clock = Date.UTC(2026, 9, 14, 15, 0, 0)
@@ -55,22 +56,39 @@ export function createFakeChatServer() {
     return stored
   }
 
+  function summary(matchId: string, me: string): MatchSummary {
+    const match = matches.get(matchId)!
+    const peer = match.users[0] === me ? match.users[1] : match.users[0]
+    const list = messages.get(matchId) ?? []
+    return {
+      id: matchId,
+      status: match.status,
+      peer: { id: peer, displayName: names.get(peer) ?? '', age: null, city: null },
+      eventName: match.eventName,
+      sharedGenres: ['rock'],
+      createdAt: new Date(Date.UTC(2026, 9, 1)).toISOString(),
+      lastMessageAt: list.at(-1)?.createdAt ?? null,
+      lastSeq: list.at(-1)?.seq ?? 0,
+    } as MatchSummary
+  }
+
   function transportFor(me: string): ChatTransport {
     return {
+      async matches() {
+        return [...matches.values()].filter((m) => m.users.includes(me)).map((m) => summary(m.id, me))
+      },
+      // Como el back: borra lo que el OTRO me envió hasta upToSeq; lo mío se queda hasta que el otro lo confirme.
+      async ack(matchId, upToSeq) {
+        peerOf(matchId, me)
+        ackLog.push({ matchId, userId: me, upToSeq })
+        messages.set(
+          matchId,
+          (messages.get(matchId) ?? []).filter((m) => m.senderId === me || m.seq > upToSeq),
+        )
+      },
       async match(matchId) {
-        const peer = peerOf(matchId, me)
-        const match = matches.get(matchId)!
-        const list = messages.get(matchId) ?? []
-        return {
-          id: matchId,
-          status: match.status,
-          peer: { id: peer, displayName: names.get(peer) ?? '', age: null, city: null },
-          eventName: match.eventName,
-          sharedGenres: ['rock'],
-          createdAt: new Date(Date.UTC(2026, 9, 1)).toISOString(),
-          lastMessageAt: list.at(-1)?.createdAt ?? null,
-          lastSeq: list.at(-1)?.seq ?? 0,
-        } as MatchSummary
+        peerOf(matchId, me)
+        return summary(matchId, me)
       },
       async myKeys() {
         const bundle = keys.get(me)
@@ -159,13 +177,19 @@ export function createFakeChatServer() {
     keysOf: (userId: string) => keys.get(userId),
     sendLog,
     pageLog,
+    ackLog,
     transportFor,
   }
 }
 
 export type FakeChatServer = ReturnType<typeof createFakeChatServer>
 
-export function createTestDeps(server: FakeChatServer, userId: string, seed: string): ChatDeps {
+export function createTestDeps(
+  server: FakeChatServer,
+  userId: string,
+  seed: string,
+  extra: Partial<Pick<ChatDeps, 'local' | 'deviceKeys' | 'peerKeys'>> = {},
+): ChatDeps {
   return {
     transport: server.transportFor(userId),
     deviceKeys: createDeviceKeys({
@@ -176,5 +200,6 @@ export function createTestDeps(server: FakeChatServer, userId: string, seed: str
     peerKeys: createPeerKeyStore(createMemoryKeyValueStore()),
     newId: () => globalThis.crypto.randomUUID(),
     now: () => Date.now(),
+    ...extra,
   }
 }

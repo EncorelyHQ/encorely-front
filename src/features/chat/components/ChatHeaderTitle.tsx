@@ -11,9 +11,10 @@ type Props = {
 type Indicator = { icon: PhosphorIcon; label: string; color: 'textMuted' | 'verified' | 'danger'; weight: 'regular' | 'fill' }
 
 export function trustIndicator(trust: PeerTrustState | null): Indicator {
-  if (trust === 'verified') return { icon: ShieldCheckIcon, label: 'Verificado', color: 'verified', weight: 'fill' }
+  // Estado primero y corto: en el header angosto el final es lo que se corta.
+  if (trust === 'verified') return { icon: ShieldCheckIcon, label: 'Verificado · Cifrado', color: 'verified', weight: 'fill' }
   if (trust === 'changed') return { icon: WarningIcon, label: 'El código cambió', color: 'danger', weight: 'fill' }
-  return { icon: LockKeyIcon, label: 'Cifrado de extremo a extremo · Sin verificar', color: 'textMuted', weight: 'regular' }
+  return { icon: LockKeyIcon, label: 'Sin verificar · Cifrado', color: 'textMuted', weight: 'regular' }
 }
 
 // Una sola señal de cifrado, discreta y bajo el nombre (03 §5.8): ni banner por mensaje ni escudo gigante.

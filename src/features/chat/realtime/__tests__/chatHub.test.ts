@@ -73,7 +73,8 @@ describe('chat hub', () => {
 
   test('MessageAvailable con conversación abierta: trae lo nuevo, salvo si ya lo tiene', async () => {
     const { hub, invalidate, queryClient } = setup()
-    const data: ConversationData = { ...emptyConversation, newestSeq: 5, oldestSeq: 1 }
+    // Lo ya leído se mide con syncedSeq (hasta dónde se leyó el servidor), no con newestSeq.
+    const data: ConversationData = { ...emptyConversation, newestSeq: 5, oldestSeq: 1, syncedSeq: 5 }
     queryClient.setQueryData(queryKeys.messages(MATCH), data)
 
     hub.emit('MessageAvailable', { matchId: MATCH, id: 'old', seq: 5 })
@@ -89,7 +90,7 @@ describe('chat hub', () => {
     ])
   })
 
-  test('con la conversación en pantalla, el aviso dispara su queryFn (que trae after=newestSeq)', async () => {
+  test('con la conversación en pantalla, el aviso dispara su queryFn (que trae after=syncedSeq)', async () => {
     const { hub, queryClient } = setup()
     const queryFn = jest.fn(async () => ({ ...emptyConversation, newestSeq: 5 }))
     const observer = new QueryObserver(queryClient, { queryKey: queryKeys.messages(MATCH), queryFn, staleTime: Infinity })

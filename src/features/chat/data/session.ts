@@ -160,6 +160,7 @@ export function createChatSession(deps: ChatDeps, me: string) {
         ...base,
         status: 'sent',
         body: opened.body,
+        kind: opened.kind,
         evidence: mine ? undefined : { plaintext: opened.p, frankingKey: opened.fk },
       }
     } catch (error) {

@@ -48,7 +48,7 @@ export function buildTimeline(messages: readonly ChatMessage[], options: BuildOp
     })
   })
 
-  // No sabemos en qué punto del historial cambió la llave (no hay historial local): el aviso va al final, donde se lee.
+  // No sabemos en qué punto del historial cambió la llave (el aviso no se guarda con los mensajes): va al final, donde se lee.
   if (options.showKeyChange) rows.push({ kind: 'keyChange', key: 'key-change' })
   return rows
 }

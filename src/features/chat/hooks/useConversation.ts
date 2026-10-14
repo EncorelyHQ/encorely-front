@@ -12,8 +12,10 @@ import {
   classifyPeerError,
   isClosedError,
   loadOlderPage,
+  persistSent,
   redecryptFailed,
   syncConversation,
+  type ConversationCtx,
 } from '../data/conversation'
 import { MAX_MESSAGE_LENGTH, withPending, type ChatMessage, type MessageStatus } from '../data/messages'
 import { ensureKeysPublished } from '../data/publishKeys'
@@ -62,18 +64,21 @@ export function useConversationAs(matchId: string, me: string) {
   const enabled = !!peerUserId && !matchClosed
 
   const peerQuery = usePeerKeys(matchId, me, enabled)
-  const ctx = useMemo(
-    () => (peerUserId ? { queryClient, session, transport: deps.transport, matchId, peerUserId } : null),
-    [queryClient, session, deps.transport, matchId, peerUserId],
+  const ctx: ConversationCtx | null = useMemo(
+    () =>
+      peerUserId
+        ? { queryClient, session, transport: deps.transport, matchId, peerUserId, local: deps.local, now: deps.now }
+        : null,
+    [queryClient, session, deps.transport, deps.local, deps.now, matchId, peerUserId],
   )
 
   const messagesQuery = useQuery({
     queryKey: queryKeys.messages(matchId),
     queryFn: () => syncConversation(ctx!),
     enabled: enabled && !!ctx,
-    // Siempre "viejo": volver a la conversación o a la app trae solo lo nuevo (after=newestSeq).
+    // Siempre "viejo": volver a la conversación o a la app trae solo lo nuevo (after=syncedSeq).
     staleTime: 0,
-    // El texto descifrado vive solo en memoria y poco tiempo después de salir del chat.
+    // En memoria, poco tiempo después de salir del chat; lo que dura está en la base local cifrada.
     gcTime: 60_000,
   })
 
@@ -154,7 +159,7 @@ export function useConversationAs(matchId: string, me: string) {
         }
 
         outbox.current.delete(id)
-        addConfirmed(queryClient, matchId, {
+        const confirmed: ChatMessage = {
           id,
           seq: sent.seq,
           senderId: me,
@@ -162,7 +167,11 @@ export function useConversationAs(matchId: string, me: string) {
           at: Date.parse(sent.createdAt),
           status: 'sent',
           body: entry.text,
-        })
+          kind: 'text',
+        }
+        addConfirmed(queryClient, matchId, confirmed)
+        // Si la base falla, el mensaje igual se ve; se pierde solo de este teléfono cuando el otro lo confirme.
+        persistSent(ctx, confirmed).catch(() => undefined)
         setPending((list) => list.filter((m) => m.id !== id))
       } catch (error) {
         if (isClosedError(error)) setClosedBySend(true)

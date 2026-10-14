@@ -1,5 +1,6 @@
 export {
   b64Decode,
+  b64DecodeLength,
   b64Encode,
   b64urlDecode,
   b64urlEncode,
@@ -48,3 +49,20 @@ export {
   type SafetyCode,
   type SafetyParty,
 } from './safetyNumber'
+export { boxKeyPairFromChain, newChainSeed, nextChainKey } from './boxChain'
+export { openFromPublicKey, sealToPublicKey, type SealedToKey } from './sealedBox'
+export { linkCode, linkQrPayload, parseLinkQr, type ParsedLinkQr } from './linkCode'
+export {
+  BACKUP_FORMAT_VERSION,
+  decryptBackup,
+  DEFAULT_SCRYPT,
+  deriveBackupKey,
+  encryptBackup,
+  fromWireKdf,
+  newBackupSalt,
+  normalizePassphrase,
+  toWireKdf,
+  type ScryptParams,
+  type SealedBackup,
+  type WireKdf,
+} from './backupCipher'

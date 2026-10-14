@@ -10,6 +10,8 @@ type RequestOptions = {
   query?: Record<string, string | number | undefined | null>
   auth?: boolean
   signal?: AbortSignal
+  // Para cargas grandes (respaldo cifrado de hasta 10 MiB) los 15 s por defecto no alcanzan en redes lentas.
+  timeoutMs?: number
 }
 
 type ExpiredListener = () => void
@@ -80,7 +82,7 @@ async function send<T>(method: Method, path: string, opts: RequestOptions): Prom
   if (!isApiConfigured) throw new ApiError('config', 'Falta EXPO_PUBLIC_API_URL')
 
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? REQUEST_TIMEOUT_MS)
   const onAbort = () => controller.abort()
   opts.signal?.addEventListener('abort', onAbort)
 

@@ -10,6 +10,8 @@ export interface KeyValueStore {
   getItem(key: string): Promise<string | null>
   setItem(key: string, value: string): Promise<void>
   removeItem(key: string): Promise<void>
+  /** Optional: every key in the store, to clean up entries written before an index existed. */
+  getAllKeys?(): Promise<readonly string[]>
 }
 
 const SAFE_SEGMENT = /^[A-Za-z0-9._-]+$/
@@ -47,6 +49,9 @@ export function createMemoryKeyValueStore(): KeyValueStore & { dump(): Map<strin
     },
     async removeItem(key) {
       map.delete(key)
+    },
+    async getAllKeys() {
+      return [...map.keys()]
     },
     dump: () => map,
   }

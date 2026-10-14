@@ -46,3 +46,14 @@ export function formatListTime(at: number, now: number): string {
   if (diff <= 0) return formatClock(at)
   return formatDayLabel(at, now)
 }
+
+export function formatDate(at: number): string {
+  return tidy(longDateFmt.format(new Date(at)))
+}
+
+// Tamaños para avisos (respaldo): una cifra decimal basta para decidir.
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
+}

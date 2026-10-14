@@ -32,6 +32,7 @@ import {
 import { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple'
 import { LegalRow, SessionsRow } from '@/features/account'
 import { AdminEntryRow } from '@/features/admin'
+import { ChatBackupRow, LinkDeviceRow } from '@/features/chat'
 import { SpotifyConnectCard } from '@/features/spotify'
 import { GenreBars } from '../components/GenreBars'
 import { computeGenreBars } from '../genreBars'
@@ -135,6 +136,8 @@ export function MeScreen() {
             icon={LockKeyIcon}
             onPress={() => router.push('/settings/privacy')}
           />
+          <ChatBackupRow />
+          <LinkDeviceRow />
           <SessionsRow />
           <LegalRow />
         </ListSection>

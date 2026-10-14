@@ -32,7 +32,7 @@ function ChatRowBase({ match, reason, now, onPress }: RowProps) {
             {name}
           </Text>
           {time ? (
-            <Text variant="data" color="textSubtle" numberOfLines={1}>
+            <Text variant="caption" color="textSubtle" numberOfLines={1}>
               {time}
             </Text>
           ) : null}

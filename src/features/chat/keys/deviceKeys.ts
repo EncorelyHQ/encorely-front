@@ -1,9 +1,9 @@
 import { randomBytes } from '@noble/hashes/utils.js'
 
 import { b64Decode, b64Encode, b64urlEncode, type RandomBytes } from '../crypto/bytes'
+import { boxKeyPairFromChain, newChainSeed, nextChainKey } from '../crypto/boxChain'
 import { E2eeError } from '../crypto/errors'
 import {
-  generateBoxKeyPair,
   generateIdentityKeyPair,
   isValidBoxKeyId,
   signBoxKey,
@@ -11,6 +11,7 @@ import {
   type KeyPair,
   type PublicKeyBundle,
 } from '../crypto/keyBundle'
+import { decodeKeyMaterial, wipeMaterial, type DecodedMaterial, type KeyMaterial } from './material'
 import { assertSafeKeySegment, type KeyValueStore, type SecretStore } from './storage'
 
 export interface DeviceKeysDeps {
@@ -18,6 +19,8 @@ export interface DeviceKeysDeps {
   kv: KeyValueStore
   /** Test hook for deterministic keys. */
   randomBytes?: RandomBytes
+  /** Test hook for the rotation clock. */
+  now?: () => number
 }
 
 export interface EnsureOptions {
@@ -44,11 +47,25 @@ export interface CurrentBoxKey {
   publicKey: Uint8Array
 }
 
+export interface KeyStatus {
+  current: number
+  keyIds: number[]
+  hasChain: boolean
+  rotatedAt: number | null
+  /** Momento en que el servidor confirmó la caja vigente: desde ahí nadie puede cifrar a las anteriores. */
+  publishedAt: number | null
+}
+
 interface Meta {
   v: 1
   installId: string
   current: number
   keyIds: number[]
+  // Campos de la cadena (v1.1). Ausentes en instalaciones v1: la primera rotación arranca la cadena.
+  chainKeyId?: number
+  rotatedAt?: number
+  publishedKeyId?: number
+  publishedAt?: number
 }
 
 interface StoredBoxKey {
@@ -62,12 +79,16 @@ interface LoadedState {
   identity: KeyPair
 }
 
+// Otro teléfono con la misma cadena (traspaso) pudo rotar varias veces sin que este se enterara.
+const MAX_ADOPT_STEPS = 16
+
 function storageKeys(userId: string) {
   assertSafeKeySegment(userId)
   const prefix = `e2ee_v1_${userId}_`
   return {
     identity: `${prefix}identity`,
     meta: `${prefix}meta`,
+    chain: `${prefix}chain`,
     box: (keyId: number) => `${prefix}box_${keyId}`,
     installFlag: `${prefix}install_id`,
   }
@@ -82,6 +103,8 @@ function parseJson(raw: string | null): unknown {
   }
 }
 
+const optionalTime = (value: unknown) => value === undefined || (typeof value === 'number' && Number.isFinite(value))
+
 function parseMeta(raw: string | null): Meta | null {
   const value = parseJson(raw) as Partial<Meta> | null
   if (
@@ -91,7 +114,11 @@ function parseMeta(raw: string | null): Meta | null {
     !isValidBoxKeyId(value.current) ||
     !Array.isArray(value.keyIds) ||
     !value.keyIds.every(isValidBoxKeyId) ||
-    !value.keyIds.includes(value.current)
+    !value.keyIds.includes(value.current) ||
+    (value.chainKeyId !== undefined && !isValidBoxKeyId(value.chainKeyId)) ||
+    (value.publishedKeyId !== undefined && !isValidBoxKeyId(value.publishedKeyId)) ||
+    !optionalTime(value.rotatedAt) ||
+    !optionalTime(value.publishedAt)
   ) {
     return null
   }
@@ -125,6 +152,7 @@ function serverKeyId(value: number | null | undefined): number {
 export function createDeviceKeys(deps: DeviceKeysDeps) {
   const { secure, kv } = deps
   const random = deps.randomBytes ?? randomBytes
+  const now = deps.now ?? Date.now
   const locks = new Map<string, Promise<unknown>>()
 
   // Serializes per user so two screens calling ensureDeviceKeys at once cannot
@@ -144,6 +172,7 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
   async function purge(userId: string, meta: Meta | null): Promise<void> {
     const keys = storageKeys(userId)
     for (const keyId of meta?.keyIds ?? []) await secure.deleteItem(keys.box(keyId))
+    await secure.deleteItem(keys.chain)
     await secure.deleteItem(keys.meta)
     await secure.deleteItem(keys.identity)
     await kv.removeItem(keys.installFlag)
@@ -171,11 +200,26 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
     return parseStoredBox(await secure.getItem(storageKeys(userId).box(keyId)))
   }
 
-  async function writeNewBoxKey(userId: string, identity: KeyPair, keyId: number): Promise<void> {
-    const box = generateBoxKeyPair(random)
+  async function readChain(userId: string, meta: Meta): Promise<Uint8Array | null> {
+    if (meta.chainKeyId === undefined) return null
+    const raw = await secure.getItem(storageKeys(userId).chain)
+    if (raw === null) return null
+    try {
+      const chain = b64Decode(raw)
+      return chain.length === 32 ? chain : null
+    } catch {
+      return null
+    }
+  }
+
+  async function writeBoxKey(userId: string, identity: KeyPair, keyId: number, box: KeyPair): Promise<void> {
     const sig = signBoxKey(keyId, box.publicKey, identity.secretKey)
     const stored: StoredBoxKey = { sk: b64Encode(box.secretKey), pk: b64Encode(box.publicKey), sig: b64Encode(sig) }
     await secure.setItem(storageKeys(userId).box(keyId), JSON.stringify(stored))
+  }
+
+  async function writeMeta(userId: string, meta: Meta): Promise<void> {
+    await secure.setItem(storageKeys(userId).meta, JSON.stringify(meta))
   }
 
   async function bundleFor(userId: string, state: LoadedState): Promise<PublicKeyBundle> {
@@ -184,14 +228,77 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
     return toPublicKeyBundle(state.identity.publicKey, b64Decode(box.pk), state.meta.current, b64Decode(box.sig))
   }
 
+  /**
+   * Siguiente eslabón: chain_{n+1} reemplaza a chain_n en el llavero (el viejo deja de existir) y su caja queda
+   * como vigente. Sin cadena (instalación v1 o llaves aleatorias) arranca una nueva desde una semilla aleatoria.
+   */
   async function rotateLocked(userId: string, state: LoadedState, serverCurrent: number): Promise<LoadedState> {
     const keyId = Math.max(...state.meta.keyIds, serverCurrent) + 1
     if (!isValidBoxKeyId(keyId)) throw new E2eeError('invalid_input')
-    // Write the key before the index so a crash never leaves the index pointing at nothing.
-    await writeNewBoxKey(userId, state.identity, keyId)
-    const meta: Meta = { ...state.meta, current: keyId, keyIds: [...state.meta.keyIds, keyId] }
-    await secure.setItem(storageKeys(userId).meta, JSON.stringify(meta))
+    const previous = await readChain(userId, state.meta)
+    const chain = previous ? nextChainKey(previous) : newChainSeed(random)
+    previous?.fill(0)
+    const box = boxKeyPairFromChain(chain)
+    // Orden pensado para un cierre a mitad: caja, luego cadena, luego índice. El índice nunca apunta a algo
+    // que no existe; en el peor caso se salta un eslabón, que no rompe nada.
+    await writeBoxKey(userId, state.identity, keyId, box)
+    await secure.setItem(storageKeys(userId).chain, b64Encode(chain))
+    chain.fill(0)
+    box.secretKey.fill(0)
+    const meta: Meta = {
+      ...state.meta,
+      current: keyId,
+      keyIds: [...state.meta.keyIds, keyId],
+      chainKeyId: keyId,
+      rotatedAt: now(),
+      publishedKeyId: undefined,
+      publishedAt: undefined,
+    }
+    await writeMeta(userId, meta)
     return { ...state, meta }
+  }
+
+  /**
+   * El servidor tiene una caja más nueva con MI identidad: otro teléfono con la misma cadena (traspaso) rotó.
+   * Si la cadena local llega a esa misma caja, se adopta sin subir nada; si no, null y se rota como siempre.
+   */
+  async function adoptLocked(
+    userId: string,
+    state: LoadedState,
+    serverCurrent: number,
+    serverBoxKey: string,
+  ): Promise<LoadedState | null> {
+    const start = await readChain(userId, state.meta)
+    if (!start) return null
+    let chain = start
+    for (let step = 0; step < MAX_ADOPT_STEPS; step++) {
+      const next = nextChainKey(chain)
+      chain.fill(0)
+      chain = next
+      const box = boxKeyPairFromChain(chain)
+      if (b64Encode(box.publicKey) !== serverBoxKey) {
+        box.secretKey.fill(0)
+        continue
+      }
+      await writeBoxKey(userId, state.identity, serverCurrent, box)
+      await secure.setItem(storageKeys(userId).chain, b64Encode(chain))
+      box.secretKey.fill(0)
+      chain.fill(0)
+      const at = now()
+      const meta: Meta = {
+        ...state.meta,
+        current: serverCurrent,
+        keyIds: [...state.meta.keyIds.filter((id) => id !== serverCurrent), serverCurrent],
+        chainKeyId: serverCurrent,
+        rotatedAt: at,
+        publishedKeyId: serverCurrent,
+        publishedAt: at,
+      }
+      await writeMeta(userId, meta)
+      return { ...state, meta }
+    }
+    chain.fill(0)
+    return null
   }
 
   function ensureDeviceKeys(userId: string, options: EnsureOptions): Promise<EnsureResult> {
@@ -203,13 +310,25 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
       if (!state) {
         const identity = generateIdentityKeyPair(random)
         const keyId = serverCurrent + 1
-        const meta: Meta = { v: 1, installId: b64urlEncode(random(16)), current: keyId, keyIds: [keyId] }
+        const chain = newChainSeed(random)
+        const meta: Meta = {
+          v: 1,
+          installId: b64urlEncode(random(16)),
+          current: keyId,
+          keyIds: [keyId],
+          chainKeyId: keyId,
+          rotatedAt: now(),
+        }
         await secure.setItem(
           keys.identity,
           JSON.stringify({ sk: b64Encode(identity.secretKey), pk: b64Encode(identity.publicKey) }),
         )
-        await writeNewBoxKey(userId, identity, keyId)
-        await secure.setItem(keys.meta, JSON.stringify(meta))
+        const box = boxKeyPairFromChain(chain)
+        await writeBoxKey(userId, identity, keyId, box)
+        await secure.setItem(keys.chain, b64Encode(chain))
+        chain.fill(0)
+        box.secretKey.fill(0)
+        await writeMeta(userId, meta)
         // Flag last: if we die before this, the next run treats the keys as stale and regenerates.
         await kv.setItem(keys.installFlag, meta.installId)
         const created = { meta, identity }
@@ -218,6 +337,14 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
 
       let current = state
       let bundle = await bundleFor(userId, current)
+      const sameIdentity = options.serverIdentityKey != null && options.serverIdentityKey === bundle.identityKey
+      if (sameIdentity && options.serverBoxKey != null && serverCurrent > current.meta.current) {
+        const adopted = await adoptLocked(userId, current, serverCurrent, options.serverBoxKey)
+        if (adopted) {
+          return { bundle: await bundleFor(userId, adopted), created: false, rotated: false, needsUpload: false }
+        }
+      }
+
       const serverDiffers =
         options.serverCurrentBoxKeyId === null ||
         options.serverCurrentBoxKeyId !== current.meta.current ||
@@ -241,6 +368,40 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
       if (!state) throw new E2eeError('missing_keys')
       const next = await rotateLocked(userId, state, serverKeyId(serverCurrentBoxKeyId))
       return bundleFor(userId, next)
+    })
+  }
+
+  /** Rotación periódica pendiente: nunca rotó con cadena, o pasó el intervalo desde la última. */
+  function rotationDue(userId: string, intervalMs: number): Promise<boolean> {
+    return withLock(userId, async () => {
+      const state = await loadState(userId)
+      if (!state) return false
+      const { chainKeyId, rotatedAt } = state.meta
+      return chainKeyId === undefined || rotatedAt === undefined || now() - rotatedAt >= intervalMs
+    })
+  }
+
+  /** El servidor aceptó (o ya tenía) la caja `keyId`. Solo cuenta si sigue siendo la vigente. */
+  function markPublished(userId: string, keyId: number): Promise<void> {
+    return withLock(userId, async () => {
+      const state = await loadState(userId)
+      if (!state || state.meta.current !== keyId || state.meta.publishedKeyId === keyId) return
+      await writeMeta(userId, { ...state.meta, publishedKeyId: keyId, publishedAt: now() })
+    })
+  }
+
+  function keyStatus(userId: string): Promise<KeyStatus | null> {
+    return withLock(userId, async () => {
+      const state = await loadState(userId)
+      if (!state) return null
+      const { meta } = state
+      return {
+        current: meta.current,
+        keyIds: [...meta.keyIds],
+        hasChain: meta.chainKeyId !== undefined,
+        rotatedAt: meta.rotatedAt ?? null,
+        publishedAt: meta.publishedKeyId === meta.current ? (meta.publishedAt ?? null) : null,
+      }
     })
   }
 
@@ -288,9 +449,89 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
       if (removed.length === 0) return []
       const meta: Meta = { ...state.meta, keyIds: state.meta.keyIds.filter((id) => keep.has(id)) }
       // Index first: an orphaned secret is harmless, an index entry without its secret is not.
-      await secure.setItem(storageKeys(userId).meta, JSON.stringify(meta))
+      await writeMeta(userId, meta)
       for (const id of removed) await secure.deleteItem(storageKeys(userId).box(id))
       return removed
+    })
+  }
+
+  /** Todo lo que un respaldo o un traspaso necesita para que otro teléfono lea y escriba como este. */
+  function exportMaterial(userId: string): Promise<KeyMaterial> {
+    return withLock(userId, async () => {
+      const state = await loadState(userId)
+      if (!state) throw new E2eeError('missing_keys')
+      const boxKeys: KeyMaterial['boxKeys'] = []
+      for (const id of state.meta.keyIds) {
+        const box = await readBox(userId, id)
+        if (box) boxKeys.push({ id, sk: box.sk, pk: box.pk, sig: box.sig })
+      }
+      const chain = await readChain(userId, state.meta)
+      const material: KeyMaterial = {
+        v: 1,
+        identity: { sk: b64Encode(state.identity.secretKey), pk: b64Encode(state.identity.publicKey) },
+        chain: chain ? b64Encode(chain) : null,
+        chainKeyId: chain ? (state.meta.chainKeyId ?? null) : null,
+        current: state.meta.current,
+        rotatedAt: state.meta.rotatedAt ?? null,
+        boxKeys,
+      }
+      chain?.fill(0)
+      return material
+    })
+  }
+
+  /**
+   * Instala material de un respaldo o de otro teléfono. Misma identidad: se suman las cajas que falten y gana
+   * la cadena más avanzada. Otra identidad: reemplaza todo (las llaves que este teléfono generó solo
+   * desaparecen). Valida antes de tocar nada. No publica: eso lo hace quien llama.
+   */
+  async function importMaterial(userId: string, material: KeyMaterial): Promise<PublicKeyBundle> {
+    const decoded: DecodedMaterial = decodeKeyMaterial(material)
+    return withLock(userId, async () => {
+      const keys = storageKeys(userId)
+      try {
+        const state = await loadState(userId)
+        const merge = state !== null && b64Encode(state.identity.publicKey) === b64Encode(decoded.identity.publicKey)
+        if (state && !merge) await purge(userId, state.meta)
+
+        const base: Meta = merge
+          ? state!.meta
+          : { v: 1, installId: b64urlEncode(random(16)), current: decoded.current, keyIds: [] }
+        const keyIds = new Set(base.keyIds)
+        for (const box of decoded.boxKeys) {
+          if (keyIds.has(box.id)) continue
+          const stored: StoredBoxKey = { sk: b64Encode(box.secretKey), pk: b64Encode(box.publicKey), sig: b64Encode(box.sig) }
+          await secure.setItem(keys.box(box.id), JSON.stringify(stored))
+          keyIds.add(box.id)
+        }
+        if (!merge) {
+          await secure.setItem(
+            keys.identity,
+            JSON.stringify({ sk: b64Encode(decoded.identity.secretKey), pk: b64Encode(decoded.identity.publicKey) }),
+          )
+        }
+
+        const incomingChainWins =
+          decoded.chain !== null && (base.chainKeyId === undefined || (decoded.chainKeyId ?? 0) > base.chainKeyId)
+        if (incomingChainWins) await secure.setItem(keys.chain, b64Encode(decoded.chain!))
+        const current = Math.max(merge ? base.current : 0, decoded.current)
+        const meta: Meta = {
+          ...base,
+          current,
+          keyIds: [...keyIds].sort((a, b) => a - b),
+          chainKeyId: incomingChainWins ? decoded.chainKeyId! : base.chainKeyId,
+          rotatedAt: incomingChainWins ? (decoded.rotatedAt ?? undefined) : base.rotatedAt,
+          publishedKeyId: undefined,
+          publishedAt: undefined,
+        }
+        await writeMeta(userId, meta)
+        await kv.setItem(keys.installFlag, meta.installId)
+        const installed = await loadState(userId)
+        if (!installed) throw new E2eeError('missing_keys')
+        return bundleFor(userId, installed)
+      } finally {
+        wipeMaterial(decoded)
+      }
     })
   }
 
@@ -304,12 +545,17 @@ export function createDeviceKeys(deps: DeviceKeysDeps) {
   return {
     ensureDeviceKeys,
     rotateBoxKey,
+    rotationDue,
+    markPublished,
+    keyStatus,
     getBoxSecret,
     currentBoxKey,
     publicBundle,
     identityPublicKey,
     listBoxKeyIds,
     pruneBoxKeys,
+    exportMaterial,
+    importMaterial,
     wipeDeviceKeys,
   }
 }

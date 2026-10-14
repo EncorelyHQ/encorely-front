@@ -64,8 +64,8 @@ export function SafetyCodeTicket({ peerName, blocks, qrPayload, verified, stampA
         ) : null
       }
     >
-      <Text variant="caption" color="onTicketMuted" style={styles.label}>
-        {`Código de seguridad · tú y ${peerName}`.toUpperCase()}
+      <Text variant="caption" color="onTicketMuted">
+        Tú y {peerName}
       </Text>
       <View
         style={styles.grid}
@@ -124,7 +124,6 @@ function VerifiedStamp({ animated }: { animated: boolean }) {
 
 const makeStyles = (_t: Theme) =>
   StyleSheet.create({
-    label: { letterSpacing: 0.6 },
     grid: { gap: space.sm, paddingTop: space.sm },
     gridRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.md },
     block: { fontSize: type.data.fontSize + 5, lineHeight: type.data.lineHeight + 8, letterSpacing: 1 },

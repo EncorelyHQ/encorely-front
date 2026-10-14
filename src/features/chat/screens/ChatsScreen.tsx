@@ -3,6 +3,7 @@ import { FlatList, RefreshControl, StyleSheet, View, type ListRenderItem } from 
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useGenreLookup } from '@/features/events/genres'
+import { PushPrimer } from '@/features/push'
 import { userMessage } from '@/lib/api/errors'
 import type { MatchSummary } from '@/lib/api/types'
 import { ChatsCircleIcon, EmptyState, ErrorState, radius, Skeleton, space, Text, useStyles, useTheme, type Theme } from '@/ui'
@@ -18,6 +19,7 @@ export function ChatsScreen() {
   const list = useMatchesList()
   const { sentence } = useGenreLookup()
   const [pulling, setPulling] = useState(false)
+  const [primerShown, setPrimerShown] = useState(false)
   const now = useNow()
 
   const reasonFor = useCallback((match: MatchSummary) => matchReason(match, sentence), [sentence])
@@ -42,16 +44,25 @@ export function ChatsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <Text variant="title1" accessibilityRole="header" style={styles.gutter}>
-        Chats
-      </Text>
+      <View style={styles.gutter}>
+        <Text variant="title1" accessibilityRole="header">
+          Chats
+        </Text>
+        {/* PushPrimer decide solo si se muestra: el espacio arriba solo existe cuando ocupa algo. */}
+        <View style={primerShown ? styles.primer : null}>
+          <View onLayout={(e) => setPrimerShown(e.nativeEvent.layout.height > 0)}>
+            <PushPrimer />
+          </View>
+        </View>
+      </View>
       {list.fresh.length > 0 ? (
         <View style={styles.section}>
           <SectionLabel>Nuevos</SectionLabel>
           <NewMatchesStrip matches={list.fresh} reasonFor={reasonFor} onPress={open} />
         </View>
       ) : null}
-      {list.conversations.length > 0 ? <SectionLabel>Conversaciones</SectionLabel> : null}
+      {/* Con una sola sección el rótulo sobra: solo distingue cuando también hay matches nuevos. */}
+      {list.conversations.length > 0 && list.fresh.length > 0 ? <SectionLabel>Conversaciones</SectionLabel> : null}
     </View>
   )
 
@@ -110,8 +121,8 @@ export function ChatsScreen() {
 function SectionLabel({ children }: { children: string }) {
   const styles = useStyles(makeStyles)
   return (
-    <Text variant="caption" color="textMuted" accessibilityRole="header" style={[styles.gutter, styles.label]}>
-      {children.toUpperCase()}
+    <Text variant="footnote" color="textMuted" accessibilityRole="header" style={styles.gutter}>
+      {children}
     </Text>
   )
 }
@@ -141,8 +152,8 @@ const makeStyles = (t: Theme) =>
     content: { flexGrow: 1, paddingBottom: space.xl },
     header: { paddingTop: space.lg, gap: space.lg, paddingBottom: space.sm },
     gutter: { paddingHorizontal: space.gutter },
+    primer: { paddingTop: space.lg },
     section: { gap: space.sm },
-    label: { letterSpacing: 0.6 },
     hint: { paddingTop: space.md },
     skeleton: { gap: space.lg, paddingHorizontal: space.gutter, paddingTop: space.sm },
     skeletonRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },

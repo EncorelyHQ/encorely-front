@@ -74,8 +74,11 @@ export async function handleChatEvent(queryClient: QueryClient, event: ChatHubEv
       const data = queryClient.getQueryData<ConversationData>(key)
       // Sin conversación en memoria no hay nada que agregar: se cargará al abrirla.
       if (!data) return list
-      if (data.newestSeq !== null && event.seq <= data.newestSeq) return list
-      // El queryFn de la conversación, con datos previos, trae solo `after=newestSeq` y lo mezcla por id.
+      // syncedSeq y no newestSeq: un envío propio confirmado puede tener un seq mayor que un mensaje del otro que aún
+      // no llegó, y saltarse el aviso dejaría ese mensaje sin traer.
+      const seen = (data.syncedSeq !== null && event.seq <= data.syncedSeq) || data.messages.some((m) => m.id === event.id)
+      if (seen) return list
+      // El queryFn de la conversación, con datos previos, trae solo `after=syncedSeq` y lo mezcla por id.
       await Promise.all([list, queryClient.invalidateQueries({ queryKey: key, exact: true })])
       return
     }

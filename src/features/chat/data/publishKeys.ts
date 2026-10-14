@@ -1,8 +1,8 @@
 import { isApiError } from '@/lib/api/errors'
-import type { PeerKeyBundle } from '@/lib/api/types'
+import type { KeyBundle, PeerKeyBundle } from '@/lib/api/types'
 import type { ChatDeps } from './deps'
 
-async function serverKeys(deps: ChatDeps): Promise<PeerKeyBundle | null> {
+export async function serverKeys(deps: ChatDeps): Promise<PeerKeyBundle | null> {
   try {
     return await deps.transport.myKeys()
   } catch (error) {
@@ -11,8 +11,22 @@ async function serverKeys(deps: ChatDeps): Promise<PeerKeyBundle | null> {
   }
 }
 
-// GET /keys/me → ensureDeviceKeys → PUT si hace falta. 409 stale_box_key_id: otro teléfono (o una
-// instalación anterior) publicó un id mayor; se rota por encima de ese y se reintenta una vez.
+// PUT /keys/me. 409 stale_box_key_id: otro teléfono (o una instalación anterior) publicó un id mayor; se rota por
+// encima de ese y se reintenta una vez. Al confirmar, se anota cuándo: desde ahí nadie cifra a las cajas viejas.
+export async function publishBundle(deps: ChatDeps, me: string, bundle: KeyBundle): Promise<void> {
+  let published = bundle
+  try {
+    await deps.transport.publishKeys(bundle)
+  } catch (error) {
+    if (!isApiError(error, 'stale_box_key_id')) throw error
+    const latest = await serverKeys(deps)
+    published = await deps.deviceKeys.rotateBoxKey(me, latest?.boxKeyId ?? null)
+    await deps.transport.publishKeys(published)
+  }
+  await deps.deviceKeys.markPublished(me, published.boxKeyId)
+}
+
+// GET /keys/me → ensureDeviceKeys → PUT si hace falta.
 async function publish(deps: ChatDeps, me: string): Promise<void> {
   const server = await serverKeys(deps)
   const result = await deps.deviceKeys.ensureDeviceKeys(me, {
@@ -20,15 +34,8 @@ async function publish(deps: ChatDeps, me: string): Promise<void> {
     serverIdentityKey: server?.identityKey ?? null,
     serverBoxKey: server?.boxKey ?? null,
   })
-  if (!result.needsUpload) return
-  try {
-    await deps.transport.publishKeys(result.bundle)
-  } catch (error) {
-    if (!isApiError(error, 'stale_box_key_id')) throw error
-    const latest = await serverKeys(deps)
-    const bundle = await deps.deviceKeys.rotateBoxKey(me, latest?.boxKeyId ?? null)
-    await deps.transport.publishKeys(bundle)
-  }
+  if (result.needsUpload) await publishBundle(deps, me, result.bundle)
+  else await deps.deviceKeys.markPublished(me, result.bundle.boxKeyId)
 }
 
 const published = new Map<ChatDeps, Map<string, Promise<void>>>()

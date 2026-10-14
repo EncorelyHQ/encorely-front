@@ -60,9 +60,19 @@ export function usePeerSecurity(matchId: string) {
     async (snapshot: PeerSnapshot | null) => {
       if (snapshot) queryClient.setQueryData(queryKeys.peerKeys(matchId), snapshot)
       else void queryClient.invalidateQueries({ queryKey: queryKeys.peerKeys(matchId), exact: true })
-      if (peerUserId) await redecryptFailed({ queryClient, session, transport: deps.transport, matchId, peerUserId })
+      if (peerUserId) {
+        await redecryptFailed({
+          queryClient,
+          session,
+          transport: deps.transport,
+          matchId,
+          peerUserId,
+          local: deps.local,
+          now: deps.now,
+        })
+      }
     },
-    [deps.transport, matchId, peerUserId, queryClient, session],
+    [deps.transport, deps.local, deps.now, matchId, peerUserId, queryClient, session],
   )
 
   // Se verifica exactamente la llave cuyo código se mostró: si cambia mientras se compara, markVerified falla.

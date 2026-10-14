@@ -19,4 +19,5 @@ export const asyncStorageKeyValueStore: KeyValueStore = {
   getItem: (key) => AsyncStorage.getItem(key),
   setItem: (key, value) => AsyncStorage.setItem(key, value),
   removeItem: (key) => AsyncStorage.removeItem(key),
+  getAllKeys: () => AsyncStorage.getAllKeys(),
 }

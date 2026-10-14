@@ -116,7 +116,7 @@ export function SecurityScreen({ matchId }: Props) {
         icon={QrCodeIcon}
         onPress={() => router.push({ pathname: '/chat/[matchId]/scan', params: { matchId } })}
       />
-      <Button label="Marcar como verificado" variant="secondary" onPress={() => setConfirm('verify')} />
+      <Button label="Marcar como verificado" variant="ghost" onPress={() => setConfirm('verify')} />
       {changed ? (
         <Button label="Aceptar el código nuevo sin verificar" variant="ghost" onPress={() => setConfirm('accept')} />
       ) : null}
@@ -131,7 +131,7 @@ export function SecurityScreen({ matchId }: Props) {
           <View style={styles.alert} accessibilityRole="alert">
             <Icon icon={WarningIcon} size={20} color="danger" weight="fill" />
             <Text variant="callout" style={styles.flex}>
-              El código de {name} cambió. Puede que haya reinstalado la app. Compárenlo de nuevo antes de compartir algo
+              El código de {name} cambió. Puede que haya reinstalado la app o cambiado de teléfono sin pasar sus llaves. Compárenlo de nuevo antes de compartir algo
               sensible.
             </Text>
           </View>

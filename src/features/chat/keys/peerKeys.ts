@@ -177,13 +177,42 @@ function parsePinned(raw: string | null): PinnedPeer | null {
 }
 
 export function createPeerKeyStore(kv: KeyValueStore) {
-  const keyFor = (myUserId: string, peerUserId: string) => `e2ee_v1_${myUserId}_peer_${peerUserId}`
+  const prefixFor = (myUserId: string) => `e2ee_v1_${myUserId}_peer_`
+  const keyFor = (myUserId: string, peerUserId: string) => `${prefixFor(myUserId)}${peerUserId}`
+  // Índice de pines por usuario: sin él no hay forma de borrarlos todos al borrar la cuenta.
+  const indexFor = (myUserId: string) => `e2ee_v1_${myUserId}_peers`
+
+  async function readIndex(myUserId: string): Promise<string[]> {
+    const raw = await kv.getItem(indexFor(myUserId))
+    if (raw === null) return []
+    try {
+      const value = JSON.parse(raw) as unknown
+      return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []
+    } catch {
+      return []
+    }
+  }
+
+  // AsyncStorage no tiene transacciones: dos pines nuevos a la vez podrían pisarse el índice. En serie.
+  let indexQueue: Promise<unknown> = Promise.resolve()
+  function updateIndex(myUserId: string, change: (ids: string[]) => string[]): Promise<void> {
+    const run = indexQueue.then(async () => {
+      const current = await readIndex(myUserId)
+      const next = change(current)
+      if (next.length === current.length && next.every((id, i) => id === current[i])) return
+      await kv.setItem(indexFor(myUserId), JSON.stringify(next))
+    })
+    indexQueue = run.catch(() => undefined)
+    return run
+  }
 
   async function get(myUserId: string, peerUserId: string): Promise<PinnedPeer | null> {
     return parsePinned(await kv.getItem(keyFor(myUserId, peerUserId)))
   }
 
   async function save(myUserId: string, pinned: PinnedPeer): Promise<void> {
+    // Índice primero: un id en el índice sin pin se ignora al borrar; un pin fuera del índice quedaría huérfano.
+    await updateIndex(myUserId, (ids) => (ids.includes(pinned.userId) ? ids : [...ids, pinned.userId]))
     await kv.setItem(keyFor(myUserId, pinned.userId), JSON.stringify(pinned))
   }
 
@@ -199,6 +228,20 @@ export function createPeerKeyStore(kv: KeyValueStore) {
     return next
   }
 
+  async function remove(myUserId: string, peerUserId: string): Promise<void> {
+    await kv.removeItem(keyFor(myUserId, peerUserId))
+    await updateIndex(myUserId, (ids) => ids.filter((id) => id !== peerUserId))
+  }
+
+  /** Borra todos los pines de `myUserId` (borrar cuenta). Incluye los guardados antes de que existiera el índice. */
+  async function wipeAll(myUserId: string): Promise<void> {
+    const prefix = prefixFor(myUserId)
+    const keys = new Set((await readIndex(myUserId)).map((peer) => keyFor(myUserId, peer)))
+    if (kv.getAllKeys) for (const key of await kv.getAllKeys()) if (key.startsWith(prefix)) keys.add(key)
+    for (const key of keys) await kv.removeItem(key)
+    await kv.removeItem(indexFor(myUserId))
+  }
+
   return {
     get,
     save,
@@ -212,7 +255,8 @@ export function createPeerKeyStore(kv: KeyValueStore) {
       update(myUserId, peerUserId, (pinned) => markVerified(pinned, verifiedIdentityKey)),
     acceptChange: (myUserId: string, peerUserId: string) =>
       update(myUserId, peerUserId, (pinned) => acceptChange(pinned)),
-    remove: (myUserId: string, peerUserId: string) => kv.removeItem(keyFor(myUserId, peerUserId)),
+    remove,
+    wipeAll,
   }
 }
 

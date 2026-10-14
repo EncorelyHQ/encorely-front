@@ -9,6 +9,7 @@ export {
   type DeviceKeysDeps,
   type EnsureOptions,
   type EnsureResult,
+  type KeyStatus,
 } from './deviceKeys'
 export {
   acceptChange,
@@ -22,6 +23,8 @@ export {
   type PeerTrustState,
   type PinnedPeer,
 } from './peerKeys'
+export { decodeKeyMaterial, type KeyMaterial } from './material'
+export { expoSecretStore } from './expoStores'
 export {
   createMemoryKeyValueStore,
   createMemorySecretStore,

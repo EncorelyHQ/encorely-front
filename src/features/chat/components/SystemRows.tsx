@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native'
-import { Button, Icon, LockKeyIcon, radius, space, Text, useStyles, WarningIcon, type Theme } from '@/ui'
+import { Button, Icon, radius, space, Text, touch, useStyles, WarningIcon, type Theme } from '@/ui'
 import { Perforation } from './Perforation'
 
 export function DaySeparator({ label }: { label: string }) {
@@ -7,8 +7,8 @@ export function DaySeparator({ label }: { label: string }) {
   return (
     <View style={styles.day} accessibilityRole="header">
       <Perforation />
-      <Text variant="data" color="textMuted" style={styles.dayLabel}>
-        {label.toUpperCase()}
+      <Text variant="caption" color="textMuted">
+        {label}
       </Text>
       <Perforation />
     </View>
@@ -36,7 +36,6 @@ export function MatchIntroRow({ title, onSecurityPress }: IntroProps) {
         accessibilityHint="Abre el código de seguridad y lo que debes saber del cifrado"
         style={({ pressed }) => [styles.note, pressed ? styles.pressed : null]}
       >
-        <Icon icon={LockKeyIcon} size={16} color="textSubtle" />
         <Text variant="footnote" color="textMuted" align="center" style={styles.noteText}>
           Los mensajes se cifran en tu teléfono. Encorely no puede leerlos.{' '}
           <Text variant="footnote" color="accentText" style={styles.link}>
@@ -61,7 +60,7 @@ export function KeyChangeRow({ name, blocked, onReview }: KeyChangeProps) {
         <Perforation />
       </View>
       <Text variant="footnote" color="text" align="center" style={styles.noteText}>
-        El código de seguridad de {name} cambió. Puede que haya reinstalado la app. Verifícalo antes de compartir algo
+        El código de seguridad de {name} cambió. Puede que haya reinstalado la app o cambiado de teléfono sin pasar sus llaves. Verifícalo antes de compartir algo
         sensible.
       </Text>
       {!blocked ? (
@@ -79,13 +78,15 @@ const makeStyles = (t: Theme) =>
       gap: space.md,
       paddingVertical: space.lg,
     },
-    dayLabel: { letterSpacing: 0.6 },
     system: { alignItems: 'center', gap: space.sm, paddingVertical: space.xl },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, alignSelf: 'stretch' },
     title: { flexShrink: 1, maxWidth: '75%' },
+    // Toda la nota es el enlace a "Cómo funciona": así el área táctil pasa de 44 pt sin depender de la palabra.
     note: {
+      minHeight: touch.min,
+      justifyContent: 'center',
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       gap: space.xs,
       paddingHorizontal: space.md,
       paddingVertical: space.sm,

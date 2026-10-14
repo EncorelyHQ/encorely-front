@@ -152,8 +152,8 @@ export const chatAckApi = {
 
 export const backupApi = {
   info: () => api<BackupInfo>('GET', '/me/backup/info'),
-  get: () => api<BackupBlob>('GET', '/me/backup'),
-  put: (body: PutBackupRequest) => api<BackupInfo>('PUT', '/me/backup', { body }),
+  get: () => api<BackupBlob>('GET', '/me/backup', { timeoutMs: 120_000 }),
+  put: (body: PutBackupRequest) => api<BackupInfo>('PUT', '/me/backup', { body, timeoutMs: 120_000 }),
   remove: () => api<void>('DELETE', '/me/backup'),
 }
 
