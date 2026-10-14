@@ -81,9 +81,10 @@ function wrap(db: SQLite.SQLiteDatabase, onClose: () => void): LocalChatStore {
   return {
     async upsert(messages) {
       if (messages.length === 0) return
-      await db.withExclusiveTransactionAsync(async (txn) => {
+      // withExclusiveTransactionAsync abre otra conexión sin el PRAGMA key de SQLCipher: la transacción va en esta misma.
+      await db.withTransactionAsync(async () => {
         for (const m of messages) {
-          await txn.runAsync(UPSERT, [
+          await db.runAsync(UPSERT, [
             m.id,
             m.matchId,
             m.seq,
