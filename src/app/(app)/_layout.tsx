@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router'
+import { PushBootstrap } from '@/features/push'
 import { font, useTheme } from '@/ui'
 
 export const unstable_settings = { initialRouteName: '(tabs)' }
@@ -7,17 +8,24 @@ export const unstable_settings = { initialRouteName: '(tabs)' }
 export default function AppLayout() {
   const theme = useTheme()
   return (
-    <Stack
-      screenOptions={{
-        headerShadowVisible: false,
-        headerTintColor: theme.text,
-        headerStyle: { backgroundColor: theme.bg },
-        headerTitleStyle: { fontFamily: font.bodySemibold, fontSize: 17 },
-        headerBackButtonDisplayMode: 'minimal',
-        contentStyle: { backgroundColor: theme.bg },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <PushBootstrap />
+      <Stack
+        screenOptions={{
+          headerShadowVisible: false,
+          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: theme.bg },
+          headerTitleStyle: { fontFamily: font.bodySemibold, fontSize: 17 },
+          headerBackButtonDisplayMode: 'minimal',
+          contentStyle: { backgroundColor: theme.bg },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="match/[matchId]"
+          options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'fade' }}
+        />
+      </Stack>
+    </>
   )
 }
