@@ -100,3 +100,67 @@ export const devicesApi = {
     api<void>('PUT', '/devices/push-token', { body: { token, platform } }),
   unregisterPush: (token: string) => api<void>('DELETE', '/devices/push-token', { body: { token } }),
 }
+
+// Panel de administración (v2). El back confirma el rol admin en BD en cada request (403 si no).
+type AdminSchemas = import('./schema').components['schemas']
+
+export const adminApi = {
+  events: (includePast = true) =>
+    api<AdminSchemas['AdminEventDto'][]>('GET', '/admin/events', { query: { includePast: String(includePast) } }),
+  createEvent: (body: AdminSchemas['AdminEventRequest']) =>
+    api<AdminSchemas['AdminEventDto']>('POST', '/admin/events', { body }),
+  updateEvent: (eventId: string, body: AdminSchemas['AdminEventRequest']) =>
+    api<AdminSchemas['AdminEventDto']>('PUT', `/admin/events/${id(eventId)}`, { body }),
+  deleteEvent: (eventId: string) => api<void>('DELETE', `/admin/events/${id(eventId)}`),
+  songs: (limit = 200) => api<AdminSchemas['AdminSongDto'][]>('GET', '/admin/songs', { query: { limit } }),
+  createSong: (body: AdminSchemas['AdminSongRequest']) =>
+    api<AdminSchemas['AdminSongDto']>('POST', '/admin/songs', { body }),
+  updateSong: (songId: string, body: AdminSchemas['AdminSongRequest']) =>
+    api<AdminSchemas['AdminSongDto']>('PUT', `/admin/songs/${id(songId)}`, { body }),
+  searchITunes: (term: string) =>
+    api<AdminSchemas['ITunesTrackDto'][]>('GET', '/admin/itunes/search', { query: { term } }),
+  reports: (status: AdminSchemas['ReportStatus']) =>
+    api<AdminSchemas['AdminReportDto'][]>('GET', '/admin/reports', { query: { status } }),
+  resolveReport: (reportId: string, body: AdminSchemas['ResolveReportRequest']) =>
+    api<AdminSchemas['AdminReportDto']>('POST', `/admin/reports/${id(reportId)}/resolve`, { body }),
+  setUserStatus: (userId: string, status: AdminSchemas['UserStatus']) =>
+    api<void>('PUT', `/admin/users/${id(userId)}/status`, { body: { status } }),
+}
+
+// Sesiones abiertas (una por dispositivo con sesión). DELETE /me/sessions cierra TODAS, incluida la de este teléfono.
+export type AccountSession = import('./schema').components['schemas']['SessionDto']
+
+export const accountApi = {
+  sessions: () => api<AccountSession[]>('GET', '/me/sessions'),
+  revokeSession: (sessionId: string) => api<void>('DELETE', `/me/sessions/${id(sessionId)}`),
+  revokeAllSessions: () => api<void>('DELETE', '/me/sessions'),
+}
+
+// --- Chat v1.1/v2: historial local (ack), respaldo cifrado y traspaso de llaves (contrato draft.3) ---
+type SyncSchemas = import('./schema').components['schemas']
+export type BackupInfo = SyncSchemas['BackupInfoDto']
+export type BackupBlob = SyncSchemas['BackupDto']
+export type PutBackupRequest = SyncSchemas['PutBackupRequest']
+export type LinkRequest = SyncSchemas['LinkRequestDto']
+export type FulfillLinkRequest = SyncSchemas['FulfillLinkRequest']
+
+export const chatAckApi = {
+  // El servidor borra lo que el otro me envió hasta upToSeq: llamar solo con eso ya guardado en el teléfono.
+  ack: (matchId: string, upToSeq: number) =>
+    api<void>('POST', `/matches/${id(matchId)}/messages/ack`, { body: { upToSeq } }),
+}
+
+export const backupApi = {
+  info: () => api<BackupInfo>('GET', '/me/backup/info'),
+  get: () => api<BackupBlob>('GET', '/me/backup'),
+  put: (body: PutBackupRequest) => api<BackupInfo>('PUT', '/me/backup', { body }),
+  remove: () => api<void>('DELETE', '/me/backup'),
+}
+
+export const linkApi = {
+  create: (ephemeralKey: string) => api<LinkRequest>('POST', '/keys/link-requests', { body: { ephemeralKey } }),
+  get: (linkId: string) => api<LinkRequest>('GET', `/keys/link-requests/${id(linkId)}`),
+  fulfill: (linkId: string, body: FulfillLinkRequest) =>
+    api<void>('PUT', `/keys/link-requests/${id(linkId)}`, { body }),
+  remove: (linkId: string) => api<void>('DELETE', `/keys/link-requests/${id(linkId)}`),
+}
