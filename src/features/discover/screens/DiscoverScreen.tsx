@@ -6,7 +6,7 @@ import { meApi } from '@/lib/api/endpoints'
 import { userMessage } from '@/lib/api/errors'
 import type { SwipeDirection } from '@/lib/api/types'
 import { queryKeys } from '@/lib/query'
-import { EmptyState, ErrorState, Screen, space, Text, useStyles, VinylRecordIcon, type Theme } from '@/ui'
+import { EmptyState, ErrorState, Logo, Screen, space, useStyles, VinylRecordIcon, type Theme } from '@/ui'
 import { DeckSkeleton } from '../components/DeckSkeleton'
 import { DiscoverActions } from '../components/DiscoverActions'
 import { RadarProgress, RadarUnlocked } from '../components/RadarProgress'
@@ -15,6 +15,7 @@ import { useAppActive, useScreenReaderEnabled } from '../hooks/useAppActive'
 import { usePreviewAudio } from '../hooks/usePreviewAudio'
 import { useSongQueue } from '../hooks/useSongQueue'
 
+const LOGO_WIDTH = 120
 const UNLOCKED_COPY = 'Listo. Ya puedes ver quién va a tus conciertos.'
 
 export function DiscoverScreen() {
@@ -89,9 +90,10 @@ export function DiscoverScreen() {
   return (
     <Screen padded={false}>
       <View style={styles.header}>
-        <Text variant="title1" accessibilityRole="header">
-          Descubrir
-        </Text>
+        {/* La pestaña de inicio lleva la marca; la barra de abajo ya dice "Descubrir", y el lector lo sigue anunciando. */}
+        <View accessible accessibilityRole="header" accessibilityLabel="Descubrir">
+          <Logo width={LOGO_WIDTH} />
+        </View>
         {unlockedNotice ? (
           <RadarUnlocked onSeeEvents={goToEvents} onDismiss={() => setUnlockedNotice(false)} />
         ) : radar && !radar.radarUnlocked ? (

@@ -7,12 +7,15 @@ import { userMessage } from '@/lib/api/errors'
 import { authApi } from '@/lib/api/endpoints'
 import { queryKeys } from '@/lib/query'
 import { useSession } from '@/lib/session/SessionContext'
-import { Alert, Button, Checkbox, haptics, Screen, space, Text, TextField, useStyles, useTheme, useToast, type Theme } from '@/ui'
+import { Alert, Button, Checkbox, haptics, Logo, Screen, space, Text, TextField, useStyles, useTheme, useToast, type Theme } from '@/ui'
 import { PasswordField } from '../components/PasswordField'
 import { TextLink } from '../components/TextLink'
 import { registerErrors, type RegisterField } from '../lib/errors'
 import { consentVersionOf, legalLinksOf } from '../lib/legal'
 import { displayNameError, emailError, newPasswordError, normalizeEmail, PASSWORD_MIN_LENGTH } from '../lib/validation'
+
+// Firma de marca arriba del formulario, a escala de encabezado: el foco sigue siendo el título.
+const LOGO_WIDTH = 128
 
 type Errors = Partial<Record<RegisterField, string>>
 
@@ -109,6 +112,7 @@ export function RegisterScreen() {
   return (
     <Screen mode="form" edges={['bottom']}>
       <View style={styles.header}>
+        <Logo width={LOGO_WIDTH} />
         <Text variant="title1" accessibilityRole="header">
           Crea tu cuenta
         </Text>

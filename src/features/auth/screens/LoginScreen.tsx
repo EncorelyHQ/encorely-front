@@ -3,11 +3,14 @@ import { StyleSheet, View, type TextInput } from 'react-native'
 import { useMutation } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { useSession } from '@/lib/session/SessionContext'
-import { Alert, Button, haptics, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
+import { Alert, Button, haptics, Logo, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
 import { PasswordField } from '../components/PasswordField'
 import { TextLink } from '../components/TextLink'
 import { loginErrors, type LoginField } from '../lib/errors'
 import { emailError, loginPasswordError, normalizeEmail } from '../lib/validation'
+
+// Firma de marca arriba del formulario, a escala de encabezado: el foco sigue siendo el título.
+const LOGO_WIDTH = 128
 
 type Errors = Partial<Record<LoginField, string>>
 
@@ -60,6 +63,7 @@ export function LoginScreen() {
   return (
     <Screen mode="form" edges={['bottom']}>
       <View style={styles.header}>
+        <Logo width={LOGO_WIDTH} />
         <Text variant="title1" accessibilityRole="header">
           Entra a tu cuenta
         </Text>
