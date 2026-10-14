@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router'
+import { ChatBootstrap } from '@/features/chat'
 import { PushBootstrap } from '@/features/push'
 import { font, useTheme } from '@/ui'
 
@@ -9,6 +10,7 @@ export default function AppLayout() {
   const theme = useTheme()
   return (
     <>
+      <ChatBootstrap />
       <PushBootstrap />
       <Stack
         screenOptions={{

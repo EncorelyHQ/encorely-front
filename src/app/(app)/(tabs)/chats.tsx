@@ -1,10 +1,5 @@
-import { Screen, Text } from '@/ui'
+import { ChatsScreen } from '@/features/chat'
 
-// Placeholder: lo reemplaza el corte de su módulo.
 export default function ChatsRoute() {
-  return (
-    <Screen>
-      <Text variant="title1">Chats</Text>
-    </Screen>
-  )
+  return <ChatsScreen />
 }
