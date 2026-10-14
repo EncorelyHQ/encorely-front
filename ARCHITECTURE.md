@@ -90,7 +90,7 @@ Todo el cifrado vive en `src/features/chat/crypto/envelope.ts`. Ningún `console
 
 ### Respaldo cifrado opcional
 
-- `PUT/GET/DELETE /me/backup` y `GET /me/backup/info`. Cifrado en el teléfono: **scrypt** (`N = 2^15, r = 8, p = 1`, 32 MiB; en el contrato `opsLimit = N`, `memLimit = 128·r·N`) → XChaCha20-Poly1305 con AAD `“ENCORELY-BACKUP-v1” ‖ versión ‖ algoritmo ‖ parámetros ‖ sal` (cambiar los parámetros en el servidor rompe el descifrado). La frase se normaliza (espacios, NFC) y nunca sale del teléfono.
+- `PUT/GET/DELETE /me/backup` y `GET /me/backup/info`. Cifrado en el teléfono: **scrypt** (`N = 2^14, r = 8, p = 1`, 16 MiB; bajado de 2^15 tras medir ~100 s en el emulador; en el contrato `opsLimit = N`, `memLimit = 128·r·N`) → XChaCha20-Poly1305 con AAD `“ENCORELY-BACKUP-v1” ‖ versión ‖ algoritmo ‖ parámetros ‖ sal` (cambiar los parámetros en el servidor rompe el descifrado). La frase se normaliza (espacios, NFC) y nunca sale del teléfono.
 - Por qué scrypt y no argon2id: con `@noble/hashes` 2.4 en un intérprete sin JIT (aproximación a Hermes), argon2id con el mínimo de OWASP (19 MiB, t=2) tardó ~9 s y con 64 MiB/t=3 pasaría de 30 s; scrypt 32 MiB tardó ~11 s y corre en trozos (`scryptAsync`) sin congelar la UI. Los parámetros viajan con el blob: se pueden subir sin romper respaldos viejos. Al restaurar se acotan (N ≤ 2^20, r ≤ 32).
 - Contenido: identidad, cadena vigente, cajas vigentes y, opcional, el historial (máx. 10 MiB; se avisa el tamaño). Restaurar valida que sea de la misma cuenta, instala, publica una caja por encima del servidor e importa el historial. Frase mínima: 4 palabras o 16 caracteres. "Si olvidas la frase, nadie puede recuperar tus mensajes, ni nosotros."
 

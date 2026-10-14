@@ -9,7 +9,7 @@ import { createLocalStores } from '../../local/registry'
 import { backupInfo, createBackup, restoreBackup } from '../backup'
 import { passphraseStrength } from '../passphrase'
 
-// scrypt real (N=2^15) tarda varios segundos en Jest bajo carga: margen explícito para no volverlo inestable.
+// scrypt real (N=2^14) tarda varios segundos en Jest bajo carga: margen explícito para no volverlo inestable.
 jest.setTimeout(60_000)
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -83,7 +83,7 @@ describe('respaldo cifrado con frase', () => {
     const stored = JSON.stringify(sync.backups.get(ANA))
     expect(stored).not.toContain('Bomba')
     expect(stored).not.toContain('perros')
-    expect(sync.backups.get(ANA)!.kdf).toEqual({ algorithm: 'scrypt', opsLimit: 2 ** 15, memLimit: 128 * 8 * 2 ** 15 })
+    expect(sync.backups.get(ANA)!.kdf).toEqual({ algorithm: 'scrypt', opsLimit: 2 ** 14, memLimit: 128 * 8 * 2 ** 14 })
 
     // Teléfono nuevo: al entrar ya generó y publicó una identidad propia.
     clearChatSessions()

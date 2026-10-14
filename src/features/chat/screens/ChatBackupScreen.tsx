@@ -244,7 +244,7 @@ function CreateBackup({ onDone }: { onDone: () => void }) {
       title="Incluir el historial"
       subtitle={
         historyFits
-          ? `Unos ${formatBytes(estimate.data.approxBytes)} · ${estimate.data.messages} mensajes guardados en este teléfono`
+          ? `Unos ${formatBytes(estimate.data.approxBytes)} · ${estimate.data.messages} ${estimate.data.messages === 1 ? 'mensaje guardado' : 'mensajes guardados'} en este teléfono`
           : `Pesa unos ${formatBytes(estimate.data.approxBytes)}, más que el máximo de 10 MB. Solo se respaldan las llaves.`
       }
       switchValue={includeHistory && historyFits}
@@ -303,7 +303,7 @@ function CreateBackup({ onDone }: { onDone: () => void }) {
       <ConfirmSheet
         visible={confirming}
         title="¿Ya guardaste la frase?"
-        message={`${FORGET_WARNING} Cifrar tarda unos segundos.`}
+        message={`${FORGET_WARNING} Cifrar puede tardar hasta un minuto: deja la app abierta.`}
         confirmLabel="Sí, la guardé"
         onConfirm={() => {
           setConfirming(false)

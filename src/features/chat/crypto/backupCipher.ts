@@ -16,7 +16,9 @@ const NONCE_LENGTH = 24
  * ~11 s y se puede correr en trozos sin congelar la UI (scryptAsync). Los parámetros viajan con el respaldo, así
  * que se pueden subir más adelante sin romper los respaldos viejos.
  */
-export const DEFAULT_SCRYPT = { N: 2 ** 15, r: 8, p: 1 } as const
+// N=2^14 (16 MiB): en Hermes sin JIT 2^15 tardó ~100 s en el emulador. Los parámetros viajan en el respaldo,
+// así que subirlos después no rompe los respaldos existentes; la frase mínima (4 palabras o 16 caracteres) compensa.
+export const DEFAULT_SCRYPT = { N: 2 ** 14, r: 8, p: 1 } as const
 
 export type ScryptParams = { N: number; r: number; p: number }
 
