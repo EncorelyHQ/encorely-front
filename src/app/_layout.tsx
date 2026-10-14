@@ -12,6 +12,7 @@ import { Archivo_400Regular, Archivo_500Medium, Archivo_600SemiBold, Archivo_700
 import { IBMPlexMono_500Medium } from '@expo-google-fonts/ibm-plex-mono'
 import { userMessage } from '@/lib/api/errors'
 import { isApiConfigured } from '@/lib/config'
+import { OfflineBanner, setupQueryEnvironment } from '@/lib/net'
 import { queryClient } from '@/lib/query'
 import { SessionProvider, useSession } from '@/lib/session/SessionContext'
 import { ErrorState, Screen, ThemeProvider, ToastProvider, useTheme } from '@/ui'
@@ -19,6 +20,7 @@ import { ErrorState, Screen, ThemeProvider, ToastProvider, useTheme } from '@/ui
 void SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
+  useEffect(() => setupQueryEnvironment(), [])
   const [fontsLoaded, fontError] = useFonts({
     BigShouldersDisplay_700Bold,
     BigShouldersDisplay_800ExtraBold,
@@ -111,6 +113,7 @@ function RootNavigator({ ready }: { ready: boolean }) {
         </Stack.Protected>
         <Stack.Screen name="spotify-callback" />
       </Stack>
+      <OfflineBanner />
     </NavThemeProvider>
   )
 }
