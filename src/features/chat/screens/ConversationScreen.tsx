@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View, type ListRenderItem } from 'react-native'
 import { router, Stack } from 'expo-router'
+import { useHeaderHeight } from 'expo-router/react-navigation'
 import { KeyboardAvoidingView, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -50,6 +51,7 @@ export function ConversationScreen({ matchId }: Props) {
   const conversation = useConversation(matchId)
   const { match, peerState, status } = conversation
   const styles = useStyles(makeStyles)
+  const headerHeight = useHeaderHeight()
   const toast = useToast()
   const queryClient = useQueryClient()
   const name = match?.peer.displayName ?? ''
@@ -111,7 +113,9 @@ export function ConversationScreen({ matchId }: Props) {
         }}
       />
 
-      <KeyboardAvoidingView behavior="padding" automaticOffset style={styles.root}>
+      {/* El KAV mide su posición relativa al stack, que empieza bajo el encabezado: sin este offset el relleno
+          queda corto justo esa altura y el teclado tapa la caja de texto (Android 15, edge-to-edge). */}
+      <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={headerHeight} style={styles.root}>
         <ConversationBody conversation={conversation} name={name} onSecurity={openSecurity} onLeave={leave} />
       </KeyboardAvoidingView>
 
