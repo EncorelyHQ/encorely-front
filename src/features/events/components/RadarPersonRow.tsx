@@ -43,9 +43,14 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
             </Text>
           ) : null}
         </View>
-        <Text variant="data" color="textMuted" style={styles.affinity}>
-          {percent(person.affinity)} afinidad
-        </Text>
+        <View style={styles.affinity}>
+          <Text variant="data" color="textMuted">
+            {percent(person.affinity)}
+          </Text>
+          <Text variant="footnote" color="textMuted">
+            afinidad
+          </Text>
+        </View>
       </View>
 
       {genres ? (
@@ -56,15 +61,21 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
 
       <View style={[styles.indented, styles.action]}>
         {person.matched ? (
-          <Button
-            label="Hicieron match · Escribir"
-            variant="secondary"
-            icon={ChatCircleTextIcon}
-            fullWidth={false}
-            loading={openingChat}
-            accessibilityHint={`Abre el chat con ${person.displayName}`}
-            onPress={() => onOpenChat(person)}
-          />
+          <View style={styles.matched}>
+            <Button
+              label="Escribir"
+              variant="primary"
+              size="md"
+              icon={ChatCircleTextIcon}
+              fullWidth={false}
+              loading={openingChat}
+              accessibilityHint={`Hicieron match. Abre el chat con ${person.displayName}`}
+              onPress={() => onOpenChat(person)}
+            />
+            <Text variant="caption" color="verified">
+              Hicieron match
+            </Text>
+          </View>
         ) : person.likedByMe ? (
           <Animated.View
             entering={FadeIn.duration(motion.duration.fast).reduceMotion(ReduceMotion.System)}
@@ -81,6 +92,7 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
           <Button
             label="Me interesa"
             variant="secondary"
+            size="md"
             icon={HeartIcon}
             fullWidth={false}
             disabled={liking}
@@ -123,9 +135,10 @@ const makeStyles = (t: Theme) =>
     },
     top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
     identity: { flex: 1, gap: space.xs / 2 },
-    affinity: { alignSelf: 'flex-start', paddingTop: space.xs, flexShrink: 0, maxWidth: '40%', textAlign: 'right' },
+    affinity: { alignSelf: 'flex-start', alignItems: 'flex-end', flexShrink: 0, maxWidth: '40%' },
     // Alinea el texto con el nombre, no con el avatar.
     indented: { marginLeft: AVATAR + space.md },
     action: { alignItems: 'flex-start', marginTop: space.xs },
+    matched: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.md },
     liked: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: space.xxxl },
   })

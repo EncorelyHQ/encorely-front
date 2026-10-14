@@ -126,7 +126,7 @@ export function GenresScreen() {
           {count}/{MAX_GENRES}
         </Text>
       </View>
-      <Button label="Terminar" size="lg" loading={save.isPending} onPress={finish} disabled={!genres.isSuccess || !catalog.length} />
+      <Button label="Terminar" size="lg" loading={save.isPending} onPress={finish} disabled={!genres.isSuccess || !catalog.length || count === 0} />
     </>
   )
 

@@ -30,9 +30,10 @@ export function Avatar({ name, size = 48 }: AvatarProps) {
       }}
     >
       <Text
-        variant={size >= 72 ? 'title1' : 'headline'}
+        variant="headline"
         color="onTicket"
         allowFontScaling={false}
+        // Siempre Archivo 600: en tamaños grandes solo crece el cuerpo, nunca cambia de familia.
         style={size >= 72 ? { fontSize: size * 0.38, lineHeight: size * 0.44 } : null}
       >
         {initials(name)}

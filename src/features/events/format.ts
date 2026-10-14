@@ -29,12 +29,15 @@ export type EventDateParts = {
 
 // ICU mete espacios finos/no separables distintos según la plataforma; los dejamos en espacio normal.
 const normalizeSpaces = (value: string) => value.replace(/\s+/g, ' ').trim()
+// La hora no se parte en dos líneas: espacio duro entre hora y sufijo y dentro de "p. m.".
+const NBSP = '\u00A0'
+const glueTime = (value: string) => value.replace(/ (?=[ap]\. m\.)/, NBSP).replace(/([ap]\.) m\./, `$1${NBSP}m.`)
 const stripDot = (value: string) => value.replace(/\.$/, '')
 
 export function formatEventDate(iso: string): EventDateParts {
   const date = new Date(iso)
   const day = dayFmt.format(date)
-  const time = normalizeSpaces(timeFmt.format(date)).replace(':00 ', ' ')
+  const time = glueTime(normalizeSpaces(timeFmt.format(date)).replace(':00 ', ' '))
   return {
     day,
     monthShort: stripDot(normalizeSpaces(monthShortFmt.format(date))).toUpperCase(),
@@ -54,6 +57,12 @@ export function lineupText(lineup: readonly string[] | string | null | undefined
 export function attendeesLabel(count: number): string | null {
   if (count <= 0) return null
   return count === 1 ? '1 va' : `${count} van`
+}
+
+// Número aparte para pintarlo en `data` y el resto en texto normal.
+export function attendeesParts(count: number): { count: string; rest: string } | null {
+  if (count <= 0) return null
+  return count === 1 ? { count: '1', rest: ' va' } : { count: String(count), rest: ' van' }
 }
 
 export function eventAccessibilityLabel(event: EventSummary): string {

@@ -19,7 +19,7 @@ export function EventTicket({ event }: { event: EventDetail }) {
               <Field label="Fecha" value={`${date.weekdayShort} ${date.day} ${date.monthShort}`} />
               <Field label="Hora" value={date.time} />
             </View>
-            <Field label="Lugar" value={`${event.venue} · ${event.city}`} />
+            <Field label="Lugar" value={`${event.venue} · ${event.city}`} mono={false} />
             {attendees ? (
               <Text variant="footnote" color="onTicketMuted">
                 {attendees}
@@ -54,14 +54,14 @@ export function EventTicket({ event }: { event: EventDetail }) {
   )
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   const styles = useStyles(makeStyles)
   return (
     <View style={styles.field}>
       <Text variant="caption" color="onTicketMuted">
         {label}
       </Text>
-      <Text variant="data" color="onTicket">
+      <Text variant={mono ? 'data' : 'callout'} color="onTicket">
         {value}
       </Text>
     </View>

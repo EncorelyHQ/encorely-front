@@ -4,7 +4,7 @@ export type GenreBar = {
   slug: string
   name: string
   weight: number
-  // Largo de la barra: 1 para el género más fuerte, el resto en proporción a él.
+  // Proporción respecto al género más fuerte (ya no define el largo de la barra: eso es `percent`).
   ratio: number
   // Porcentaje sobre el total de géneros con peso positivo (no solo del top), redondeado.
   percent: number

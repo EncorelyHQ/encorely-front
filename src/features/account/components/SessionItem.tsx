@@ -23,7 +23,7 @@ export function SessionItem({ row, onClose, closing, disabled }: SessionItemProp
   return (
     <Animated.View style={styles.row} exiting={exiting} layout={layout}>
       <View style={styles.main} accessible accessibilityLabel={row.accessibilityLabel}>
-        <Icon icon={DeviceMobileIcon} size={24} color={row.isCurrent ? 'accentText' : 'textMuted'} />
+        <Icon icon={DeviceMobileIcon} size={24} color="textMuted" />
         <View style={styles.texts}>
           <Text variant="headline">{row.title}</Text>
           <View style={styles.meta}>

@@ -1,12 +1,12 @@
 import { StyleSheet, View } from 'react-native'
 import Svg, { Line } from 'react-native-svg'
-import { radius, space, Text, useStyles, useTheme, type Theme } from '@/ui'
+import { space, Text, useStyles, useTheme, type Theme } from '@/ui'
 
 type StepStubProps = { step: number; total: number }
 
 const STROKE = 2
 
-// Progreso como talón numerado: el número va en un recuadro de boleta y lo que falta se ve perforado.
+// Progreso como talón numerado: el contador va suelto en `data` y lo que falta se ve perforado.
 export function StepStub({ step, total }: StepStubProps) {
   const theme = useTheme()
   const styles = useStyles(makeStyles)
@@ -20,11 +20,9 @@ export function StepStub({ step, total }: StepStubProps) {
       accessibilityLabel={`Paso ${step} de ${total}`}
       accessibilityValue={{ min: 1, max: total, now: step }}
     >
-      <View style={styles.stub}>
-        <Text variant="data">
-          {step}/{total}
-        </Text>
-      </View>
+      <Text variant="data">
+        {step}/{total}
+      </Text>
       <View style={styles.track}>
         {segments.map((n) =>
           n <= step ? (
@@ -51,13 +49,6 @@ export function StepStub({ step, total }: StepStubProps) {
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-    stub: {
-      borderWidth: 1.5,
-      borderColor: t.borderInput,
-      borderRadius: radius.sm,
-      paddingHorizontal: space.sm,
-      paddingVertical: space.xs / 2,
-    },
     track: { flex: 1, flexDirection: 'row', gap: space.xs },
     done: { flex: 1, height: STROKE, backgroundColor: t.accent },
     pending: { flex: 1 },

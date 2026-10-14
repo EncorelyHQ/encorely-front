@@ -61,7 +61,16 @@ const makeStyles = (t: Theme) =>
     body: { padding: space.lg + 4, gap: space.sm },
     perforation: { height: NOTCH * 2, justifyContent: 'center' },
     line: { position: 'absolute', left: 0 },
-    notch: { position: 'absolute', width: NOTCH * 2, height: NOTCH * 2, borderRadius: NOTCH, top: 0 },
+    notch: {
+      position: 'absolute',
+      width: NOTCH * 2,
+      height: NOTCH * 2,
+      borderRadius: NOTCH,
+      top: 0,
+      // En Papel la muesca lleva el mismo filo que la boleta para leerse como mordisco del borde.
+      borderWidth: t.scheme === 'papel' ? StyleSheet.hairlineWidth : 0,
+      borderColor: t.border,
+    },
     notchLeft: { left: -NOTCH },
     notchRight: { right: -NOTCH },
     stub: { paddingHorizontal: space.lg + 4, paddingBottom: space.lg, paddingTop: space.xs, gap: space.xs },

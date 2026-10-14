@@ -34,9 +34,6 @@ export const RadarProgress = memo(function RadarProgress({ swipeCount, threshold
         <Text variant="footnote" color="textMuted" style={styles.copy}>
           Califica <Text variant="data">{remaining}</Text> {songsWord(remaining)} más para ver quién va a tus conciertos
         </Text>
-        <Text variant="data" color="textMuted">
-          {Math.min(swipeCount, threshold)}/{threshold}
-        </Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, fill]} />
@@ -72,7 +69,7 @@ const makeStyles = (t: Theme) =>
     wrap: { gap: space.sm },
     line: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
     copy: { flex: 1 },
-    track: { height: 3, borderRadius: radius.full, backgroundColor: t.surface2, overflow: 'hidden' },
+    track: { height: 3, borderRadius: radius.full, backgroundColor: t.borderInput, overflow: 'hidden' },
     fill: { flex: 1, backgroundColor: t.accent, transformOrigin: 'left' },
     notice: {
       gap: space.sm,

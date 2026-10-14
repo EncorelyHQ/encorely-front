@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native'
 import type { EventSummary } from '@/lib/api/types'
 import { Icon, Skeleton, Text, TicketIcon, radius, space, useStyles, type Theme } from '@/ui'
-import { attendeesLabel, eventAccessibilityLabel, formatEventDate, lineupText } from '../format'
+import { attendeesParts, eventAccessibilityLabel, formatEventDate, lineupText } from '../format'
 
 type EventRowProps = { event: EventSummary; onPress: (event: EventSummary) => void }
 
@@ -14,7 +14,7 @@ export function EventRow({ event, onPress }: EventRowProps) {
   const stacked = fontScale >= STACK_AT_FONT_SCALE
   const date = formatEventDate(event.startsAt)
   const lineup = lineupText(event.artistLineup)
-  const attendees = attendeesLabel(event.attendeeCount)
+  const attendees = attendeesParts(event.attendeeCount)
 
   return (
     <Pressable
@@ -32,7 +32,7 @@ export function EventRow({ event, onPress }: EventRowProps) {
           <Text variant="data" color="textMuted">
             {date.monthShort}
           </Text>
-          <Text variant="data" color="textMuted">
+          <Text variant="data" color="textMuted" numberOfLines={1}>
             {date.time}
           </Text>
         </View>
@@ -61,8 +61,11 @@ export function EventRow({ event, onPress }: EventRowProps) {
               </View>
             ) : null}
             {attendees ? (
-              <Text variant="caption" color="textMuted">
-                {attendees}
+              <Text variant="footnote" color="textMuted">
+                <Text variant="data" color="textMuted">
+                  {attendees.count}
+                </Text>
+                {attendees.rest}
               </Text>
             ) : null}
           </View>

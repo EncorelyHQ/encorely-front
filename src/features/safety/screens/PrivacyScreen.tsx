@@ -69,7 +69,7 @@ function Section({ icon, title, children }: { icon: PhosphorIcon; title: string;
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <Icon icon={icon} size={24} color="accentText" />
+        <Icon icon={icon} size={24} color={icon === WarningIcon ? 'danger' : 'textMuted'} />
         <Text variant="headline" accessibilityRole="header" style={styles.sectionTitle}>
           {title}
         </Text>

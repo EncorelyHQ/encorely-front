@@ -90,8 +90,8 @@ export function ListSection({ title, children, footer }: { title?: string; child
   return (
     <View style={styles.section}>
       {title ? (
-        <Text variant="caption" color="textMuted" style={styles.sectionTitle} accessibilityRole="header">
-          {title.toUpperCase()}
+        <Text variant="footnote" color="textMuted" style={styles.sectionTitle} accessibilityRole="header">
+          {title}
         </Text>
       ) : null}
       <View style={styles.group}>{children}</View>
@@ -117,8 +117,8 @@ const makeStyles = (t: Theme) =>
     },
     texts: { flex: 1, gap: 2 },
     section: { gap: space.sm },
-    sectionTitle: { paddingHorizontal: space.xs, letterSpacing: 0.6 },
-    sectionFooter: { paddingHorizontal: space.xs },
+    sectionTitle: { paddingHorizontal: space.lg },
+    sectionFooter: { paddingHorizontal: space.lg },
     group: {
       borderRadius: 12,
       overflow: 'hidden',

@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Stack, useRouter } from 'expo-router'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { userMessage } from '@/lib/api/errors'
 import { queryKeys } from '@/lib/query'
-import { Button, ErrorState, LoadingState, Screen, TicketIcon, space, useStyles, type Theme } from '@/ui'
+import { Button, ConfirmSheet, ErrorState, LoadingState, Screen, TicketIcon, space, useStyles, type Theme } from '@/ui'
 import { EventTicket } from '../components/EventTicket'
 import { RadarSection } from '../components/RadarSection'
 import { useAttendance, useEvent, useManualRefresh } from '../hooks'
@@ -15,6 +15,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
   const qc = useQueryClient()
   const event = useEvent(eventId)
   const attendance = useAttendance(eventId)
+  const [confirmingLeave, setConfirmingLeave] = useState(false)
 
   const refetchAll = useCallback(
     () =>
@@ -56,15 +57,7 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
       refreshing={refreshing}
       onRefresh={onRefresh}
       footer={
-        going ? (
-          <Button
-            label="Ya no voy"
-            variant="ghost"
-            disabled={attendance.isPending}
-            accessibilityHint="Dejarás de aparecer en el radar de este concierto"
-            onPress={() => attendance.mutate({ going: false })}
-          />
-        ) : (
+        going ? undefined : (
           <Button
             label="Voy a este concierto"
             size="lg"
@@ -85,10 +78,31 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
           attendancePending={attendance.isPending}
         />
       </View>
+      {going ? (
+        <Button
+          label="Ya no voy"
+          variant="ghost"
+          disabled={attendance.isPending}
+          accessibilityHint="Dejarás de aparecer en el radar de este concierto"
+          onPress={() => setConfirmingLeave(true)}
+        />
+      ) : null}
       {/* Si se llega por enlace sin historial, "atrás" no existe: se ofrece volver a la lista. */}
       {router.canGoBack() ? null : (
         <Button label="Ver todos los conciertos" variant="ghost" onPress={() => router.replace('/events')} />
       )}
+      <ConfirmSheet
+        visible={confirmingLeave}
+        title="¿Ya no vas a este concierto?"
+        message="Dejarás de aparecer en el radar y no verás a quienes van. Puedes volver a marcar que vas cuando quieras."
+        confirmLabel="Ya no voy"
+        loading={attendance.isPending}
+        onConfirm={() => {
+          setConfirmingLeave(false)
+          attendance.mutate({ going: false })
+        }}
+        onCancel={() => setConfirmingLeave(false)}
+      />
     </Screen>
   )
 }

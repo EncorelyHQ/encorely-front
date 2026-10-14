@@ -52,7 +52,9 @@ function GenreBarRow({ bar, index }: { bar: GenreBar; index: number }) {
         </Text>
       </View>
       <View style={styles.track}>
-        <Animated.View style={[styles.fill, { width: `${Math.max(bar.ratio * 100, 2)}%` }, fillStyle]} />
+        <Animated.View
+          style={[styles.fill, index === 0 ? styles.fillTop : styles.fillRest, { width: `${Math.max(bar.percent, 2)}%` }, fillStyle]}
+        />
       </View>
     </View>
   )
@@ -65,5 +67,8 @@ const makeStyles = (t: Theme) =>
     labels: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
     name: { flex: 1 },
     track: { height: space.sm, borderRadius: radius.full, backgroundColor: t.surface2, overflow: 'hidden' },
-    fill: { height: '100%', borderRadius: radius.full, backgroundColor: t.accent, transformOrigin: 'left' },
+    fill: { height: '100%', borderRadius: radius.full, transformOrigin: 'left' },
+    // Solo el género dominante lleva el acento; el resto es proporción en neutro.
+    fillTop: { backgroundColor: t.accent },
+    fillRest: { backgroundColor: t.textSubtle },
   })
