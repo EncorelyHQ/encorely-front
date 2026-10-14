@@ -19,7 +19,7 @@ import {
 } from '@/ui'
 import { ArrowSquareOutIcon } from 'phosphor-react-native/src/icons/ArrowSquareOut'
 import { FileTextIcon } from 'phosphor-react-native/src/icons/FileText'
-import { ConsentCheckbox } from '@/features/auth/components/ConsentCheckbox'
+import { Checkbox } from '@/ui'
 import { CONSENT_REQUIRED_CODE, currentConsentVersionOf } from '../consent'
 import { clearConsentFlag } from '../consentSignal'
 import { effectiveDateLabel, legalDocumentsOf } from '../legal'
@@ -154,7 +154,7 @@ export function ConsentScreen() {
               ))}
             </ListSection>
 
-            <ConsentCheckbox
+            <Checkbox
               checked={checked}
               onChange={(value) => {
                 setChecked(value)
