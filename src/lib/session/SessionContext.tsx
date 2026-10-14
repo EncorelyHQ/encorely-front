@@ -95,9 +95,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [bootAttempt, runSignInTasks])
 
   const finish = useCallback(
-    async (reason: 'signOut' | 'delete' | 'expired') => {
+    async (reason: 'delete' | 'local') => {
       const userId = getSession()?.userId ?? user?.id
-      if (userId && reason !== 'expired') {
+      if (userId && reason === 'delete') {
         await Promise.allSettled([...signOutTasks].map((task) => task(userId, reason)))
       }
       await clearSession()
@@ -112,7 +112,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     () =>
       onSessionExpired(() => {
         setNotice('Tu sesión se cerró. Vuelve a entrar para seguir.')
-        void finish('expired')
+        void finish('local')
       }),
     [finish],
   )
@@ -144,10 +144,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
-    const refreshToken = getSession()?.refreshToken
+    const session = getSession()
+    // Las tareas (p. ej. borrar el token de push) necesitan la sesión viva: corren antes de revocar el refresh.
+    if (session) await Promise.allSettled([...signOutTasks].map((task) => task(session.userId, 'signOut')))
     // Cerrar sesión en el dispositivo nunca depende de que el servidor responda.
-    if (refreshToken) await authApi.logout(refreshToken).catch(() => undefined)
-    await finish('signOut')
+    if (session) await authApi.logout(session.refreshToken).catch(() => undefined)
+    await finish('local')
   }, [finish])
 
   const deleteAccount = useCallback(async () => {

@@ -62,6 +62,7 @@ export function IconButton({
                 : 'transparent',
         borderWidth: tone === 'outline' ? 1.5 : 0,
         borderColor: theme.borderInput,
+        transform: [{ scale: pressed ? 0.94 : 1 }],
       })}
       {...rest}
     >

@@ -48,6 +48,8 @@ export function Button({
         fullWidth ? styles.full : null,
         variantStyle(theme, variant, pressed),
         inactive && !loading ? styles.disabled : null,
+        // Respuesta táctil inmediata: el botón cede un poco bajo el dedo.
+        pressed ? styles.pressed : null,
       ]}
       {...rest}
     >
@@ -104,5 +106,6 @@ const makeStyles = (_t: Theme) =>
     lg: { minHeight: touch.large, paddingVertical: space.lg },
     full: { alignSelf: 'stretch' },
     disabled: { opacity: 0.45 },
+    pressed: { transform: [{ scale: 0.97 }] },
     content: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   })
