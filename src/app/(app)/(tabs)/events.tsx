@@ -1,10 +1,5 @@
-import { Screen, Text } from '@/ui'
+import { EventsScreen } from '@/features/events'
 
-// Placeholder: lo reemplaza el corte de su módulo.
 export default function EventsRoute() {
-  return (
-    <Screen>
-      <Text variant="title1">Events</Text>
-    </Screen>
-  )
+  return <EventsScreen />
 }
