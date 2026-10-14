@@ -68,7 +68,7 @@ export function AboutYouScreen() {
   }
 
   return (
-    <Screen mode="form" edges={['top', 'bottom']}>
+    <Screen mode="form" edges={['bottom']}>
       <View style={styles.header}>
         <StepStub step={1} total={2} />
         <Text variant="title1" accessibilityRole="header">

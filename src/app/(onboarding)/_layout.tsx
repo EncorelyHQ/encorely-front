@@ -16,7 +16,7 @@ export default function OnboardingLayout() {
         contentStyle: { backgroundColor: theme.bg },
       }}
     >
-      <Stack.Screen name="about-you" options={{ headerShown: false }} />
+      <Stack.Screen name="about-you" options={{ headerBackVisible: false }} />
       <Stack.Screen name="genres" />
     </Stack>
   )
