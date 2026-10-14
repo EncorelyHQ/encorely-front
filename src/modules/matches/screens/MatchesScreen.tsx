@@ -99,7 +99,7 @@ export default function MatchesScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={[StyleSheet.absoluteFillObject, { opacity: 0.6 }]} />
+      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={[StyleSheet.absoluteFill, { opacity: 0.6 }]} />
       <SafeAreaView style={styles.safeArea}>
 
         {/* Header without Back Button */}

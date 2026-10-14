@@ -147,7 +147,7 @@ export default function ChatScreen() {
 
   return (
     <Container style={{ paddingTop: Math.max(insets.top, 20) + 10, paddingBottom: insets.bottom }}>
-      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={['#181818', '#2a1a3a', '#181818']} style={StyleSheet.absoluteFill} />
       
       <Header intensity={20}>
         <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>

@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0A0A0F"
-    },
     "plugins": [
       [
         "expo-router",
@@ -20,9 +15,28 @@
         }
       ],
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundRecording": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      "expo-status-bar",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0A0A0F",
+          "resizeMode": "contain"
+        }
+      ]
     ],
-    "newArchEnabled": true,
     "experiments": {
       "tsconfigPaths": true
     },

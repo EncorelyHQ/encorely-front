@@ -28,7 +28,7 @@ export function SwipeStack({ tracks, onSwipe }: SwipeStackProps) {
           <View
             key={track.id}
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 transform: [{ scale }, { translateY }],
                 zIndex: mappedIndex,

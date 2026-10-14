@@ -42,7 +42,7 @@ No sustituye un tutorial de onboarding; asume familiaridad con React Native y Ex
 
 Stack principal:
 
-- **Expo SDK 54**, **expo-router** (rutas basadas en archivos bajo `src/app`).
+- **Expo SDK 57**, **expo-router** (rutas basadas en archivos bajo `src/app`).
 - **React Native** + **TypeScript**.
 - **styled-components** para tema y parte de la UI.
 
@@ -200,3 +200,8 @@ Requisitos: Node LTS, entorno Expo (iOS Simulator / Android / Expo Go según flu
 ## Conclusión
 
 La arquitectura de Encorely prioriza **claridad de capas**, **features agrupados** y **integraciones aisladas en `clients`**, alineada con objetivos de mantenimiento y crecimiento del producto. Está pensada para sostener el proyecto a **mediano plazo**, ajustando capas adicionales solo cuando la complejidad del dominio lo exija.
+
+
+## Actualización y validación
+
+Gestor único: pnpm 12.11.2, Node 24 LTS. Ver [auditoría, comandos y checklist](docs/upgrade/README.md) e [inventario](docs/upgrade/INVENTORY.md).

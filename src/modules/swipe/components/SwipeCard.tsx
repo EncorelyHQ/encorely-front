@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
   withSequence,
 } from 'react-native-reanimated';
-import { Audio } from 'expo-av';
+import { usePreviewAudio } from '../hooks/usePreviewAudio';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from '@/shared/lib/haptics';
 import { BlurView } from 'expo-blur';
@@ -175,79 +175,7 @@ export function SwipeCard({ track, isFront, onSwipe }: SwipeCardProps) {
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
 
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const soundRef = useRef<Audio.Sound | null>(null);
-
-  const stopAndUnload = useCallback(async () => {
-    const s = soundRef.current;
-    if (s) {
-      try {
-        await s.stopAsync();
-        await s.unloadAsync();
-      } catch (_) {}
-      soundRef.current = null;
-      setSound(null);
-      setIsPlaying(false);
-      setProgress(0);
-    }
-  }, []);
-
-  useEffect(() => {
-    let currentSound: Audio.Sound | null = null;
-
-    if (isFront && track.previewUrl) {
-      const loadAudio = async () => {
-        try {
-          await Audio.setAudioModeAsync({
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: false,
-          });
-
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri: track.previewUrl! },
-            { shouldPlay: true, isLooping: false, progressUpdateIntervalMillis: 250 }
-          );
-          currentSound = newSound;
-          soundRef.current = newSound;
-          setSound(newSound);
-          setIsPlaying(true);
-
-          newSound.setOnPlaybackStatusUpdate((status) => {
-            if (status.isLoaded) {
-              if (status.durationMillis && status.durationMillis > 0) {
-                setProgress(status.positionMillis / status.durationMillis);
-              }
-              if (status.didJustFinish) {
-                setIsPlaying(false);
-                setProgress(1);
-              }
-            }
-          });
-        } catch {
-        }
-      };
-      loadAudio();
-    }
-
-    return () => {
-      if (currentSound) {
-        currentSound.stopAsync().then(() => currentSound?.unloadAsync()).catch(() => {});
-      }
-    };
-  }, [isFront, track.previewUrl]);
-
-  const togglePlay = async () => {
-    if (!sound) return;
-    if (isPlaying) {
-      await sound.pauseAsync();
-      setIsPlaying(false);
-    } else {
-      await sound.playAsync();
-      setIsPlaying(true);
-    }
-  };
+  const { isPlaying, progress, stopAndUnload, togglePlay } = usePreviewAudio(track.previewUrl, isFront);
 
   const pan = Gesture.Pan()
     .enabled(isFront)
@@ -306,14 +234,14 @@ export function SwipeCard({ track, isFront, onSwipe }: SwipeCardProps) {
   });
 
   return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.card, animatedStyle]}>
           <Animated.Image source={{ uri: track.imageUrl }} style={styles.image} />
 
           <LinearGradient
             colors={['transparent', '#2a1a3a', '#181818']}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             locations={[0.4, 0.8, 1]}
           />
 

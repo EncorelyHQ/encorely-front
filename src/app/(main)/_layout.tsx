@@ -128,14 +128,14 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   blurContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 32,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(243, 102, 255, 0.15)',
   },
   darkOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(24,24,24,0.5)',
   },
   tabItem: {
