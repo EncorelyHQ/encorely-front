@@ -1,6 +1,6 @@
 import { hmac } from '@noble/hashes/hmac.js'
 import { sha256 } from '@noble/hashes/sha2.js'
-import { bytesToHex } from '@noble/hashes/utils.js'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 
 import { seededRandom } from '../__fixtures__/seededRandom'
 import { b64Decode, b64Encode, utf8 } from '../bytes'
@@ -16,7 +16,7 @@ const MATCH = 'match-1'
 
 function input(overrides: Partial<SealInput> = {}): SealInput {
   return {
-    id: 'msg-1',
+    id: '0f8e2a6c-3b1d-4c5e-9a7f-1b2c3d4e5f60',
     matchId: MATCH,
     senderId: alice.userId,
     recipientId: bob.userId,
@@ -62,7 +62,7 @@ describe('sealMessage / openMessage', () => {
     const envelope = sealMessage(input())
     const opened = openMessage(envelope, bobCtx)
     expect(opened).toMatchObject({
-      id: 'msg-1',
+      id: '0f8e2a6c-3b1d-4c5e-9a7f-1b2c3d4e5f60',
       matchId: MATCH,
       senderId: alice.userId,
       sentAt: 1_760_000_000_000,
@@ -71,7 +71,7 @@ describe('sealMessage / openMessage', () => {
     })
     expect(JSON.parse(opened.p)).toEqual({
       v: 1,
-      id: 'msg-1',
+      id: '0f8e2a6c-3b1d-4c5e-9a7f-1b2c3d4e5f60',
       m: MATCH,
       s: alice.userId,
       r: bob.userId,
@@ -127,7 +127,7 @@ describe('sealMessage / openMessage', () => {
     const b = sealMessage(input(), { randomBytes: seededRandom('vector') })
     expect(a).toEqual(b)
     const digest = bytesToHex(sha256(utf8(JSON.stringify(a))))
-    expect(digest).toBe('be2ce5ffadd3e1b2fd082112487f3e93ad135843a9fefbb57132b57da8b7142b')
+    expect(digest).toBe('a0e2a8936528cbdff41738269639253a8c002d4149fbdadaf60f59c6905617c6')
   })
 
   test('wrong key fails', () => {
@@ -143,7 +143,7 @@ describe('sealMessage / openMessage', () => {
 
   test('tampered AAD fields fail', () => {
     const envelope = sealMessage(input())
-    expectCode(() => openMessage({ ...envelope, id: 'msg-2' }, bobCtx), 'aead_failed')
+    expectCode(() => openMessage({ ...envelope, id: '1a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d' }, bobCtx), 'aead_failed')
     expectCode(() => openMessage({ ...envelope, senderBoxKeyId: alice.keyId + 1 }, bobCtx), 'aead_failed')
     expectCode(() => openMessage({ ...envelope, recipientBoxKeyId: bob.keyId + 1 }, bobCtx), 'aead_failed')
   })
@@ -185,7 +185,9 @@ describe('sealMessage / openMessage', () => {
   test('franking evidence verifies independently (what the server does on report)', () => {
     const envelope = sealMessage(input())
     const opened = openMessage(envelope, bobCtx)
-    const tag = hmac(sha256, b64Decode(opened.fk), utf8(opened.p))
+    // Recalculado a mano según el contrato del back: 'ENCORELY-FRANK-v1' ‖ UUID en 16 B big-endian ‖ texto.
+    const idBytes = hexToBytes(opened.id.replace(/-/g, ''))
+    const tag = hmac(sha256, b64Decode(opened.fk), new Uint8Array([...utf8('ENCORELY-FRANK-v1'), ...idBytes, ...utf8(opened.p)]))
     expect(b64Encode(tag)).toBe(envelope.frankingTag)
   })
 

@@ -13,6 +13,7 @@ import {
   u8,
   utf8,
   utf8Decode,
+  uuidBytes,
   type RandomBytes,
 } from './bytes'
 import { E2eeError } from './errors'
@@ -164,7 +165,7 @@ export function sealMessage(input: SealInput, options: SealOptions = {}): Messag
   }
   const p = JSON.stringify(inner)
   const fk = random(FRANKING_KEY_LENGTH)
-  const frankingTag = hmac(sha256, fk, utf8(p))
+  const frankingTag = frankingHmac(fk, input.id, p)
   const payload = pad(utf8(JSON.stringify({ p, fk: b64Encode(fk) })))
 
   const nonce = random(NONCE_LENGTH)
@@ -234,7 +235,7 @@ export function openMessage(envelope: MessageEnvelope, ctx: OpenContext): Opened
   if (typeof outer.p !== 'string') throw new E2eeError('malformed')
   const p = outer.p
   const fkBytes = b64DecodeLength(outer.fk, FRANKING_KEY_LENGTH)
-  if (!constantTimeEqual(hmac(sha256, fkBytes, utf8(p)), frankingTag)) {
+  if (!constantTimeEqual(frankingHmac(fkBytes, envelope.id, p), frankingTag)) {
     throw new E2eeError('franking_mismatch')
   }
 
@@ -281,4 +282,10 @@ export function keyIdsForOpen(
   return senderId === myUserId
     ? { myBoxKeyId: envelope.senderBoxKeyId, peerBoxKeyId: envelope.recipientBoxKeyId }
     : { myBoxKeyId: envelope.recipientBoxKeyId, peerBoxKeyId: envelope.senderBoxKeyId }
+}
+
+// Mismo cálculo que hace moderación en el back al verificar un reporte (contrato v1, evidence[]):
+// HMAC-SHA256(fk, 'ENCORELY-FRANK-v1' ‖ uuid(id) 16 B ‖ utf8(p)). `p` es el texto interno que se envía como plaintext.
+export function frankingHmac(fk: Uint8Array, messageId: string, p: string): Uint8Array {
+  return hmac(sha256, fk, concat(utf8('ENCORELY-FRANK-v1'), uuidBytes(messageId), utf8(p)))
 }

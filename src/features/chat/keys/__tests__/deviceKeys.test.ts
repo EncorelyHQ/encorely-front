@@ -82,7 +82,7 @@ describe('deviceKeys', () => {
 
     const oldSecret = (await keys.getBoxSecret(USER, mine.bundle.boxKeyId))!
     const envelope = sealMessage({
-      id: 'm1',
+      id: '2b3c4d5e-6f70-4a1b-9c2d-3e4f5a6b7c8d',
       matchId: 'match',
       senderId: 'peer-user',
       recipientId: USER,

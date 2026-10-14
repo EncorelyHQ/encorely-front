@@ -157,3 +157,14 @@ export function b64DecodeLength(text: unknown, length: number): Uint8Array {
   if (bytes.length !== length) throw new E2eeError('malformed')
   return bytes
 }
+
+// UUID canónico → 16 bytes en orden RFC 4122 (big-endian), como lo serializa el back para el franking.
+export function uuidBytes(uuid: string): Uint8Array {
+  if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid)) {
+    throw new E2eeError('invalid_input')
+  }
+  const hex = uuid.replace(/-/g, '')
+  const out = new Uint8Array(16)
+  for (let i = 0; i < 16; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
+  return out
+}
