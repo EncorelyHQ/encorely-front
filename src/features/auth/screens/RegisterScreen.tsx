@@ -11,7 +11,7 @@ import { Alert, Button, Checkbox, haptics, Logo, Screen, space, Text, TextField,
 import { PasswordField } from '../components/PasswordField'
 import { TextLink } from '../components/TextLink'
 import { registerErrors, type RegisterField } from '../lib/errors'
-import { consentVersionOf, legalLinksOf } from '../lib/legal'
+import { CONSENT_LABEL, consentVersionOf, legalLinksOf } from '../lib/legal'
 import { displayNameError, emailError, newPasswordError, normalizeEmail, PASSWORD_MIN_LENGTH } from '../lib/validation'
 
 // Firma de marca arriba del formulario, a escala de encabezado: el foco sigue siendo el título.
@@ -19,7 +19,6 @@ const LOGO_WIDTH = 128
 
 type Errors = Partial<Record<RegisterField, string>>
 
-const CONSENT_LABEL = 'Acepto los términos y la política de tratamiento de datos (Ley 1581 de 2012).'
 
 export function RegisterScreen() {
   const theme = useTheme()

@@ -35,6 +35,7 @@ import { AdminEntryRow } from '@/features/admin'
 import { ChatBackupRow, LinkDeviceRow } from '@/features/chat'
 import { SpotifyConnectCard } from '@/features/spotify'
 import { GenreBars } from '../components/GenreBars'
+import { SpotifyLinkRow } from '../components/SpotifyLinkRow'
 import { computeGenreBars } from '../genreBars'
 import { useDnaQuery, useMeQuery } from '../queries'
 
@@ -117,6 +118,7 @@ export function MeScreen() {
 
         <ListSection title="Cuenta">
           <ListRow title="Editar perfil" icon={UserIcon} onPress={() => router.push('/profile/edit')} />
+          <SpotifyLinkRow me={me.data} />
           <ListRow
             title="Descargar mis datos"
             subtitle="Una copia de tu información. Sin mensajes: no los podemos leer."

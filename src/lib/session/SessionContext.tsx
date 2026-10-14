@@ -1,7 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { onSessionExpired } from '@/lib/api/client'
 import { authApi, meApi } from '@/lib/api/endpoints'
-import type { LoginRequest, Me, RegisterRequest, SessionUser } from '@/lib/api/types'
+import type {
+  AuthResponse,
+  DeleteMeRequest,
+  LoginRequest,
+  Me,
+  RegisterRequest,
+  SessionUser,
+  SpotifyLoginRequest,
+} from '@/lib/api/types'
 import { queryClient, queryKeys } from '@/lib/query'
 import { clearSession, getSession, loadSession, saveSession } from './tokenStore'
 
@@ -15,8 +23,9 @@ type SessionValue = {
   bootError: unknown
   signIn: (body: LoginRequest) => Promise<void>
   signUp: (body: RegisterRequest) => Promise<void>
+  signInWithSpotify: (body: SpotifyLoginRequest) => Promise<void>
   signOut: () => Promise<void>
-  deleteAccount: () => Promise<void>
+  deleteAccount: (body: DeleteMeRequest) => Promise<void>
   applyMe: (me: Me) => void
   retryBoot: () => void
   clearNotice: () => void
@@ -121,9 +130,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [finish],
   )
 
-  const signIn = useCallback(
-    async (body: LoginRequest) => {
-      const auth = await authApi.login(body)
+  // Entrar, registrarse o entrar con Spotify terminan igual: guardar la sesión y arrancar limpio.
+  const establish = useCallback(
+    async (auth: AuthResponse) => {
       await saveSession(auth)
       queryClient.clear()
       setNotice(null)
@@ -134,17 +143,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [runSignInTasks],
   )
 
-  const signUp = useCallback(
-    async (body: RegisterRequest) => {
-      const auth = await authApi.register(body)
-      await saveSession(auth)
-      queryClient.clear()
-      setNotice(null)
-      setUser(auth.user)
-      setStatus('signedIn')
-      runSignInTasks(auth.user.id)
-    },
-    [runSignInTasks],
+  const signIn = useCallback(async (body: LoginRequest) => establish(await authApi.login(body)), [establish])
+  const signUp = useCallback(async (body: RegisterRequest) => establish(await authApi.register(body)), [establish])
+  const signInWithSpotify = useCallback(
+    async (body: SpotifyLoginRequest) => establish(await authApi.spotify(body)),
+    [establish],
   )
 
   const signOut = useCallback(async () => {
@@ -156,10 +159,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await finish('local')
   }, [finish])
 
-  const deleteAccount = useCallback(async () => {
-    await meApi.remove()
-    await finish('delete')
-  }, [finish])
+  const deleteAccount = useCallback(
+    async (body: DeleteMeRequest) => {
+      await meApi.remove(body)
+      await finish('delete')
+    },
+    [finish],
+  )
 
   const applyMe = useCallback((me: Me) => {
     queryClient.setQueryData(queryKeys.me, me)
@@ -174,6 +180,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       bootError,
       signIn,
       signUp,
+      signInWithSpotify,
       signOut,
       deleteAccount,
       applyMe,
@@ -183,7 +190,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       },
       clearNotice: () => setNotice(null),
     }),
-    [status, user, notice, bootError, signIn, signUp, signOut, deleteAccount, applyMe],
+    [status, user, notice, bootError, signIn, signUp, signInWithSpotify, signOut, deleteAccount, applyMe],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

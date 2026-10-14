@@ -1,13 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { AccessibilityInfo, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native'
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
   ReduceMotion,
-  useAnimatedStyle,
   useReducedMotion,
-  useSharedValue,
-  withTiming,
 } from 'react-native-reanimated'
 import {
   ArrowsClockwiseIcon,
@@ -18,20 +15,15 @@ import {
   motion,
   radius,
   space,
-  SpotifyLogoIcon,
   Text,
   touch,
   useStyles,
-  useTheme,
   useToast,
   WarningCircleIcon,
   type Theme,
 } from '@/ui'
+import { SpotifyButton } from './SpotifyButton'
 import { useSpotifyImport, type SpotifyImportResult } from './useSpotifyImport'
-
-// Única excepción a la paleta de Encorely: la guía de marca de Spotify exige su verde en el botón de conexión.
-// Va con texto y logo casi negros (`onTicket`, 9.3:1) y nunca blancos (2.6:1, no pasa AA). No usar fuera de aquí.
-const SPOTIFY_GREEN = '#1ED760'
 
 const ease = Easing.bezier(...motion.easeOut)
 
@@ -158,52 +150,6 @@ export function SpotifyConnectCard({ onImported }: Props) {
   )
 }
 
-type SpotifyButtonProps = { label: string; busyLabel: string; busy: boolean; onPress: () => void }
-
-function SpotifyButton({ label, busyLabel, busy, onPress }: SpotifyButtonProps) {
-  const theme = useTheme()
-  const styles = useStyles(makeStyles)
-  const scale = useSharedValue(1)
-  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
-
-  const animateTo = (value: number) => {
-    scale.set(
-      withTiming(value, {
-        duration: motion.duration.fast,
-        easing: ease,
-        reduceMotion: ReduceMotion.System,
-      }),
-    )
-  }
-
-  return (
-    <Animated.View style={pressStyle}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={busy ? busyLabel : label}
-        accessibilityState={{ disabled: busy, busy }}
-        disabled={busy}
-        onPressIn={() => animateTo(0.97)}
-        onPressOut={() => animateTo(1)}
-        onPress={() => {
-          haptics.selection()
-          onPress()
-        }}
-        style={styles.spotifyButton}
-      >
-        {busy ? (
-          <ActivityIndicator color={theme.onTicket} />
-        ) : (
-          <Icon icon={SpotifyLogoIcon} size={24} color="onTicket" weight="fill" />
-        )}
-        <Text variant="headline" color="onTicket" numberOfLines={2} style={styles.spotifyLabel}>
-          {busy ? busyLabel : label}
-        </Text>
-      </Pressable>
-    </Animated.View>
-  )
-}
-
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     card: {
@@ -218,18 +164,6 @@ const makeStyles = (t: Theme) =>
     body: { gap: space.md },
     statusRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
     statusText: { flex: 1, gap: space.xs },
-    spotifyButton: {
-      minHeight: touch.comfortable,
-      borderRadius: radius.full,
-      backgroundColor: SPOTIFY_GREEN,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: space.sm,
-      paddingHorizontal: space.xl,
-      paddingVertical: space.md,
-    },
-    spotifyLabel: { flexShrink: 1, textAlign: 'center' },
     footer: {
       flexDirection: 'row',
       flexWrap: 'wrap',

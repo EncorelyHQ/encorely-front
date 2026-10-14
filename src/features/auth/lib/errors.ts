@@ -1,3 +1,5 @@
+// Directo al módulo de errores: el índice de spotify arrastra componentes y este archivo es lógica pura.
+import { isSpotifyError } from '@/features/spotify/errors'
 import { ApiError, isApiError, userMessage } from '@/lib/api/errors'
 
 export const INVALID_CREDENTIALS = 'El correo o la contraseña no coinciden.'
@@ -59,4 +61,63 @@ export function registerErrors(error: unknown): FormErrors<RegisterField> {
     if (Object.keys(fields).length) return { fields, general: null }
   }
   return { fields: {}, general: userMessage(error) }
+}
+
+export const SPOTIFY_EMAIL_IN_USE =
+  'Ya hay una cuenta con el correo de tu Spotify. Entra con tu contraseña y, si quieres, vincula Spotify desde Tú.'
+export const SPOTIFY_NOT_ALLOWED =
+  'Mientras la app está en desarrollo, Spotify solo deja entrar a las cuentas de prueba registradas.'
+
+export const SPOTIFY_ALREADY_LINKED =
+  'Ese Spotify ya está vinculado a otra cuenta de Encorely, o esta cuenta ya tiene otro. Desvincúlalo primero.'
+export const SPOTIFY_LAST_LOGIN_METHOD = 'Spotify es tu única forma de entrar a esta cuenta: no se puede desvincular.'
+export const SPOTIFY_ACCOUNT_MISMATCH =
+  'Ese Spotify no es el vinculado a esta cuenta. Confirma con el Spotify con el que entras a Encorely.'
+export const INVALID_PASSWORD = 'La contraseña no coincide.'
+export const ACCOUNT_LOCKED = 'Hiciste muchos intentos fallidos. Espera unos minutos y vuelve a intentarlo.'
+
+// Lo común a todo lo que manda un grant de Spotify al back (entrar, vincular, borrar la cuenta).
+// null = la persona cerró Spotify o no dio permiso: es su decisión, no hay nada que mostrar.
+function spotifyGrantError(error: unknown): string | null | undefined {
+  if (isSpotifyError(error, 'cancelled') || isSpotifyError(error, 'denied')) return null
+  if (isSpotifyError(error)) return error.message
+  if (isApiError(error, 'spotify_user_not_allowed')) return SPOTIFY_NOT_ALLOWED
+  if (isApiError(error, 'spotify_invalid_code')) return 'La conexión con Spotify venció. Intenta otra vez.'
+  if (isApiError(error, 'spotify_unavailable')) return 'Spotify no responde en este momento. Intenta de nuevo en un rato.'
+  return undefined
+}
+
+export function spotifySignInError(error: unknown): string | null {
+  const grant = spotifyGrantError(error)
+  if (grant !== undefined) return grant
+  if (isRateLimited(error)) return RATE_LIMITED
+  if (isApiError(error, 'account_banned')) return ACCOUNT_BANNED
+  if (isApiError(error, 'spotify_email_in_use')) return SPOTIFY_EMAIL_IN_USE
+  if (isApiError(error, 'spotify_email_missing')) return 'Tu cuenta de Spotify no tiene un correo. Crea tu cuenta con correo y contraseña.'
+  if (isApiError(error, 'consent_required')) return CONSENT_CHANGED
+  return userMessage(error)
+}
+
+export function spotifyLinkError(error: unknown): string | null {
+  const grant = spotifyGrantError(error)
+  if (grant !== undefined) return grant
+  if (isApiError(error, 'spotify_already_linked')) return SPOTIFY_ALREADY_LINKED
+  if (isApiError(error, 'spotify_last_login_method')) return SPOTIFY_LAST_LOGIN_METHOD
+  if (isRateLimited(error)) return RATE_LIMITED
+  return userMessage(error)
+}
+
+// 403 invalid_password no cierra la sesión (el contrato lo separa del 401): solo se vuelve a pedir la contraseña.
+export function deleteAccountError(error: unknown): { password: string | null; general: string | null } {
+  if (isApiError(error, 'invalid_password')) return { password: INVALID_PASSWORD, general: null }
+  if (isApiError(error, 'account_locked')) return { password: null, general: ACCOUNT_LOCKED }
+  if (isApiError(error, 'spotify_account_mismatch')) return { password: null, general: SPOTIFY_ACCOUNT_MISMATCH }
+  if (isRateLimited(error)) return { password: null, general: RATE_LIMITED }
+  if (error instanceof ApiError && error.kind === 'http' && error.status === 400) {
+    const password = error.field('password')
+    if (password) return { password, general: null }
+  }
+  const grant = spotifyGrantError(error)
+  if (grant !== undefined) return { password: null, general: grant }
+  return { password: null, general: userMessage(error) }
 }

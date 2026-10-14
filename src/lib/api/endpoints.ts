@@ -7,6 +7,7 @@ import type {
   Genre,
   HistoricalBoxKey,
   DataExport,
+  DeleteMeRequest,
   DevicePlatform,
   ReportCreated,
   KeyBundle,
@@ -23,7 +24,10 @@ import type {
   ReportRequest,
   SentMessage,
   Song,
+  SpotifyAuthResponse,
+  SpotifyGrant,
   SpotifyImportRequest,
+  SpotifyLoginRequest,
   SwipeDirection,
   SwipeResult,
   UpdateMeRequest,
@@ -35,17 +39,21 @@ export const authApi = {
   legal: () => api<LegalCurrent>('GET', '/legal/current', { auth: false }),
   register: (body: RegisterRequest) => api<AuthResponse>('POST', '/auth/register', { body, auth: false }),
   login: (body: LoginRequest) => api<AuthResponse>('POST', '/auth/login', { body, auth: false }),
+  spotify: (body: SpotifyLoginRequest) => api<SpotifyAuthResponse>('POST', '/auth/spotify', { body, auth: false }),
   logout: (refreshToken: string) => api<void>('POST', '/auth/logout', { body: { refreshToken }, auth: false }),
 }
 
 export const meApi = {
   get: () => api<Me>('GET', '/me'),
   update: (body: UpdateMeRequest) => api<Me>('PATCH', '/me', { body }),
-  remove: () => api<void>('DELETE', '/me'),
+  // Exactamente uno: la contraseña actual o, si la cuenta no tiene, un grant nuevo del Spotify vinculado.
+  remove: (body: DeleteMeRequest) => api<void>('DELETE', '/me', { body }),
   export: () => api<DataExport>('GET', '/me/export'),
   consent: (version: string) => api<void>('POST', '/me/consents', { body: { version } }),
   dna: () => api<Dna>('GET', '/me/dna'),
   importSpotify: (body: SpotifyImportRequest) => api<Dna>('POST', '/me/spotify/import', { body }),
+  linkSpotify: (body: SpotifyGrant) => api<void>('POST', '/me/spotify/link', { body }),
+  unlinkSpotify: () => api<void>('DELETE', '/me/spotify/link'),
 }
 
 export const catalogApi = {

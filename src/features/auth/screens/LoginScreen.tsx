@@ -4,7 +4,9 @@ import { useMutation } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import { useSession } from '@/lib/session/SessionContext'
 import { Alert, Button, haptics, Logo, Screen, space, Text, TextField, useStyles, type Theme } from '@/ui'
+import { OrDivider } from '../components/OrDivider'
 import { PasswordField } from '../components/PasswordField'
+import { SpotifySignIn } from '../components/SpotifySignIn'
 import { TextLink } from '../components/TextLink'
 import { loginErrors, type LoginField } from '../lib/errors'
 import { emailError, loginPasswordError, normalizeEmail } from '../lib/validation'
@@ -110,6 +112,8 @@ export function LoginScreen() {
       <View style={styles.actions}>
         {general ? <Alert message={general} /> : null}
         <Button label="Entrar" size="lg" loading={login.isPending} onPress={submit} />
+        <OrDivider />
+        <SpotifySignIn />
         <View style={styles.switch}>
           <Text variant="callout" color="textMuted">
             ¿No tienes cuenta?

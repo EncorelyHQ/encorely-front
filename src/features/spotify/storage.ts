@@ -14,11 +14,19 @@ export type PendingAuthorization = {
   state: string
   redirectUri: string
   createdAt: number
+  // Solo en el login: la versión de términos que la persona aceptó antes de abrir Spotify.
+  consentVersion?: string | null
 }
 
 // SecureStore solo acepta [A-Za-z0-9._-] en las llaves; se namespacea por usuario para no cruzar cuentas.
 function storeKey(userId: string, name: 'pkce' | 'refresh'): string {
   return `spotify_v1_${userId.replace(/[^A-Za-z0-9._-]/g, '_')}_${name}`
+}
+
+// Vincular o reconfirmar con Spotify usa otra llave: si el redirect llega en frío, la importación
+// (que canjea el code en el teléfono) no debe tomar un code que es para el back.
+export function grantPendingKey(userId: string): string {
+  return `${userId}_grant`
 }
 
 export async function savePending(userId: string, pending: PendingAuthorization): Promise<void> {
@@ -62,7 +70,7 @@ export async function clearRefreshToken(userId: string): Promise<void> {
 }
 
 export async function clearSpotifyData(userId: string): Promise<void> {
-  await Promise.all([clearPending(userId), clearRefreshToken(userId)])
+  await Promise.all([clearPending(userId), clearPending(grantPendingKey(userId)), clearRefreshToken(userId)])
 }
 
 let cleanupRegistered = false

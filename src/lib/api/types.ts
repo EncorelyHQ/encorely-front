@@ -10,9 +10,13 @@ export type AuthResponse = S['AuthResponse']
 export type RegisterRequest = S['RegisterRequest']
 export type LoginRequest = S['LoginRequest']
 export type LegalCurrent = S['LegalResponse']
+export type SpotifyLoginRequest = S['SpotifyLoginRequest']
+export type SpotifyAuthResponse = S['SpotifyAuthResponse']
+export type SpotifyGrant = S['SpotifyGrant']
 
 export type Me = S['MeResponse']
 export type UpdateMeRequest = S['UpdateMeRequest']
+export type DeleteMeRequest = S['DeleteMeRequest']
 export type Genre = S['GenreDto']
 
 export type Song = S['SongDto']

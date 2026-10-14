@@ -152,6 +152,20 @@ describe('useConversation', () => {
     expect(server.sendLog.map((s) => s.id)).toEqual([failedId, failedId])
   })
 
+  test('409 message_already_delivered → se da por enviado, sin reintentar', async () => {
+    const { server, ana } = await setup()
+    const a = await open(ana)
+    server.failNextSend(new ApiError('http', 'Ya entregado', { status: 409, code: 'message_already_delivered' }))
+
+    await act(async () => {
+      a.result.current.send('Ya estoy en la fila')
+    })
+    await waitFor(() => expect(a.result.current.messages.at(-1)?.status).toBe('sent'))
+    expect(a.result.current.messages).toHaveLength(1)
+    expect(a.result.current.messages[0]).toMatchObject({ body: 'Ya estoy en la fila', seq: null, mine: true })
+    expect(server.sendLog).toHaveLength(1)
+  })
+
   test('un sobre manipulado se muestra como "no descifrable" sin romper el resto', async () => {
     const { server, ana, bruno } = await setup()
     await seed(server, bruno, ANA, ['primero'])

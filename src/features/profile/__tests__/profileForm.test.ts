@@ -18,6 +18,8 @@ const me: Me = {
   createdAt: '2026-01-01T00:00:00Z',
   acceptedConsentVersion: '2026-10-13',
   consentUpToDate: true,
+  spotifyLinked: false,
+  hasPassword: true,
 }
 
 const edit = (patch: Partial<ProfileDraft>): ProfileDraft => ({ ...draftFromMe(me), ...patch })

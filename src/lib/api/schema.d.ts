@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/spotify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Entra con Spotify (canjea el code PKCE). Crea la cuenta si el Spotify no está vinculado */
+        post: operations["SpotifyLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -117,12 +134,30 @@ export interface paths {
         get: operations["GetMe"];
         put?: never;
         post?: never;
-        /** Borra mi cuenta: datos personales, swipes, likes, matches y mensajes. Irreversible */
+        /** Borra mi cuenta (pide la contraseña o reconfirmar con Spotify): datos personales, swipes, likes, matches y mensajes. Irreversible */
         delete: operations["DeleteMe"];
         options?: never;
         head?: never;
         /** Edita mi perfil (campos null no cambian) */
         patch: operations["UpdateMe"];
+        trace?: never;
+    };
+    "/api/v1/me/spotify/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vincula mi cuenta de Spotify para poder entrar con ella */
+        post: operations["LinkSpotify"];
+        /** Desvincula Spotify (no si es mi única forma de entrar) */
+        delete: operations["UnlinkSpotify"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/me/consents": {
@@ -979,6 +1014,14 @@ export interface components {
             /** Format: date-time */
             generatedAt: string;
         };
+        /**
+         * @description Borrar la cuenta reconfirma la identidad: un access token robado no basta para una operación irreversible.
+         *     Va exactamente uno de los dos: la contraseña, o un grant nuevo de la cuenta de Spotify vinculada.
+         */
+        DeleteMeRequest: {
+            password?: null | string;
+            spotify?: null | components["schemas"]["SpotifyGrant"];
+        };
         DeletePushTokenRequest: {
             token: string;
         };
@@ -1186,6 +1229,10 @@ export interface components {
             acceptedConsentVersion: null | string;
             /** @description true si `AcceptedConsentVersion` es la vigente (`GET /legal/current`); false: pedir aceptar de nuevo. */
             consentUpToDate: boolean;
+            /** @description true si hay una cuenta de Spotify vinculada (sirve para entrar). */
+            spotifyLinked: boolean;
+            /** @description false en cuentas creadas con Spotify: no pueden entrar por correo ni desvincular Spotify. */
+            hasPassword: boolean;
         };
         MessageAcceptedDto: {
             /** Format: uuid */
@@ -1398,9 +1445,40 @@ export interface components {
             name: string;
             genres: string[];
         };
+        SpotifyAuthResponse: {
+            accessToken: string;
+            refreshToken: string;
+            /** Format: int32 */
+            expiresIn: number;
+            user: components["schemas"]["AuthUserDto"];
+            /** @description true si este login creó la cuenta (sin contraseña, onboarding pendiente). */
+            isNewUser: boolean;
+        };
+        /** @description Resultado del flujo PKCE de Spotify en el dispositivo. El back canjea el code: el cliente no lo hace. */
+        SpotifyGrant: {
+            /** @description Authorization code recibido en la redirect URI. De un solo uso. */
+            code: string;
+            /** @description El verifier PKCE con el que se generó el challenge (43 a 128 caracteres). */
+            codeVerifier: string;
+            /** @description La misma de la autorización; debe estar en la lista permitida del servidor. */
+            redirectUri: string;
+        };
         /** @description Gustos importados de Spotify por el cliente (PKCE en el dispositivo; el token nunca llega al servidor). */
         SpotifyImportRequest: {
             topArtists: components["schemas"]["SpotifyArtist"][];
+        };
+        /** @description Entrar con Spotify: el grant PKCE más el consentimiento, que solo cuenta si se crea la cuenta. */
+        SpotifyLoginRequest: {
+            /** @description Authorization code recibido en la redirect URI. De un solo uso. */
+            code: string;
+            /** @description El verifier PKCE con el que se generó el challenge (43 a 128 caracteres). */
+            codeVerifier: string;
+            /** @description La misma de la autorización; debe estar en la lista permitida del servidor. */
+            redirectUri: string;
+            /** @description Solo se exige si se crea una cuenta nueva; en el login de una cuenta existente se ignora. */
+            acceptTerms: boolean;
+            /** @description Versión aceptada; debe coincidir con GET /api/v1/legal/current si se crea la cuenta. */
+            consentVersion?: null | string;
         };
         /** @enum {unknown} */
         SwipeDirection: "like" | "dislike";
@@ -1560,6 +1638,75 @@ export interface operations {
             };
             /** @description Too Many Requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SpotifyLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpotifyLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpotifyAuthResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1747,7 +1894,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteMeRequest"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {
@@ -1756,8 +1907,44 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1800,6 +1987,118 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    LinkSpotify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpotifyGrant"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UnlinkSpotify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4013,7 +4312,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Filtra por estado; por defecto open */
-                status?: components["schemas"]["ReportStatus"];
+                status?: "open" | "resolved" | "dismissed";
             };
             header?: never;
             path?: never;
@@ -4028,6 +4327,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminReportDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */

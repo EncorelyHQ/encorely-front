@@ -1,5 +1,8 @@
 import type { LegalCurrent } from '@/lib/api/types'
 
+// Ley 1581: autorización previa y expresa; el mismo texto en el registro y en la entrada con Spotify.
+export const CONSENT_LABEL = 'Acepto los términos y la política de tratamiento de datos (Ley 1581 de 2012).'
+
 type LegalPayload = Pick<LegalCurrent, 'consentVersion' | 'termsUrl' | 'privacyUrl'>
 
 export function consentVersionOf(legal: LegalPayload | null | undefined): string | null {

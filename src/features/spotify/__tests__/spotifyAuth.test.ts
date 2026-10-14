@@ -2,11 +2,14 @@ import * as WebBrowser from 'expo-web-browser'
 import { isSpotifyError } from '../errors'
 import { parseQuery } from '../http'
 import {
+  authorizeSpotifyLogin,
   authorizeWithSpotify,
   buildAuthorizeUrl,
   challengeFromVerifier,
   completeAuthorizationRedirect,
+  completeLoginRedirect,
   createState,
+  LOGIN_PENDING_KEY,
   createVerifier,
   paramsFromUrl,
   readAuthorizationCode,
@@ -199,6 +202,55 @@ describe('completeAuthorizationRedirect (resume after Android kills the app)', (
     await savePending(USER, { verifier: 'v', state: 'st', redirectUri: REDIRECT, createdAt: Date.now() - PENDING_TTL_MS - 1 })
     await expect(completeAuthorizationRedirect(USER, { code: 'c', state: 'st' })).rejects.toMatchObject({ kind: 'expired' })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('authorizeSpotifyLogin', () => {
+  test('asks only for the email and hands the code to the back without exchanging it', async () => {
+    let authorizeUrl = ''
+    openAuth.mockImplementation(async (url: string) => {
+      authorizeUrl = url
+      // El consentimiento viaja con el PKCE pendiente por si Android mata la app en Spotify.
+      expect((await loadPending(LOGIN_PENDING_KEY))?.consentVersion).toBe('2026-10')
+      return { type: 'success', url: `${REDIRECT}?code=login-code&state=${parseQuery(url).state}` }
+    })
+
+    const grant = await authorizeSpotifyLogin('2026-10')
+
+    expect(parseQuery(authorizeUrl).scope).toBe('user-read-email')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(grant).toMatchObject({ code: 'login-code', redirectUri: REDIRECT, consentVersion: '2026-10' })
+    expect(createHash('sha256').update(grant.codeVerifier).digest('base64url')).toBe(parseQuery(authorizeUrl).code_challenge)
+    expect(await loadPending(LOGIN_PENDING_KEY)).toBeNull()
+  })
+
+  test('a forged redirect never yields a code', async () => {
+    openAuth.mockResolvedValue({ type: 'success', url: `${REDIRECT}?code=stolen&state=forged` })
+    await expect(authorizeSpotifyLogin('2026-10')).rejects.toMatchObject({ kind: 'state' })
+  })
+})
+
+describe('completeLoginRedirect', () => {
+  test('returns the stored verifier and consent once', async () => {
+    await savePending(LOGIN_PENDING_KEY, {
+      verifier: 'w'.repeat(43),
+      state: 'st',
+      redirectUri: REDIRECT,
+      createdAt: Date.now(),
+      consentVersion: '2026-10',
+    })
+    await expect(completeLoginRedirect({ code: 'c', state: 'st' })).resolves.toEqual({
+      code: 'c',
+      codeVerifier: 'w'.repeat(43),
+      redirectUri: REDIRECT,
+      consentVersion: '2026-10',
+    })
+    await expect(completeLoginRedirect({ code: 'c', state: 'st' })).resolves.toBeNull()
+  })
+
+  test('the login and a signed-in import never share the pending verifier', async () => {
+    await savePending(USER, { verifier: 'v', state: 'st', redirectUri: REDIRECT, createdAt: Date.now() })
+    await expect(completeLoginRedirect({ code: 'c', state: 'st' })).resolves.toBeNull()
   })
 })
 

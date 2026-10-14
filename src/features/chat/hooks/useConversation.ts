@@ -141,30 +141,36 @@ export function useConversationAs(matchId: string, me: string) {
           envelope = await republishAndSeal()
         }
 
-        let sent: SentMessage
+        // null = el primer POST sí llegó y el otro ya lo confirmó (409 message_already_delivered): está entregado,
+        // pero el servidor ya lo borró y no devuelve su seq. Se muestra enviado, sin guardarse en el historial local.
+        let sent: SentMessage | null
         try {
           // Reintentar reenvía el MISMO sobre: si el primer POST sí llegó, el servidor responde 200 con el existente.
           sent = await deps.transport.send(matchId, envelope)
         } catch (error) {
-          if (isApiError(error, 'stale_recipient_key')) {
-            // El otro rotó su llave: se refresca y se vuelve a sellar con el mismo id.
-            queryClient.setQueryData(queryKeys.peerKeys(matchId), await session.fetchPeer(matchId))
-            envelope = await seal()
-          } else if (isApiError(error, 'keys_missing') || isApiError(error, 'unknown_sender_key')) {
-            envelope = await republishAndSeal()
+          if (isApiError(error, 'message_already_delivered')) {
+            sent = null
           } else {
-            throw error
+            if (isApiError(error, 'stale_recipient_key')) {
+              // El otro rotó su llave: se refresca y se vuelve a sellar con el mismo id.
+              queryClient.setQueryData(queryKeys.peerKeys(matchId), await session.fetchPeer(matchId))
+              envelope = await seal()
+            } else if (isApiError(error, 'keys_missing') || isApiError(error, 'unknown_sender_key')) {
+              envelope = await republishAndSeal()
+            } else {
+              throw error
+            }
+            sent = await deps.transport.send(matchId, envelope)
           }
-          sent = await deps.transport.send(matchId, envelope)
         }
 
         outbox.current.delete(id)
         const confirmed: ChatMessage = {
           id,
-          seq: sent.seq,
+          seq: sent?.seq ?? null,
           senderId: me,
           mine: true,
-          at: Date.parse(sent.createdAt),
+          at: sent ? Date.parse(sent.createdAt) : entry.at,
           status: 'sent',
           body: entry.text,
           kind: 'text',

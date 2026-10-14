@@ -4,6 +4,8 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withT
 import { router } from 'expo-router'
 import { useSession } from '@/lib/session/SessionContext'
 import { Alert, Button, Logo, motion, Screen, space, Text, useStyles } from '@/ui'
+import { OrDivider } from '../components/OrDivider'
+import { SpotifySignIn } from '../components/SpotifySignIn'
 
 export function WelcomeScreen() {
   const styles = useStyles(makeStyles)
@@ -43,6 +45,8 @@ export function WelcomeScreen() {
         {notice ? <Alert tone="info" message={notice} /> : null}
         <Button label="Crear cuenta" size="lg" onPress={() => router.push('/register')} />
         <Button label="Ya tengo cuenta" variant="secondary" size="lg" onPress={() => router.push('/login')} />
+        <OrDivider />
+        <SpotifySignIn />
         <Text variant="footnote" color="textSubtle" align="center">
           Solo para mayores de 18 años.
         </Text>

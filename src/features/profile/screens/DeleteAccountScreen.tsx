@@ -2,26 +2,75 @@ import { useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { router, Stack } from 'expo-router'
 import { useMutation } from '@tanstack/react-query'
-import { userMessage } from '@/lib/api/errors'
-import { useSession } from '@/lib/session/SessionContext'
-import { Button, Icon, Screen, space, Text, TextField, useStyles, useToast, WarningIcon, type Theme } from '@/ui'
+import { deleteAccountError, PasswordField } from '@/features/auth'
+import { authorizeSpotifyGrant } from '@/features/spotify'
+import type { DeleteMeRequest } from '@/lib/api/types'
+import { useSession, useUser } from '@/lib/session/SessionContext'
+import {
+  Alert,
+  Button,
+  ErrorState,
+  haptics,
+  Icon,
+  LoadingState,
+  Screen,
+  space,
+  Text,
+  TextField,
+  useStyles,
+  useToast,
+  WarningIcon,
+  type Theme,
+} from '@/ui'
+import { useMeQuery } from '../queries'
 import { DELETE_CONFIRMATION_WORD, isDeleteConfirmation } from '../validation'
 
 export const DELETE_ACCOUNT_SCOPE = 'Tu perfil, tus calificaciones, tus matches y todos tus mensajes. No se puede deshacer.'
 
-// Pantalla y no hoja: escribir la palabra con el teclado abierto necesita espacio, y la decisión merece una pausa.
+// Pantalla y no hoja: escribir con el teclado abierto necesita espacio, y la decisión merece una pausa.
+// La contraseña es la confirmación; una cuenta creada con Spotify no tiene, así que escribe la palabra y
+// se reconfirma en Spotify (el back exige un grant nuevo de la cuenta vinculada).
 export function DeleteAccountScreen() {
   const styles = useStyles(makeStyles)
   const toast = useToast()
+  const user = useUser()
+  const me = useMeQuery()
   const { deleteAccount } = useSession()
+  const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
-  const ready = isDeleteConfirmation(confirmation)
+
+  const hasPassword = me.data?.hasPassword ?? true
+  const ready = hasPassword ? password.length > 0 : isDeleteConfirmation(confirmation)
 
   const remove = useMutation({
-    mutationFn: deleteAccount,
+    mutationFn: async () => {
+      const body: DeleteMeRequest = hasPassword
+        ? { password }
+        : { spotify: await authorizeSpotifyGrant(user.id) }
+      await deleteAccount(body)
+    },
     // Al terminar la sesión pasa a signedOut y el layout raíz lleva solo al inicio; el toast sobrevive al cambio.
     onSuccess: () => toast.show('Borramos tu cuenta y tus datos.', 'success'),
+    onError: (error) => {
+      const { password: wrong, general } = deleteAccountError(error)
+      if (wrong || general) haptics.warning()
+    },
   })
+
+  const failure = remove.isError ? deleteAccountError(remove.error) : null
+
+  if (me.isPending || me.isError) {
+    return (
+      <Screen>
+        <Stack.Screen options={{ title: 'Borrar cuenta' }} />
+        {me.isPending ? (
+          <LoadingState label="Cargando tu cuenta" />
+        ) : (
+          <ErrorState message="No pudimos cargar tu cuenta." onRetry={() => void me.refetch()} retrying={me.isRefetching} />
+        )}
+      </Screen>
+    )
+  }
 
   return (
     <Screen
@@ -30,13 +79,15 @@ export function DeleteAccountScreen() {
       footer={
         <>
           <Button
-            label="Borrar mi cuenta"
+            label={hasPassword ? 'Borrar mi cuenta' : 'Confirmar con Spotify y borrar'}
             variant="destructive"
             size="lg"
             disabled={!ready}
             loading={remove.isPending}
             onPress={() => remove.mutate()}
-            accessibilityHint={ready ? undefined : `Escribe ${DELETE_CONFIRMATION_WORD} para habilitarlo`}
+            accessibilityHint={
+              ready ? undefined : hasPassword ? 'Escribe tu contraseña para habilitarlo' : `Escribe ${DELETE_CONFIRMATION_WORD} para habilitarlo`
+            }
           />
           <Button label="Cancelar" variant="ghost" disabled={remove.isPending} onPress={() => router.back()} />
         </>
@@ -66,21 +117,40 @@ export function DeleteAccountScreen() {
           </Text>
         </View>
 
-        <TextField
-          label={`Escribe ${DELETE_CONFIRMATION_WORD} para confirmar`}
-          value={confirmation}
-          onChangeText={(text) => {
-            if (remove.isError) remove.reset()
-            setConfirmation(text)
-          }}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          autoComplete="off"
-          spellCheck={false}
-          editable={!remove.isPending}
-          returnKeyType="done"
-          error={remove.isError ? userMessage(remove.error) : null}
-        />
+        {hasPassword ? (
+          <PasswordField
+            label="Tu contraseña"
+            helper="La pedimos para confirmar que eres tú."
+            value={password}
+            onChangeText={(text) => {
+              if (remove.isError) remove.reset()
+              setPassword(text)
+            }}
+            autoComplete="current-password"
+            textContentType="password"
+            editable={!remove.isPending}
+            returnKeyType="done"
+            error={failure?.password ?? null}
+          />
+        ) : (
+          <TextField
+            label={`Escribe ${DELETE_CONFIRMATION_WORD} para confirmar`}
+            helper="Luego confirmas en Spotify, con la cuenta con la que entras a Encorely."
+            value={confirmation}
+            onChangeText={(text) => {
+              if (remove.isError) remove.reset()
+              setConfirmation(text)
+            }}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            autoComplete="off"
+            spellCheck={false}
+            editable={!remove.isPending}
+            returnKeyType="done"
+          />
+        )}
+
+        {failure?.general ? <Alert message={failure.general} /> : null}
       </View>
     </Screen>
   )
