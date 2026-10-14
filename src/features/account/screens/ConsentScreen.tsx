@@ -32,7 +32,7 @@ const CONSENT_LABEL = 'Leí y acepto los términos y la política de tratamiento
 export function ConsentScreen() {
   const styles = useStyles(makeStyles)
   const toast = useToast()
-  const { signOut } = useSession()
+  const { signOut, applyMe } = useSession()
   const legal = useLegalQuery()
   const accept = useAcceptConsent()
   const open = useOpenLink()
@@ -58,7 +58,8 @@ export function ConsentScreen() {
       return
     }
     accept.mutate(version, {
-      onSuccess: () => {
+      onSuccess: (me) => {
+        applyMe(me)
         clearConsentFlag()
         toast.show('Listo. Gracias por aceptar.', 'success')
         router.replace('/')

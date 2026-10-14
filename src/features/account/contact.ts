@@ -1,7 +1,5 @@
 // Canal de consultas y reclamos (Ley 1581 de 2012, art. 14 y 15; Decreto 1377 de 2013).
-// PENDIENTE DEL DUEÑO: el back no expone un canal de contacto en GET /legal/current y la política publicada remite
-// "al contacto publicado en la ficha de la aplicación". Antes de publicar, poner aquí el correo real del responsable
-// del tratamiento (el mismo de la ficha de las tiendas) o, mejor, exponerlo desde el back para no duplicarlo.
+// Fallback: el correo real llega en GET /legal/current (privacyContactEmail). Solo se usa si el back no lo trae.
 export const PRIVACY_CONTACT_EMAIL: string | null = null
 
 // Plazos legales que la app le comunica al titular (Ley 1581, art. 14 y 15).

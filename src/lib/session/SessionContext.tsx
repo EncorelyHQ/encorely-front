@@ -110,8 +110,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(
     () =>
-      onSessionExpired(() => {
-        setNotice('Tu sesión se cerró. Vuelve a entrar para seguir.')
+      onSessionExpired((reason) => {
+        setNotice(
+          reason === 'banned'
+            ? 'Tu cuenta está suspendida. Si crees que es un error, escríbenos.'
+            : 'Tu sesión se cerró. Vuelve a entrar para seguir.',
+        )
         void finish('local')
       }),
     [finish],

@@ -16,7 +16,9 @@ export function LegalScreen() {
   const open = useOpenLink()
   const documents = legalDocumentsOf(legal.data)
   const effective = effectiveDateLabel(legal.data?.effectiveDate)
-  const mailto = contactMailto(PRIVACY_CONTACT_EMAIL)
+  // El correo sale del back; la constante local solo cubre un back que aún no lo traiga.
+  const contactEmail = legal.data?.privacyContactEmail ?? PRIVACY_CONTACT_EMAIL
+  const mailto = contactMailto(contactEmail)
 
   return (
     <Screen
@@ -82,19 +84,13 @@ export function LegalScreen() {
           {mailto ? (
             <ListRow
               title="Consultas y reclamos"
-              subtitle={PRIVACY_CONTACT_EMAIL ?? undefined}
+              subtitle={contactEmail ?? undefined}
               icon={EnvelopeIcon}
               chevron={false}
               accessibilityHint="Abre tu app de correo"
               onPress={() => void open(mailto)}
             />
-          ) : (
-            <ListRow
-              title="Consultas y reclamos"
-              subtitle="El canal de contacto se publica en la ficha de la app en la tienda."
-              icon={EnvelopeIcon}
-            />
-          )}
+          ) : null}
           <ListRow
             title="Superintendencia de Industria y Comercio"
             subtitle="La autoridad de protección de datos en Colombia."

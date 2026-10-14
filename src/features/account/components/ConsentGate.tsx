@@ -4,25 +4,22 @@ import { useQueryClient } from '@tanstack/react-query'
 import { isApiError } from '@/lib/api/errors'
 import { useSession } from '@/lib/session/SessionContext'
 import {
-  acceptedConsentVersionOf,
   CONSENT_REQUIRED_CODE,
   CONSENT_ROUTE,
-  currentConsentVersionOf,
   decideConsent,
   shouldRedirectToConsent,
 } from '../consent'
 import { flagConsentRequired, useConsentFlag } from '../consentSignal'
-import { accountKeys, useAccountMeQuery, useLegalQuery } from '../queries'
+import { accountKeys, useAccountMeQuery } from '../queries'
 
 // Se monta una vez en el árbol autenticado. No pinta nada: decide si hay que pasar por /consent.
-// Dos fuentes, ninguna guardada en el dispositivo: la versión aceptada que traiga GET /me (cuando el back la exponga)
+// Dos fuentes, ninguna guardada en el dispositivo: `consentUpToDate` de GET /me
 // y cualquier respuesta autenticada con code=consent_required.
 export function ConsentGate() {
   const { status, user } = useSession()
   const userId = status === 'signedIn' ? (user?.id ?? null) : null
   const pathname = usePathname()
   const qc = useQueryClient()
-  const legal = useLegalQuery()
   const me = useAccountMeQuery(!!userId)
   const flagged = useConsentFlag(userId)
 
@@ -48,8 +45,7 @@ export function ConsentGate() {
   }, [qc, userId])
 
   const decision = decideConsent({
-    currentVersion: currentConsentVersionOf(legal.data),
-    acceptedVersion: acceptedConsentVersionOf(me.data),
+    consentUpToDate: me.data?.consentUpToDate,
     serverRequiresConsent: flagged,
   })
 

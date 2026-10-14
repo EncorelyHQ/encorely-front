@@ -1105,6 +1105,7 @@ export interface components {
             termsUrl: string;
             privacyUrl: string;
             accountDeletionUrl: string;
+            privacyContactEmail: null | string;
         };
         LikeRequest: {
             /** Format: uuid */
@@ -1181,6 +1182,10 @@ export interface components {
             role: components["schemas"]["UserRole"];
             /** Format: date-time */
             createdAt: string;
+            /** @description Versión más reciente aceptada por la persona; null si no consta ninguna. */
+            acceptedConsentVersion: null | string;
+            /** @description true si `AcceptedConsentVersion` es la vigente (`GET /legal/current`); false: pedir aceptar de nuevo. */
+            consentUpToDate: boolean;
         };
         MessageAcceptedDto: {
             /** Format: uuid */
@@ -1375,6 +1380,7 @@ export interface components {
             lastUsedAt: string;
             /** Format: date-time */
             expiresAt: string;
+            current: boolean;
         };
         SongDto: {
             /** Format: uuid */
@@ -2283,6 +2289,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RadarEntryDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */

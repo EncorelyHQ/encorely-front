@@ -14,7 +14,8 @@ type RequestOptions = {
   timeoutMs?: number
 }
 
-type ExpiredListener = () => void
+export type ExpiredReason = 'expired' | 'banned'
+type ExpiredListener = (reason: ExpiredReason) => void
 const expiredListeners = new Set<ExpiredListener>()
 
 // La sesión se entera de que el refresh falló y vuelve al login con un mensaje claro (no app zombi).
@@ -46,7 +47,7 @@ async function doRefresh(): Promise<string> {
     // Solo un rechazo explícito del servidor cierra la sesión; sin red se conserva para reintentar luego.
     if (error instanceof ApiError && error.kind === 'http' && (error.status === 400 || error.status === 401)) {
       await clearSession()
-      expiredListeners.forEach((l) => l())
+      expiredListeners.forEach((l) => l('expired'))
       throw new ApiError('sessionExpired', 'Tu sesión se cerró. Vuelve a entrar para seguir.', { status: 401 })
     }
     throw error
@@ -66,6 +67,12 @@ export async function api<T>(method: Method, path: string, opts: RequestOptions 
   try {
     return await send<T>(method, path, opts)
   } catch (error) {
+    // Una cuenta suspendida no se recupera reintentando: se cierra la sesión con un aviso claro.
+    if (auth && error instanceof ApiError && error.code === 'account_banned') {
+      await clearSession()
+      expiredListeners.forEach((l) => l('banned'))
+      throw error
+    }
     if (auth && error instanceof ApiError && error.kind === 'http' && error.status === 401) {
       await refreshAccessToken()
       return send<T>(method, path, opts)

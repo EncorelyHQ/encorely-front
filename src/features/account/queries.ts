@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { accountApi, authApi, meApi } from '@/lib/api/endpoints'
 import { queryKeys } from '@/lib/query'
-import { getSession } from '@/lib/session/tokenStore'
-import { findCurrentSessionId, issuedAtOf } from './sessions'
 
 const HOUR = 60 * 60 * 1000
 
@@ -14,12 +12,7 @@ export const accountKeys = {
 export function useSessionsQuery() {
   return useQuery({
     queryKey: accountKeys.sessions,
-    queryFn: async () => {
-      const sessions = await accountApi.sessions()
-      // El token se lee DESPUÉS de la petición: si el cliente lo renovó para hacerla, el iat ya es el nuevo.
-      const currentId = findCurrentSessionId(sessions, issuedAtOf(getSession()?.accessToken))
-      return { sessions, currentId }
-    },
+    queryFn: accountApi.sessions,
   })
 }
 
@@ -59,7 +52,11 @@ export function useAcceptConsent() {
   const qc = useQueryClient()
   return useMutation({
     mutationKey: accountKeys.acceptConsent,
-    mutationFn: meApi.consent,
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.me, exact: true }),
+    // Tras aceptar se trae /me: de ahí sale consentUpToDate y el gate se apaga solo.
+    mutationFn: async (version: string) => {
+      await meApi.consent(version)
+      return meApi.get()
+    },
+    onSuccess: (me) => qc.setQueryData(queryKeys.me, me),
   })
 }

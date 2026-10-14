@@ -9,6 +9,7 @@ import { attendanceMutationOptions } from './mutations'
 
 export const RADAR_LOCKED = 'radar_locked'
 export const NOT_ATTENDING = 'not_attending'
+export const EVENT_PAST = 'event_past'
 
 export function useEventsList(city: string | undefined) {
   return useQuery({ queryKey: queryKeys.events(city), queryFn: () => eventsApi.list(city) })
@@ -56,6 +57,7 @@ export function useSwipesMissing(enabled: boolean): number | null {
 }
 
 export const isRadarLocked = (error: unknown) => isApiError(error, RADAR_LOCKED)
+export const isEventPast = (error: unknown) => isApiError(error, EVENT_PAST)
 export const isNotAttending = (error: unknown) => isApiError(error, NOT_ATTENDING)
 
 // Pull to refresh con indicador propio: isRefetching también se enciende en refrescos de fondo.

@@ -9,6 +9,9 @@ import { createLocalStores } from '../../local/registry'
 import { backupInfo, createBackup, restoreBackup } from '../backup'
 import { passphraseStrength } from '../passphrase'
 
+// scrypt real (N=2^15) tarda varios segundos en Jest bajo carga: margen explícito para no volverlo inestable.
+jest.setTimeout(60_000)
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 )

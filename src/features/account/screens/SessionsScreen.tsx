@@ -38,11 +38,11 @@ export function SessionsScreen() {
   const data = sessions.data
   // "hace N min" se mide contra el momento de la respuesta: se actualiza al refrescar, no en cada render.
   const rows = useMemo(
-    () => (data ? toSessionRows(data.sessions, data.currentId, { now: sessions.dataUpdatedAt }) : []),
+    () => (data ? toSessionRows(data, { now: sessions.dataUpdatedAt }) : []),
     [data, sessions.dataUpdatedAt],
   )
-  const currentKnown = !!data?.currentId
-  const others = data ? otherSessionIds(data.sessions, data.currentId) : []
+  const currentKnown = !!data?.some((s) => s.current)
+  const others = data ? otherSessionIds(data) : []
   const busy = revokeOne.isPending || revokeOthers.isPending || revokeAll.isPending || signingOut
 
   async function confirm() {

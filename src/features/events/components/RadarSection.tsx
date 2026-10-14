@@ -4,7 +4,7 @@ import { useLike, useOpenChatWith } from '@/features/match/hooks'
 import { userMessage } from '@/lib/api/errors'
 import { EmptyState, ErrorState, Icon, Text, UsersIcon, VinylRecordIcon, radius, space, useStyles, type Theme } from '@/ui'
 import { useGenreLookup } from '../genres'
-import { isNotAttending, isRadarLocked, useRadar, useSwipesMissing } from '../hooks'
+import { isEventPast, isNotAttending, isRadarLocked, useRadar, useSwipesMissing } from '../hooks'
 import { RadarPersonRow, RadarPersonSkeleton } from './RadarPersonRow'
 
 type RadarSectionProps = {
@@ -36,6 +36,10 @@ export function RadarSection({ eventId, eventName, going, attendancePending }: R
         </Text>
       </View>
     )
+  }
+
+  if (isEventPast(radar.error)) {
+    return <EmptyState icon={UsersIcon} title="Este concierto ya pasó." />
   }
 
   if (radar.isPending) {

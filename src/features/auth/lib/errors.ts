@@ -5,6 +5,8 @@ export const RATE_LIMITED = 'Hiciste muchos intentos seguidos. Espera unos minut
 export const EMAIL_TAKEN = 'Ya hay una cuenta con este correo. Si es tuya, entra con tu contraseña.'
 export const CONSENT_CHANGED = 'Los términos se actualizaron. Revísalos y vuelve a aceptarlos.'
 
+export const ACCOUNT_BANNED = 'Esta cuenta está suspendida. Si crees que es un error, escríbenos.'
+
 export type FormErrors<F extends string> = { fields: Partial<Record<F, string>>; general: string | null }
 
 function isRateLimited(error: unknown): boolean {
@@ -29,6 +31,7 @@ export type LoginField = 'email' | 'password'
 
 export function loginErrors(error: unknown): FormErrors<LoginField> {
   if (isRateLimited(error)) return { fields: {}, general: RATE_LIMITED }
+  if (isApiError(error, 'account_banned')) return { fields: {}, general: ACCOUNT_BANNED }
   if (error instanceof ApiError && error.kind === 'http') {
     if (error.status === 401 || error.code === 'invalid_credentials') return { fields: {}, general: INVALID_CREDENTIALS }
     if (error.status === 400) {
@@ -46,6 +49,7 @@ export function registerErrors(error: unknown): FormErrors<RegisterField> {
   if (isApiError(error, 'email_taken') || (error instanceof ApiError && error.kind === 'http' && error.status === 409)) {
     return { fields: { email: EMAIL_TAKEN }, general: null }
   }
+  if (isApiError(error, 'account_banned')) return { fields: {}, general: ACCOUNT_BANNED }
   if (isApiError(error, 'consent_required')) return { fields: { consent: CONSENT_CHANGED }, general: null }
   if (error instanceof ApiError && error.kind === 'http' && error.status === 400) {
     const fields = pickFields(error, ['displayName', 'email', 'password'] as const, {

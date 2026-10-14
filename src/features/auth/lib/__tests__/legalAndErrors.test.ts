@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/api/errors'
-import { CONSENT_CHANGED, EMAIL_TAKEN, INVALID_CREDENTIALS, loginErrors, RATE_LIMITED, registerErrors } from '../errors'
+import { ACCOUNT_BANNED, CONSENT_CHANGED, EMAIL_TAKEN, INVALID_CREDENTIALS, loginErrors, RATE_LIMITED, registerErrors } from '../errors'
 import { consentVersionOf, legalLinksOf } from '../legal'
 
 const legal = (overrides: Partial<{ consentVersion: string; termsUrl: string; privacyUrl: string }> = {}) => ({
@@ -53,10 +53,15 @@ describe('loginErrors', () => {
 describe('registerErrors', () => {
   it('correo repetido se marca en el campo', () => {
     expect(registerErrors(http(409, 'email_taken')).fields.email).toBe(EMAIL_TAKEN)
+    expect(loginErrors(http(403, 'account_banned')).general).toBe(ACCOUNT_BANNED)
   })
 
   it('consentimiento desactualizado va a la casilla', () => {
     expect(registerErrors(http(400, 'consent_required')).fields.consent).toBe(CONSENT_CHANGED)
+  })
+
+  it('cuenta suspendida da un mensaje general sin detalles', () => {
+    expect(registerErrors(http(403, 'account_banned'))).toEqual({ fields: {}, general: ACCOUNT_BANNED })
   })
 
   it('traduce consentVersion del back a la casilla', () => {

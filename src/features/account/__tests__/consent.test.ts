@@ -1,6 +1,4 @@
-import type { Me } from '@/lib/api/types'
 import {
-  acceptedConsentVersionOf,
   currentConsentVersionOf,
   decideConsent,
   shouldRedirectToConsent,
@@ -8,45 +6,18 @@ import {
 import { contactMailto, PRIVACY_CONTACT_EMAIL } from '../contact'
 import { effectiveDateLabel, legalDocumentsOf } from '../legal'
 
-const me = (extra: Record<string, unknown> = {}) =>
-  ({
-    id: 'u',
-    email: 'ana@correo.com',
-    displayName: 'Ana',
-    birthDate: null,
-    age: null,
-    city: null,
-    bio: null,
-    genres: [],
-    onboardingCompleted: true,
-    role: 'user',
-    createdAt: '2026-10-01T00:00:00Z',
-    ...extra,
-  }) as Me
-
 describe('decideConsent', () => {
-  it('pide consentimiento si el servidor respondió consent_required, sin importar lo demás', () => {
-    expect(decideConsent({ currentVersion: '2026-10-13', acceptedVersion: '2026-10-13', serverRequiresConsent: true })).toBe(
-      'required',
-    )
+  it('pide consentimiento si el servidor respondió consent_required, sin importar /me', () => {
+    expect(decideConsent({ consentUpToDate: true, serverRequiresConsent: true })).toBe('required')
   })
 
-  it('no bloquea cuando el back no expone la versión aceptada', () => {
-    expect(decideConsent({ currentVersion: '2026-10-13', acceptedVersion: undefined, serverRequiresConsent: false })).toBe(
-      'unknown',
-    )
+  it('pide consentimiento cuando GET /me dice consentUpToDate=false', () => {
+    expect(decideConsent({ consentUpToDate: false, serverRequiresConsent: false })).toBe('required')
   })
 
-  it('no bloquea si todavía no se sabe la versión vigente', () => {
-    expect(decideConsent({ currentVersion: null, acceptedVersion: '2026-01-01', serverRequiresConsent: false })).toBe('unknown')
-  })
-
-  it('compara la versión aceptada con la vigente', () => {
-    expect(decideConsent({ currentVersion: '2026-10-13', acceptedVersion: '2026-10-13', serverRequiresConsent: false })).toBe('ok')
-    expect(decideConsent({ currentVersion: '2026-10-13', acceptedVersion: '2026-01-01', serverRequiresConsent: false })).toBe(
-      'required',
-    )
-    expect(decideConsent({ currentVersion: '2026-10-13', acceptedVersion: null, serverRequiresConsent: false })).toBe('required')
+  it('no bloquea con consentUpToDate=true ni mientras /me carga', () => {
+    expect(decideConsent({ consentUpToDate: true, serverRequiresConsent: false })).toBe('ok')
+    expect(decideConsent({ consentUpToDate: undefined, serverRequiresConsent: false })).toBe('ok')
   })
 })
 
@@ -55,23 +26,11 @@ describe('shouldRedirectToConsent', () => {
     expect(shouldRedirectToConsent('required', '/')).toBe(true)
     expect(shouldRedirectToConsent('required', '/consent')).toBe(false)
     expect(shouldRedirectToConsent('ok', '/')).toBe(false)
-    expect(shouldRedirectToConsent('unknown', '/')).toBe(false)
   })
 })
 
-describe('acceptedConsentVersionOf', () => {
-  it('es undefined con el contrato actual (MeResponse no trae el dato)', () => {
-    expect(acceptedConsentVersionOf(me())).toBeUndefined()
-    expect(acceptedConsentVersionOf(undefined)).toBeUndefined()
-  })
-
-  it('lee el campo cuando el back lo agregue', () => {
-    expect(acceptedConsentVersionOf(me({ acceptedConsentVersion: '2026-10-13' }))).toBe('2026-10-13')
-    expect(acceptedConsentVersionOf(me({ consentVersion: '2026-01-01' }))).toBe('2026-01-01')
-    expect(acceptedConsentVersionOf(me({ acceptedConsentVersion: null }))).toBeNull()
-  })
-
-  it('currentConsentVersionOf ignora versiones vacías', () => {
+describe('currentConsentVersionOf', () => {
+  it('ignora versiones vacías', () => {
     expect(currentConsentVersionOf({ consentVersion: '  ' })).toBeNull()
     expect(currentConsentVersionOf({ consentVersion: '2026-10-13' })).toBe('2026-10-13')
   })
@@ -84,6 +43,7 @@ describe('documentos legales y contacto', () => {
     termsUrl: 'https://api.encorely.example/legal/terminos',
     privacyUrl: '',
     accountDeletionUrl: 'https://api.encorely.example/cuenta/eliminar',
+    privacyContactEmail: null,
   }
 
   it('omite documentos sin URL usable', () => {
