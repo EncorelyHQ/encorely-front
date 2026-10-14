@@ -6,7 +6,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#121110",
     "plugins": [
       [
         "expo-router",
@@ -14,7 +15,13 @@
           "root": "src/app"
         }
       ],
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": false
+        }
+      ],
       "expo-font",
       [
         "expo-audio",
@@ -25,38 +32,65 @@
           "microphonePermission": false
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Encorely usa la cámara solo para escanear el código de seguridad de tu match y verificar que nadie más lee el chat.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#FF6A2B",
+          "defaultChannel": "messages"
+        }
+      ],
       "expo-web-browser",
-      "expo-status-bar",
       "expo-asset",
+      "expo-image",
       [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0A0A0F",
-          "resizeMode": "contain"
+          "imageWidth": 160,
+          "backgroundColor": "#121110",
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#121110"
+          }
         }
       ]
     ],
     "experiments": {
-      "tsconfigPaths": true
+      "tsconfigPaths": true,
+      "typedRoutes": false
     },
     "extra": {
-      "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c",
-      "spotifyRedirectUriWeb": "http://localhost:8081/spotify-callback"
+      "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.encorely.app"
     },
     "android": {
+      "package": "com.encorely.app",
+      "allowBackup": false,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0F",
+        "backgroundColor": "#121110",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.encorely.app"
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
