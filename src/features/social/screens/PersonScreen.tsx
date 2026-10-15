@@ -5,6 +5,8 @@ import { useQueryClient } from '@tanstack/react-query'
 // Directo a genres y no al index de events: el radar de events ya importa de social y el index cerraría un ciclo.
 import { genresSentence, joinSpanish, useGenreLookup } from '@/features/events/genres'
 import type { MatchRouteParams } from '@/features/match'
+// Directo a hooks: el index de match arrastra pantallas que cerrarían un ciclo con events y social.
+import { useOpenChatWith } from '@/features/match/hooks'
 import { BlockReportSheet } from '@/features/safety'
 import { userMessage } from '@/lib/api/errors'
 import type { PublicProfile, ReactionType } from '@/lib/api/types'
@@ -38,7 +40,8 @@ import { ProfileTicket, type TicketGenre } from '../components/ProfileTicket'
 import { PublicProfileBody, type ProfileTarget } from '../components/PublicProfileBody'
 import { ReactionSheet } from '../components/ReactionSheet'
 import { isProfileGone, socialErrorMessage, PROFILE_UNAVAILABLE } from '../errors'
-import { useActiveMatchWith, useLikeProfile, useProfile, useReaction } from '../queries'
+import { profileCta } from '../cta'
+import { useLikeProfile, useProfile, useReaction } from '../queries'
 import { reactionFor } from '../reactions'
 import { reactionLabel, reactionTone } from '../stickers'
 
@@ -54,12 +57,11 @@ export function PersonScreen() {
   const profile = useProfile(userId)
   const reaction = useReaction(userId ?? '', { onError: (error) => toast.show(socialErrorMessage(error), 'danger') })
   const like = useLikeProfile(userId ?? '')
-  const matchId = useActiveMatchWith(userId)
+  const chat = useOpenChatWith()
   const [picking, setPicking] = useState<ProfileTarget | null>(null)
   // Solo la etiqueta recién puesta rebota: las que ya estaban aparecen quietas.
   const [justPlaced, setJustPlaced] = useState<string | null>(null)
   const [safety, setSafety] = useState(false)
-  const [liked, setLiked] = useState(false)
   const own = userId === me.id
   // Si el perfil dejó de verse, no se sigue mostrando lo que quedó en caché, ni siquiera el nombre en el encabezado.
   const gone = profile.isError && isProfileGone(profile.error)
@@ -137,7 +139,10 @@ export function PersonScreen() {
   const onLike = () =>
     like.mutate(undefined, {
       onSuccess: (result) => {
-        setLiked(true)
+        // El back no devuelve el perfil: se marca en la caché con lo que respondió el like (draft.15).
+        qc.setQueryData<PublicProfile>(queryKeys.profile(p.id), (prev) =>
+          prev ? { ...prev, likedByMe: true, matched: result.matched } : prev,
+        )
         if (result.matched) void qc.invalidateQueries({ queryKey: queryKeys.matches })
         if (result.matched && result.matchId) {
           const params: MatchRouteParams = {
@@ -156,14 +161,16 @@ export function PersonScreen() {
       onError: (error) => toast.show(userMessage(error), 'danger'),
     })
 
-  const footer = own ? undefined : matchId ? (
+  const cta = profileCta(p, own)
+  const footer = cta === 'none' ? undefined : cta === 'write' ? (
     <Button
       label="Escribir"
       icon={ChatCircleIcon}
+      loading={chat.opening === p.id}
       accessibilityHint={`Ya hicieron match. Abre el chat con ${p.displayName}`}
-      onPress={() => router.push(`/chat/${matchId}`)}
+      onPress={() => void chat.open(p.id)}
     />
-  ) : liked ? (
+  ) : cta === 'liked' ? (
     <View style={styles.liked} accessible accessibilityLabel={`Te interesa ${p.displayName}`}>
       <Icon icon={CheckIcon} size={20} color="textMuted" weight="bold" />
       <Text variant="callout" color="textMuted">

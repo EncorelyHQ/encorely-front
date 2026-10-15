@@ -407,7 +407,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Asistentes del evento ordenados por afinidad real. Requiere ir al evento y haber desbloqueado el radar */
+        /**
+         * Asistentes del evento ordenados por afinidad real. Requiere ir al evento y haber desbloqueado el radar
+         * @description Devuelve hasta 200 asistentes; si había más, responde con la cabecera `X-Radar-Truncated: true`.
+         */
         get: operations["GetEventRadar"];
         put?: never;
         post?: never;
@@ -1437,9 +1440,13 @@ export interface components {
             common: components["schemas"]["ProfileCommonDto"];
             /** @description Las reacciones que quien llama dejó en este perfil. */
             myReactions: components["schemas"]["MyReactionDto"][];
+            /** @description Quien llama ya le dio like (en cualquier evento), haya o no match. Igual que en el radar. False en el perfil propio. */
+            likedByMe: boolean;
+            /** @description Hay un match activo entre los dos: manda sobre LikedByMe. False en el perfil propio. */
+            matched: boolean;
         };
         PushTokenRequest: {
-            /** @description ExpoPushToken[...]. */
+            /** @description ExponentPushToken[...] o ExpoPushToken[...]. */
             token: string;
             platform: components["schemas"]["DevicePlatform"];
         };
@@ -1472,7 +1479,7 @@ export interface components {
             city: null | string;
             /**
              * Format: int32
-             * @description Afinidad 0–100 (coseno entre vectores de géneros), o null si alguno de los dos aún no tiene señal suficiente (pocos swipes y sin Spotify).
+             * @description Afinidad 0–100 (coseno entre vectores de géneros), o null si alguno de los dos aún no tiene señal suficiente (pocos swipes y sin Spotify) o ningún género con peso positivo.
              */
             affinity: null | number;
             /** @description Slugs de géneros con peso en ambos ADN (máx. 3, de mayor a menor). */
@@ -4912,6 +4919,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
