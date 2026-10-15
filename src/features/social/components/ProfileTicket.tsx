@@ -23,7 +23,7 @@ export function ProfileTicket({ name, meta, bio, genres, renderGenreExtra, onGen
     <ParallaxTicket>
       <TicketCard>
         <View style={styles.head}>
-          <Avatar name={name} size={56} />
+          <Avatar name={name} size={56} tone="ink" />
           <View style={styles.identity}>
             <Text variant="display" style={styles.name} accessibilityRole="header" numberOfLines={2}>
               {name}

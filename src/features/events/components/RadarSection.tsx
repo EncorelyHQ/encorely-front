@@ -101,6 +101,7 @@ export function RadarSection({ eventId, eventName, going, attendancePending }: R
           genres={sentence(person.sharedGenres)}
           onLike={(p) => like.mutate(p)}
           onOpenChat={(p) => void chat.open(p.userId)}
+          onOpenProfile={(p) => router.push(`/person/${p.userId}`)}
           liking={like.isPending && like.variables?.userId === person.userId}
           openingChat={chat.opening === person.userId}
         />

@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { meApi, usersApi } from '@/lib/api/endpoints'
+import { matchesApi, meApi, usersApi } from '@/lib/api/endpoints'
 import { queryKeys } from '@/lib/query'
 import { reactionMutationOptions, type ReactionVars } from './reactions'
 import { visibilityMutationOptions } from './visibility'
@@ -39,3 +39,6 @@ export function useProfileVisibility({ onError }: { onError?: (error: unknown) =
     visibilityMutationOptions(qc, (show) => meApi.update({ showProfileToOthers: show }), (error) => onError?.(error)),
   )
 }
+
+// "Me interesa" desde el perfil: POST /likes sin evento (el contrato lo permite).
+export const useLikeProfile = (userId: string) => useMutation({ mutationFn: () => matchesApi.like(userId) })

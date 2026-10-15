@@ -66,7 +66,7 @@ function ArtistCard({ artist, showShared, extra }: { artist: ProfileArtist; show
           {artist.name}
         </RNText>
       </View>
-      {showShared && artist.shared ? <ReactionTag label="En común" tone="stamp" angle={-6} style={styles.sharedTag} /> : null}
+      {showShared && artist.shared ? <ReactionTag label="En común" anchor="left" tone="stamp" angle={-6} style={styles.sharedTag} /> : null}
       {extra}
     </View>
   )

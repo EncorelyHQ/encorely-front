@@ -17,14 +17,25 @@ type PublicProfileBodyProps = {
   showShared?: boolean
   // Lo que va entre los géneros y los artistas (por ejemplo, "En común").
   middle?: ReactNode
+  // En el perfil ajeno los géneros ya van en la boleta de arriba.
+  showGenres?: boolean
 }
 
 // Lo que cualquiera ve de un perfil: géneros como stickers, artistas en carrusel y la temporada.
-export function PublicProfileBody({ profile, titles, renderExtra, onTargetPress, targetHint, showShared = false, middle }: PublicProfileBodyProps) {
+export function PublicProfileBody({
+  profile,
+  titles,
+  renderExtra,
+  onTargetPress,
+  targetHint,
+  showShared = false,
+  middle,
+  showGenres = true,
+}: PublicProfileBodyProps) {
   const styles = useStyles(makeStyles)
   return (
     <View style={styles.body}>
-      {profile.genres.length ? (
+      {showGenres && profile.genres.length ? (
         <ScrollReveal style={styles.section}>
           <StickerTitle label={titles.genres} angle={-2} />
           <View style={styles.stickers}>

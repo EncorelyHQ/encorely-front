@@ -1,9 +1,10 @@
 import { View } from 'react-native'
 import { Text } from './Text'
 import { useTheme } from './theme'
-import { radius } from './tokens'
+import { radius, sticker } from './tokens'
 
-type AvatarProps = { name: string; size?: 40 | 48 | 56 | 72 | 96 }
+// tone 'ink': para pintarlo encima de una boleta, donde el papel de siempre desaparece.
+type AvatarProps = { name: string; size?: 40 | 48 | 56 | 72 | 96; tone?: 'paper' | 'ink' }
 
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -14,7 +15,7 @@ export function initials(name: string): string {
 }
 
 // Sin fotos en la v1: iniciales sobre papel, nunca caras de relleno.
-export function Avatar({ name, size = 48 }: AvatarProps) {
+export function Avatar({ name, size = 48, tone = 'paper' }: AvatarProps) {
   const theme = useTheme()
   return (
     <View
@@ -24,7 +25,7 @@ export function Avatar({ name, size = 48 }: AvatarProps) {
         width: size,
         height: size,
         borderRadius: radius.full,
-        backgroundColor: theme.ticket,
+        backgroundColor: tone === 'ink' ? sticker.ink.bg : theme.ticket,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -34,7 +35,7 @@ export function Avatar({ name, size = 48 }: AvatarProps) {
         color="onTicket"
         allowFontScaling={false}
         // Siempre Archivo 600: en tamaños grandes solo crece el cuerpo, nunca cambia de familia.
-        style={size >= 72 ? { fontSize: size * 0.38, lineHeight: size * 0.44 } : null}
+        style={[size >= 72 ? { fontSize: size * 0.38, lineHeight: size * 0.44 } : null, tone === 'ink' ? { color: sticker.ink.fg } : null]}
       >
         {initials(name)}
       </Text>

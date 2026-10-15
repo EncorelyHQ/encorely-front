@@ -1,5 +1,5 @@
 import { ChatCircleTextIcon } from 'phosphor-react-native/src/icons/ChatCircleText'
-import { StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated'
 import { affinityPercent, affinitySentence } from '@/features/social'
 import type { RadarPerson } from '@/lib/api/types'
@@ -11,11 +11,12 @@ type RadarPersonRowProps = {
   genres: string
   onLike: (person: RadarPerson) => void
   onOpenChat: (person: RadarPerson) => void
+  onOpenProfile: (person: RadarPerson) => void
   liking: boolean
   openingChat: boolean
 }
 
-export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, openingChat }: RadarPersonRowProps) {
+export function RadarPersonRow({ person, genres, onLike, onOpenChat, onOpenProfile, liking, openingChat }: RadarPersonRowProps) {
   const styles = useStyles(makeStyles)
   const facts = [person.age ? `${person.age} años` : null, person.city].filter(Boolean).join(' · ')
   const summary = [
@@ -30,7 +31,13 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
 
   return (
     <View style={styles.row}>
-      <View style={styles.top} accessible accessibilityLabel={summary}>
+      <Pressable
+        style={({ pressed }) => [styles.top, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel={summary}
+        accessibilityHint="Abre su perfil"
+        onPress={() => onOpenProfile(person)}
+      >
         <Avatar name={person.displayName} size={48} />
         <View style={styles.identity}>
           <Text variant="headline" numberOfLines={2}>
@@ -52,7 +59,7 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
             </Text>
           </View>
         )}
-      </View>
+      </Pressable>
 
       {genres ? (
         <Text variant="footnote" color="textMuted" style={styles.indented} importantForAccessibility="no">
@@ -135,6 +142,7 @@ const makeStyles = (t: Theme) =>
       borderBottomColor: t.border,
     },
     top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+    pressed: { opacity: 0.7 },
     identity: { flex: 1, gap: space.xs / 2 },
     affinity: { alignSelf: 'flex-start', alignItems: 'flex-end', flexShrink: 0, maxWidth: '40%' },
     // Alinea el texto con el nombre, no con el avatar.

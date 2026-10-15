@@ -94,9 +94,12 @@ const placeKeyframe = (angle: number) =>
   }).duration(PLACE_MS)
 
 export const PLACE_MS = 440
+const TAG_BOX = 220
 
 type ReactionTagProps = {
   label: string
+  // De qué lado se ancla al sticker o tarjeta (con `right` o `left` en style). Crece hacia el lado contrario.
+  anchor?: 'right' | 'left'
   tone?: StickerTone
   angle?: number
   // true solo cuando la persona la acaba de poner: así no rebotan todas al abrir el perfil.
@@ -105,7 +108,7 @@ type ReactionTagProps = {
 }
 
 // Etiqueta chica que se pega sobre un sticker o una tarjeta (la reacción que dejaste).
-export function ReactionTag({ label, tone = 'band', angle = 5, justPlaced = false, style }: ReactionTagProps) {
+export function ReactionTag({ label, anchor = 'right', tone = 'band', angle = 5, justPlaced = false, style }: ReactionTagProps) {
   const { reduced, reduceMotion } = useMotion()
   const { fontScale } = useWindowDimensions()
   const finalAngle = stickerAngle(angle, fontScale)
@@ -116,14 +119,17 @@ export function ReactionTag({ label, tone = 'band', angle = 5, justPlaced = fals
     if (placed) haptics.selection()
   }, [placed])
 
+  // Un absoluto toma como máximo el ancho de su padre: sobre un sticker angosto ("Salsa") la etiqueta se partía en
+  // dos líneas. La caja ancha y transparente le da espacio; pointerEvents="none" para no robar toques.
   return (
-    <Animated.View
-      pointerEvents="none"
-      entering={placed && !reduced ? placeKeyframe(finalAngle).reduceMotion(reduceMotion) : undefined}
-      style={[styles.tag, { transform: [{ rotate: `${finalAngle}deg` }] }, style]}
-    >
-      <StickerFace label={label} tone={tone} size="tag" accessible={false} />
-    </Animated.View>
+    <View pointerEvents="none" style={[styles.tagBox, anchor === 'right' ? styles.tagRight : styles.tagLeft, style]}>
+      <Animated.View
+        entering={placed && !reduced ? placeKeyframe(finalAngle).reduceMotion(reduceMotion) : undefined}
+        style={{ transform: [{ rotate: `${finalAngle}deg` }] }}
+      >
+        <StickerFace label={label} tone={tone} size="tag" accessible={false} />
+      </Animated.View>
+    </View>
   )
 }
 
@@ -140,5 +146,7 @@ const styles = StyleSheet.create({
   },
   face: { borderWidth: CUT, borderColor: sticker.cut, flexShrink: 1 },
   label: { fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.4, includeFontPadding: false },
-  tag: { position: 'absolute', zIndex: 2 },
+  tagBox: { position: 'absolute', zIndex: 2, width: TAG_BOX },
+  tagRight: { alignItems: 'flex-end' },
+  tagLeft: { alignItems: 'flex-start' },
 })

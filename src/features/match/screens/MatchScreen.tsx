@@ -29,6 +29,7 @@ export function MatchScreen({ params }: { params: MatchRouteParams }) {
   const match = matches.data?.find((m) => m.id === params.matchId)
 
   const peerName = params.peerName ?? match?.peer.displayName
+  const peerId = params.peerId ?? match?.peer.id
   const event = params.eventId ? findCachedEvent(qc, params.eventId) : undefined
   const eventName = params.eventName ?? event?.name ?? match?.eventName ?? null
   const slugs = params.genres ? params.genres.split(',').filter(Boolean) : (match?.sharedGenres ?? [])
@@ -81,6 +82,9 @@ export function MatchScreen({ params }: { params: MatchRouteParams }) {
             icon={ChatCircleIcon}
             onPress={() => router.replace(`/chat/${params.matchId}`)}
           />
+          {peerId ? (
+            <Button label="Ver su perfil" variant="secondary" onPress={() => router.push(`/person/${peerId}`)} />
+          ) : null}
           <Button label="Seguir viendo" variant="ghost" onPress={leave} />
         </>
       }
