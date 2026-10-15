@@ -12,12 +12,20 @@ jest.mock('expo-router', () => ({
 
 // Reanimated nativo no carga en Jest; el panel no anima nada en estas piezas.
 jest.mock('react-native-reanimated', () => {
-  const { View } = jest.requireActual('react-native')
+  const { View, ScrollView, FlatList } = jest.requireActual('react-native')
   const chain: Record<string, () => unknown> = {}
   for (const k of ['duration', 'easing', 'delay', 'reduceMotion']) chain[k] = () => chain
+  const mutable = (value: unknown) => ({ value, get: () => value, set: () => undefined })
   return {
     __esModule: true,
-    default: { View },
+    default: { View, ScrollView, FlatList },
+    makeMutable: mutable,
+    useSharedValue: mutable,
+    useAnimatedScrollHandler: () => undefined,
+    useAnimatedStyle: () => ({}),
+    useAnimatedRef: () => ({ current: null }),
+    useAnimatedReaction: () => undefined,
+    measure: () => null,
     Easing: { bezier: () => (t: number) => t },
     FadeIn: chain,
     FadeOut: chain,
