@@ -23,7 +23,7 @@ flowchart LR
 | Carpeta | Qué vive ahí | Regla |
 |---|---|---|
 | `src/app/` | Rutas de expo-router. Delgadas: importan la pantalla de su feature | Sin lógica de negocio |
-| `src/features/<dominio>/` | Pantallas, componentes, hooks y lógica pura de cada dominio: `auth`, `onboarding`, `discover`, `events`, `match`, `chat`, `profile`, `safety`, `push`, `spotify` | Un dominio no edita archivos de otro; reutiliza por su `index.ts` |
+| `src/features/<dominio>/` | Pantallas, componentes, hooks y lógica pura de cada dominio: `auth`, `onboarding`, `discover`, `events`, `match`, `chat`, `profile`, `social`, `safety`, `push`, `spotify`, `dev` (solo `__DEV__`) | Un dominio no edita archivos de otro; reutiliza por su `index.ts` |
 | `src/ui/` | Design system "La boleta compartida": tokens, tema, primitivas, iconos | Única fuente de colores, tipos, espacios y radios |
 | `src/lib/` | Configuración, cliente API, tipos del contrato, sesión, Query, red | Sin UI salvo el aviso de red |
 
@@ -128,7 +128,18 @@ Todo el cifrado vive en `src/features/chat/crypto/envelope.ts`. Ningún `console
 
 ## Diseño: "La boleta compartida"
 
-Tokens en `src/ui/tokens.ts` (paletas *venue* oscura y *papel* clara verificadas para AA, escala de 4 pt, 3 radios, Big Shoulders Display + Archivo + IBM Plex Mono, motion). La boleta con muesca (`TicketCard`) solo aparece en match, concierto y verificación del chat. Iconos Phosphor por imports profundos (`src/ui/icons.ts`). Sin emojis, gradientes de color, glow ni blur. Sin datos inventados: lo que no viene del API no se muestra.
+Tokens en `src/ui/tokens.ts` (paletas *venue* oscura y *papel* clara verificadas para AA, escala de 4 pt, 3 radios, Big Shoulders Display + Archivo + IBM Plex Mono, motion). La boleta con muesca (`TicketCard`) aparece en match, concierto, verificación del chat y arriba de cada perfil. Iconos Phosphor por imports profundos (`src/ui/icons.ts`). Sin emojis, gradientes de color, glow ni blur. Sin datos inventados: lo que no viene del API no se muestra.
+
+## Perfil social: stickers, motion y números
+
+Contrato draft.11+ (`GET /users/{id}/profile`, reacciones, `showProfileToOthers`). Todo vive en `src/features/social/`; las pantallas son *Tú* (pestañas "Tu perfil | Así te ven"), `/(app)/person/[userId]`, `/(app)/reactions` y `settings/profile-visibility`.
+
+- **3D solo con transformaciones nativas.** `rotateX`, `rotateY`, `scale` y `perspective` de Reanimated en el hilo de UI; nunca WebGL ni librerías 3D. `Screen` en modo scroll publica el desplazamiento (`useScreenScroll()`), y de ahí leen `ScrollReveal` (la sección entra inclinada 14° y sube 28 pt), `ParallaxTicket` (la boleta se inclina hasta 12° y baja a 0,92) y `StickerTitle`. `Carousel3D` gira cada tarjeta ±18° según su distancia al centro. La matemática está en `src/ui/motionMath.ts`, como worklets puros con tests.
+- **Reduce motion manda.** `useMotion()` es el único lugar que lo decide: con reduce motion no hay inclinación, ni opacidad, ni rebote, y los stickers quedan en su ángulo fijo.
+- **Cuándo van stickers.** Solo para gustos (géneros, reacciones, "En común") y en algunos títulos de sección del perfil (`StickerTitle`). Nunca en ajustes, listas, formularios ni botones. El ángulo y el color salen de la clave (`stickerAngleFor`), así que el mismo género se ve igual en todos los perfiles. Con la fuente del sistema al 150 % o más, la inclinación baja a ±1° y el texto se limita a 1,3×. La sombra dura es una `View` desplazada, porque `elevation` difumina en Android. Los colores de sticker (`sticker` en `tokens.ts`) son iguales en los dos temas y todas sus parejas pasan AA.
+- **Números honestos.** "X % de gustos en común", nunca "afinidad". Se redondea de 5 en 5 y, si el back manda `affinity: null` (alguno tiene menos de 25 canciones y no conectó Spotify), no se muestra número, solo lo que tienen en común. Siempre va con la razón al lado y con "¿Cómo lo calculamos?". `GenreBars` reparte por resto mayor y agrupa el resto en "Otros" para sumar 100. Las estadísticas dicen conciertos "marcados", no "asistidos".
+- **Reacciones.** `meToo`, `letsGo` y `sendOne`, una por objetivo. Se marcan de forma optimista y se deshacen solo en ese objetivo si falla. No cuentan para el match ni mandan push. Quien las recibe ve el nombre (`/reactions`) y puede bloquear o reportar desde la fila. Un 404 `user_not_found` dice "Este perfil no está disponible" sin explicar por qué.
+- **Laboratorios** (solo `__DEV__`, sin sesión): `encorely://dev-motion` y `encorely://dev-profile`.
 
 ## Pruebas
 

@@ -12,19 +12,33 @@ type PublicProfileBodyProps = {
   profile: PublicProfile
   titles: { genres: string; artists: string; season: string }
   renderExtra?: (target: ProfileTarget) => ReactNode
+  // Texto para TalkBack de lo que renderExtra pinta encima.
+  describe?: (target: ProfileTarget) => string | null
   onTargetPress?: (target: ProfileTarget) => void
   targetHint?: string
   showShared?: boolean
   // Lo que va entre los géneros y los artistas (por ejemplo, "En común").
   middle?: ReactNode
+  // En el perfil ajeno los géneros ya van en la boleta de arriba.
+  showGenres?: boolean
 }
 
 // Lo que cualquiera ve de un perfil: géneros como stickers, artistas en carrusel y la temporada.
-export function PublicProfileBody({ profile, titles, renderExtra, onTargetPress, targetHint, showShared = false, middle }: PublicProfileBodyProps) {
+export function PublicProfileBody({
+  profile,
+  titles,
+  renderExtra,
+  describe,
+  onTargetPress,
+  targetHint,
+  showShared = false,
+  middle,
+  showGenres = true,
+}: PublicProfileBodyProps) {
   const styles = useStyles(makeStyles)
   return (
     <View style={styles.body}>
-      {profile.genres.length ? (
+      {showGenres && profile.genres.length ? (
         <ScrollReveal style={styles.section}>
           <StickerTitle label={titles.genres} angle={-2} />
           <View style={styles.stickers}>
@@ -37,7 +51,7 @@ export function PublicProfileBody({ profile, titles, renderExtra, onTargetPress,
                   {renderExtra?.(target)}
                 </>
               )
-              const label = shared ? `${g.name}, en común` : g.name
+              const label = [g.name, shared ? 'en común' : null, describe?.(target)].filter(Boolean).join(', ')
               return onTargetPress ? (
                 <Pressable
                   key={g.slug}
@@ -69,6 +83,7 @@ export function PublicProfileBody({ profile, titles, renderExtra, onTargetPress,
               artists={profile.artists}
               showShared={showShared}
               pressHint={targetHint}
+              describe={describe ? (a) => describe({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
               onPress={onTargetPress ? (a) => onTargetPress({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
               renderExtra={renderExtra ? (a) => renderExtra({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
             />

@@ -14,16 +14,27 @@ type ProfileTicketProps = {
   renderGenreExtra?: (genre: TicketGenre) => ReactNode
   onGenrePress?: (genre: TicketGenre) => void
   genreHint?: string
+  // Lo que la etiqueta encima dice en pantalla ("tu sticker: Yo también", "4 reacciones"): TalkBack no la lee sola.
+  describeGenre?: (genre: TicketGenre) => string | null
 }
 
 // La boleta de arriba del perfil: tus gustos son stickers pegados en ella. Se inclina al bajar (ParallaxTicket).
-export function ProfileTicket({ name, meta, bio, genres, renderGenreExtra, onGenrePress, genreHint }: ProfileTicketProps) {
+export function ProfileTicket({
+  name,
+  meta,
+  bio,
+  genres,
+  renderGenreExtra,
+  onGenrePress,
+  genreHint,
+  describeGenre,
+}: ProfileTicketProps) {
   const styles = useStyles(makeStyles)
   return (
     <ParallaxTicket>
       <TicketCard>
         <View style={styles.head}>
-          <Avatar name={name} size={56} />
+          <Avatar name={name} size={56} tone="ink" />
           <View style={styles.identity}>
             <Text variant="display" style={styles.name} accessibilityRole="header" numberOfLines={2}>
               {name}
@@ -34,6 +45,7 @@ export function ProfileTicket({ name, meta, bio, genres, renderGenreExtra, onGen
         {genres.length ? (
           <View style={styles.stickers}>
             {genres.map((genre) => {
+              const label = [genre.name, describeGenre?.(genre)].filter(Boolean).join(', ')
               const sticker = <Sticker label={genre.name} tone={stickerToneFor(genre.key)} angle={stickerAngleFor(genre.key)} />
               return onGenrePress ? (
                 <Pressable
@@ -41,14 +53,14 @@ export function ProfileTicket({ name, meta, bio, genres, renderGenreExtra, onGen
                   style={styles.stickerWrap}
                   onPress={() => onGenrePress(genre)}
                   accessibilityRole="button"
-                  accessibilityLabel={genre.name}
+                  accessibilityLabel={label}
                   accessibilityHint={genreHint}
                 >
                   {sticker}
                   {renderGenreExtra?.(genre)}
                 </Pressable>
               ) : (
-                <View key={genre.key} style={styles.stickerWrap}>
+                <View key={genre.key} style={styles.stickerWrap} accessible accessibilityLabel={label}>
                   {sticker}
                   {renderGenreExtra?.(genre)}
                 </View>

@@ -10,6 +10,7 @@ import { likeMutationOptions } from './likeMutation'
 export type MatchRouteParams = {
   matchId: string
   peerName?: string
+  peerId?: string
   eventId?: string
   eventName?: string
   // Slugs separados por coma: los params de ruta son texto.
@@ -34,6 +35,7 @@ export function useLike({ eventId, eventName }: LikeContextInfo) {
         const params: MatchRouteParams = {
           matchId,
           peerName: person.displayName,
+          peerId: person.userId,
           eventId,
           eventName,
           genres: person.sharedGenres.join(','),

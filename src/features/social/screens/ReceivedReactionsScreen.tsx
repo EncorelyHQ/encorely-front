@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { FlatList, StyleSheet, View } from 'react-native'
-import { Stack } from 'expo-router'
+import { FlatList, Pressable, StyleSheet, View } from 'react-native'
+import { router, Stack } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { BlockReportSheet } from '@/features/safety'
 import { userMessage } from '@/lib/api/errors'
@@ -133,10 +133,12 @@ function ReactionRow({ item, onMore }: { item: ReceivedReaction; onMore: () => v
   const when = reactedAtLabel(item.reactedAt)
   return (
     <View style={styles.row}>
-      <View
-        style={styles.main}
-        accessible
+      <Pressable
+        style={({ pressed }) => [styles.main, pressed && styles.pressed]}
+        accessibilityRole="button"
         accessibilityLabel={`${item.from.displayName} te pegó «${label}» en ${item.targetName}, ${when}`}
+        accessibilityHint="Abre su perfil"
+        onPress={() => router.push(`/person/${item.from.userId}`)}
       >
         <Avatar name={item.from.displayName} size={AVATAR} />
         <View style={styles.texts}>
@@ -148,7 +150,7 @@ function ReactionRow({ item, onMore }: { item: ReceivedReaction; onMore: () => v
           </Text>
           <Sticker label={label} tone={reactionTone(item.reaction)} size="tag" angle={-3} style={styles.sticker} />
         </View>
-      </View>
+      </Pressable>
       <IconButton icon={DotsThreeVerticalIcon} label={`Bloquear o reportar a ${item.from.displayName}`} onPress={onMore} />
     </View>
   )
@@ -162,6 +164,7 @@ const makeStyles = (t: Theme) =>
     main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
     texts: { flex: 1, gap: space.xs },
     sticker: { marginTop: space.xs },
+    pressed: { opacity: 0.7 },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: t.border },
     footer: { alignItems: 'center', gap: space.sm, paddingVertical: space.lg },
   })

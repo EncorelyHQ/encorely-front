@@ -21,11 +21,12 @@ import {
   ListSection,
   motion,
   radius,
-  ShieldCheckIcon,
   Sheet,
+  ShieldCheckIcon,
   Skeleton,
   space,
   Text,
+  UserIcon,
   useStyles,
   useTheme,
   useToast,
@@ -129,6 +130,16 @@ export function ConversationScreen({ matchId }: Props) {
               openSecurity()
             }}
           />
+          {match ? (
+            <ListRow
+              title="Ver su perfil"
+              icon={UserIcon}
+              onPress={() => {
+                setOverlay('none')
+                router.push(`/person/${match.peer.id}`)
+              }}
+            />
+          ) : null}
           {match ? (
             <ListRow title="Bloquear o reportar" icon={FlagIcon} onPress={() => switchOverlay('safety')} />
           ) : null}
