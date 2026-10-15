@@ -250,8 +250,8 @@ function MusicSummary({
         <Text variant="data" color="text">
           {data.swipeCount}
         </Text>{' '}
-        {data.swipeCount === 1 ? 'canción' : 'canciones'}. Los porcentajes salen de tus calificaciones, los géneros
-        de tu perfil y Spotify si lo conectaste.
+        {data.swipeCount === 1 ? 'canción' : 'canciones'}. Los porcentajes suman 100 y salen de tus calificaciones, los
+        géneros de tu perfil y Spotify si lo conectaste.
       </Text>
     </View>
   )

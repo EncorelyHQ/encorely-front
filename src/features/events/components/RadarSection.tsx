@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 import { useLike, useOpenChatWith } from '@/features/match/hooks'
+import { AFFINITY_EXPLAINER } from '@/features/social'
 import { userMessage } from '@/lib/api/errors'
-import { EmptyState, ErrorState, Icon, Text, UsersIcon, VinylRecordIcon, radius, space, useStyles, type Theme } from '@/ui'
+import { Button, EmptyState, ErrorState, Icon, Sheet, Text, UsersIcon, VinylRecordIcon, radius, space, useStyles, type Theme } from '@/ui'
 import { useGenreLookup } from '../genres'
 import { isEventPast, isNotAttending, isRadarLocked, useRadar, useSwipesMissing } from '../hooks'
 import { RadarPersonRow, RadarPersonSkeleton } from './RadarPersonRow'
@@ -109,6 +111,7 @@ export function RadarSection({ eventId, eventName, going, attendancePending }: R
 
 function SectionTitle() {
   const styles = useStyles(makeStyles)
+  const [explaining, setExplaining] = useState(false)
   return (
     <View style={styles.title}>
       <Text variant="title2" accessibilityRole="header">
@@ -117,6 +120,17 @@ function SectionTitle() {
       <Text variant="footnote" color="textMuted">
         Primero quienes más comparten tu música.
       </Text>
+      <View style={styles.how}>
+        <Button label="¿Cómo lo calculamos?" variant="ghost" fullWidth={false} onPress={() => setExplaining(true)} />
+      </View>
+      <Sheet visible={explaining} onClose={() => setExplaining(false)} title="¿Cómo lo calculamos?">
+        {AFFINITY_EXPLAINER.map((paragraph) => (
+          <Text key={paragraph} variant="body" color="textMuted">
+            {paragraph}
+          </Text>
+        ))}
+        <Button label="Entendido" variant="secondary" onPress={() => setExplaining(false)} />
+      </Sheet>
     </View>
   )
 }
@@ -124,6 +138,8 @@ function SectionTitle() {
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     title: { gap: space.xs, paddingBottom: space.xs },
+    // El botón fantasma trae su propio padding: se alinea el texto con el título.
+    how: { alignItems: 'flex-start', marginLeft: -space.xl },
     hint: {
       flexDirection: 'row',
       alignItems: 'center',

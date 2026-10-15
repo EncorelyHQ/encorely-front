@@ -6,9 +6,13 @@ export type GenreBar = {
   weight: number
   // Proporción respecto al género más fuerte (ya no define el largo de la barra: eso es `percent`).
   ratio: number
-  // Porcentaje sobre el total de géneros con peso positivo (no solo del top), redondeado.
+  // Porcentaje sobre el total de géneros con peso positivo. Las filas visibles (con "Otros") suman 100 exacto.
   percent: number
+  // Fila que agrupa todo lo que no entró en el top.
+  others?: true
 }
+
+export const OTHERS_SLUG = '__otros'
 
 export const GENRE_BARS_LIMIT = 5
 
@@ -30,16 +34,29 @@ export function computeGenreBars(weights: readonly DnaGenre[], limit: number = G
 
   const total = [...totals.values()].reduce((sum, w) => sum + w, 0)
 
-  const sorted = [...totals.entries()]
+  const ranked = [...totals.entries()]
     .map(([slug, weight]) => ({ slug, weight, name: names.get(slug) ?? humanizeSlug(slug) }))
     // Empates: orden alfabético para que la lista no baile entre recargas.
     .sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name, 'es') || a.slug.localeCompare(b.slug))
-    .slice(0, Math.max(0, limit))
+  const top: Omit<GenreBar, 'ratio' | 'percent'>[] = ranked.slice(0, Math.max(0, limit))
+  const restWeight = ranked.slice(top.length).reduce((sum, item) => sum + item.weight, 0)
+  if (restWeight > 0) top.push({ slug: OTHERS_SLUG, name: 'Otros', weight: restWeight, others: true })
 
-  const max = sorted[0]?.weight ?? 1
-  return sorted.map((item) => ({
-    ...item,
-    ratio: item.weight / max,
-    percent: Math.round((item.weight / total) * 100),
-  }))
+  const max = top[0]?.weight ?? 1
+  const percents = largestRemainder(top.map((item) => (item.weight / total) * 100))
+  return top.map((item, i) => ({ ...item, ratio: item.weight / max, percent: percents[i] }))
+}
+
+// Redondea para que la suma dé 100: los puntos que faltan van a quien tenía la parte decimal más grande.
+// Redondear cada uno por separado daba 99 % o 101 % (03 §5.9).
+export function largestRemainder(values: readonly number[]): number[] {
+  const floors = values.map(Math.floor)
+  let missing = Math.round(values.reduce((sum, v) => sum + v, 0)) - floors.reduce((sum, v) => sum + v, 0)
+  const order = values.map((v, i) => ({ i, frac: v - floors[i] })).sort((a, b) => b.frac - a.frac || a.i - b.i)
+  for (const { i } of order) {
+    if (missing <= 0) break
+    floors[i] += 1
+    missing -= 1
+  }
+  return floors
 }
