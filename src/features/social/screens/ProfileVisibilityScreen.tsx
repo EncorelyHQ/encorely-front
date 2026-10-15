@@ -55,7 +55,8 @@ export function ProfileVisibilityScreen() {
             onValueChange={(value) => toggle.mutate(value)}
             accessibilityLabel="Mostrar mi perfil a otras personas"
             trackColor={{ false: theme.borderInput, true: theme.accent }}
-            thumbColor={theme.surface}
+            // Con surface la perilla casi desaparecía sobre el riel apagado en venue.
+            thumbColor={theme.text}
             ios_backgroundColor={theme.borderInput}
           />
         </View>
