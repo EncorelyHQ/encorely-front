@@ -12,6 +12,7 @@ import { queryKeys } from '@/lib/query'
 import { useUser } from '@/lib/session/SessionContext'
 import {
   Button,
+  ChatCircleIcon,
   CheckIcon,
   DotsThreeVerticalIcon,
   EmptyState,
@@ -37,7 +38,7 @@ import { ProfileTicket, type TicketGenre } from '../components/ProfileTicket'
 import { PublicProfileBody, type ProfileTarget } from '../components/PublicProfileBody'
 import { ReactionSheet } from '../components/ReactionSheet'
 import { isProfileGone, socialErrorMessage, PROFILE_UNAVAILABLE } from '../errors'
-import { useLikeProfile, useProfile, useReaction } from '../queries'
+import { useActiveMatchWith, useLikeProfile, useProfile, useReaction } from '../queries'
 import { reactionFor } from '../reactions'
 import { reactionLabel, reactionTone } from '../stickers'
 
@@ -53,20 +54,23 @@ export function PersonScreen() {
   const profile = useProfile(userId)
   const reaction = useReaction(userId ?? '', { onError: (error) => toast.show(socialErrorMessage(error), 'danger') })
   const like = useLikeProfile(userId ?? '')
+  const matchId = useActiveMatchWith(userId)
   const [picking, setPicking] = useState<ProfileTarget | null>(null)
   // Solo la etiqueta recién puesta rebota: las que ya estaban aparecen quietas.
   const [justPlaced, setJustPlaced] = useState<string | null>(null)
   const [safety, setSafety] = useState(false)
   const [liked, setLiked] = useState(false)
   const own = userId === me.id
-  const name = profile.data?.displayName ?? ''
+  // Si el perfil dejó de verse, no se sigue mostrando lo que quedó en caché, ni siquiera el nombre en el encabezado.
+  const gone = profile.isError && isProfileGone(profile.error)
+  const name = gone ? '' : (profile.data?.displayName ?? '')
 
   const header = (
     <Stack.Screen
       options={{
         title: name,
         headerRight:
-          profile.data && !own
+          profile.data && !own && !gone
             ? () => <IconButton icon={DotsThreeVerticalIcon} label={`Bloquear o reportar a ${name}`} onPress={() => setSafety(true)} />
             : undefined,
       }}
@@ -91,12 +95,7 @@ export function PersonScreen() {
       <Screen edges={[]}>
         {header}
         {isProfileGone(profile.error) ? (
-          <EmptyState
-            icon={UserCircleIcon}
-            title={PROFILE_UNAVAILABLE}
-            body="Puede que esta persona lo haya ocultado."
-            action={{ label: 'Volver', onPress: () => router.back() }}
-          />
+          <EmptyState icon={UserCircleIcon} title={PROFILE_UNAVAILABLE} action={{ label: 'Volver', onPress: () => router.back() }} />
         ) : (
           <ErrorState
             title="No pudimos cargar el perfil"
@@ -139,6 +138,7 @@ export function PersonScreen() {
     like.mutate(undefined, {
       onSuccess: (result) => {
         setLiked(true)
+        if (result.matched) void qc.invalidateQueries({ queryKey: queryKeys.matches })
         if (result.matched && result.matchId) {
           const params: MatchRouteParams = {
             matchId: result.matchId,
@@ -156,7 +156,14 @@ export function PersonScreen() {
       onError: (error) => toast.show(userMessage(error), 'danger'),
     })
 
-  const footer = own ? undefined : liked ? (
+  const footer = own ? undefined : matchId ? (
+    <Button
+      label="Escribir"
+      icon={ChatCircleIcon}
+      accessibilityHint={`Ya hicieron match. Abre el chat con ${p.displayName}`}
+      onPress={() => router.push(`/chat/${matchId}`)}
+    />
+  ) : liked ? (
     <View style={styles.liked} accessible accessibilityLabel={`Te interesa ${p.displayName}`}>
       <Icon icon={CheckIcon} size={20} color="textMuted" weight="bold" />
       <Text variant="callout" color="textMuted">

@@ -63,7 +63,13 @@ function ArtistCard({ artist, showShared, extra }: { artist: ProfileArtist; show
           </>
         ) : null}
         {/* adjustsFontSizeToFit: un nombre largo se achica en vez de partirse a mitad de palabra. */}
-        <RNText style={styles.name} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={1.3}>
+        <RNText
+          style={[styles.name, !photo && styles.typeName]}
+          numberOfLines={photo ? 3 : 4}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          maxFontSizeMultiplier={1.3}
+        >
           {artist.name}
         </RNText>
       </View>
@@ -86,5 +92,7 @@ const styles = StyleSheet.create({
   },
   typeCard: { borderWidth: 3, borderColor: sticker.cut },
   name: { fontFamily: font.title, fontSize: 22, lineHeight: 24, color: sticker.ink.fg },
+  // Sin foto el nombre es la tarjeta: cartel grande en vez de un recuadro vacío.
+  typeName: { fontFamily: font.display, fontSize: 36, lineHeight: 34, textTransform: 'uppercase' },
   sharedTag: { top: -space.sm, left: -space.xs },
 })

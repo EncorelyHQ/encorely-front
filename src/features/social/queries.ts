@@ -42,3 +42,9 @@ export function useProfileVisibility({ onError }: { onError?: (error: unknown) =
 
 // "Me interesa" desde el perfil: POST /likes sin evento (el contrato lo permite).
 export const useLikeProfile = (userId: string) => useMutation({ mutationFn: () => matchesApi.like(userId) })
+
+// El perfil público no dice si ya hay match: se busca en /matches (la misma caché que Chats) para ofrecer "Escribir".
+export function useActiveMatchWith(userId: string | undefined) {
+  const matches = useQuery({ queryKey: queryKeys.matches, queryFn: matchesApi.list, enabled: !!userId })
+  return matches.data?.find((m) => m.peer.id === userId && m.status === 'active')?.id ?? null
+}
