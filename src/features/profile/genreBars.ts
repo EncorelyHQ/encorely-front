@@ -48,7 +48,7 @@ export function computeGenreBars(weights: readonly DnaGenre[], limit: number = G
 }
 
 // Redondea para que la suma dé 100: los puntos que faltan van a quien tenía la parte decimal más grande.
-// Redondear cada uno por separado daba 99 % o 101 % (03 §5.9).
+// Redondear cada uno por separado daba 99 % o 101 %.
 export function largestRemainder(values: readonly number[]): number[] {
   const floors = values.map(Math.floor)
   let missing = Math.round(values.reduce((sum, v) => sum + v, 0)) - floors.reduce((sum, v) => sum + v, 0)

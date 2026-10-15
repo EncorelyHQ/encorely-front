@@ -174,6 +174,10 @@ export function PersonScreen() {
   )
 
   const reactHint = own ? undefined : 'Pégale un sticker'
+  const describe = (t: Pick<ProfileTarget, 'targetKind' | 'targetKey'>) => {
+    const mine = reactionFor(p, t)
+    return mine ? `tu sticker: ${reactionLabel(mine)}` : null
+  }
 
   return (
     <Screen mode="scroll" edges={[]} footer={footer} refreshing={profile.isRefetching} onRefresh={() => void profile.refetch()}>
@@ -187,6 +191,7 @@ export function PersonScreen() {
           genreHint={reactHint}
           onGenrePress={own ? undefined : (g) => setPicking({ targetKind: 'genre', targetKey: g.key, name: g.name })}
           renderGenreExtra={(g) => tagFor({ targetKind: 'genre', targetKey: g.key }, styles.genreTag)}
+          describeGenre={(g) => describe({ targetKind: 'genre', targetKey: g.key })}
         />
 
         <PublicProfileBody
@@ -197,6 +202,7 @@ export function PersonScreen() {
           targetHint={reactHint}
           onTargetPress={own ? undefined : setPicking}
           renderExtra={(t) => (t.targetKind === 'artist' ? tagFor(t, styles.artistTag) : null)}
+          describe={describe}
           middle={own ? null : <InCommon profile={p} />}
         />
       </View>

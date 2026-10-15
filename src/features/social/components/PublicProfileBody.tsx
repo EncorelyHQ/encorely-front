@@ -12,6 +12,8 @@ type PublicProfileBodyProps = {
   profile: PublicProfile
   titles: { genres: string; artists: string; season: string }
   renderExtra?: (target: ProfileTarget) => ReactNode
+  // Texto para TalkBack de lo que renderExtra pinta encima.
+  describe?: (target: ProfileTarget) => string | null
   onTargetPress?: (target: ProfileTarget) => void
   targetHint?: string
   showShared?: boolean
@@ -26,6 +28,7 @@ export function PublicProfileBody({
   profile,
   titles,
   renderExtra,
+  describe,
   onTargetPress,
   targetHint,
   showShared = false,
@@ -48,7 +51,7 @@ export function PublicProfileBody({
                   {renderExtra?.(target)}
                 </>
               )
-              const label = shared ? `${g.name}, en común` : g.name
+              const label = [g.name, shared ? 'en común' : null, describe?.(target)].filter(Boolean).join(', ')
               return onTargetPress ? (
                 <Pressable
                   key={g.slug}
@@ -80,6 +83,7 @@ export function PublicProfileBody({
               artists={profile.artists}
               showShared={showShared}
               pressHint={targetHint}
+              describe={describe ? (a) => describe({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
               onPress={onTargetPress ? (a) => onTargetPress({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
               renderExtra={renderExtra ? (a) => renderExtra({ targetKind: 'artist', targetKey: a.key, name: a.name }) : undefined}
             />

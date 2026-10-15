@@ -56,6 +56,15 @@ export function ProfileLabScreen() {
     ) : null
   }
 
+  const describe = (t: Pick<ProfileTarget, 'targetKind' | 'targetKey'>) => {
+    if (owner) {
+      const n = COUNTS[`${t.targetKind}|${t.targetKey}`] ?? 0
+      return n ? `${n} ${n === 1 ? 'reacción' : 'reacciones'}` : null
+    }
+    const mine = reactionFor(profile, t)
+    return mine ? `tu sticker: ${reactionLabel(mine)}` : null
+  }
+
   const pick = (reaction: ReactionType | null) => {
     if (!picking) return
     setJustPlaced(reaction ? `${picking.targetKind}|${picking.targetKey}` : null)
@@ -82,6 +91,7 @@ export function ProfileLabScreen() {
           genres={profile.genres.map((g) => ({ key: g.slug, name: g.name }))}
           onGenrePress={owner ? undefined : (g) => setPicking({ targetKind: 'genre', targetKey: g.key, name: g.name })}
           renderGenreExtra={(g) => tag({ targetKind: 'genre', targetKey: g.key }, styles.genreTag)}
+          describeGenre={(g) => describe({ targetKind: 'genre', targetKey: g.key })}
         />
         <PublicProfileBody
           profile={profile}
@@ -90,6 +100,7 @@ export function ProfileLabScreen() {
           titles={{ genres: 'Sus géneros', artists: 'Lo que suena', season: 'Su temporada' }}
           onTargetPress={owner ? undefined : setPicking}
           renderExtra={(t) => (t.targetKind === 'artist' ? tag(t, styles.artistTag) : null)}
+          describe={describe}
         />
       </View>
       <ReactionSheet

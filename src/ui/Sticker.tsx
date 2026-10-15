@@ -79,7 +79,7 @@ export function StickerTitle({ label, tone = 'paper', angle = -2, style }: Omit<
     return { transform: [{ rotate: `${finalAngle * q}deg` }, { scale: 1 + 0.14 * (1 - q) }] }
   })
   return (
-    <Animated.View style={[styles.self, style, animated]} accessibilityRole="header">
+    <Animated.View style={[styles.self, style, animated]} accessible accessibilityRole="header" accessibilityLabel={label}>
       <StickerFace label={label} tone={tone} size="title" />
     </Animated.View>
   )

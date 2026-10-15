@@ -288,6 +288,10 @@ function SeenByOthers({ me }: { me: Me }) {
           profile={profile.data}
           titles={{ genres: 'Tus géneros', artists: 'Tus artistas', season: 'Tu temporada' }}
           renderExtra={(t) => <CountBadge count={counts.get(`${t.targetKind}|${t.targetKey}`) ?? 0} />}
+          describe={(t) => {
+            const n = counts.get(`${t.targetKind}|${t.targetKey}`) ?? 0
+            return n ? `${n} ${n === 1 ? 'reacción' : 'reacciones'}` : null
+          }}
         />
       )}
     </View>

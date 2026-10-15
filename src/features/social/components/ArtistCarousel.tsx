@@ -17,9 +17,10 @@ type ArtistCarouselProps = {
   pressHint?: string
   // "En común" solo tiene sentido en el perfil de otra persona.
   showShared?: boolean
+  describe?: (artist: ProfileArtist) => string | null
 }
 
-export function ArtistCarousel({ artists, renderExtra, onPress, pressHint, showShared = false }: ArtistCarouselProps) {
+export function ArtistCarousel({ artists, renderExtra, onPress, pressHint, showShared = false, describe }: ArtistCarouselProps) {
   return (
     <Carousel3D
       data={artists}
@@ -27,7 +28,7 @@ export function ArtistCarousel({ artists, renderExtra, onPress, pressHint, showS
       itemWidth={ARTIST_CARD_WIDTH}
       accessibilityLabel="Artistas"
       renderItem={(artist) => {
-        const label = [artist.name, showShared && artist.shared ? 'en común' : null].filter(Boolean).join(', ')
+        const label = [artist.name, showShared && artist.shared ? 'en común' : null, describe?.(artist)].filter(Boolean).join(', ')
         const card = <ArtistCard artist={artist} showShared={showShared} extra={renderExtra?.(artist)} />
         return onPress ? (
           <Pressable onPress={() => onPress(artist)} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={pressHint}>
