@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react'
-import { RefreshControl, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native'
+import { useCallback, useMemo, useRef, type ReactNode } from 'react'
+import { RefreshControl, StyleSheet, View, type ViewStyle } from 'react-native'
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets, type Edge } from 'react-native-safe-area-context'
+import { ScreenScrollProvider } from './scroll'
 import { useStyles, useTheme } from './theme'
 import { space, type Theme } from './tokens'
 
@@ -37,6 +39,20 @@ export function Screen({
   }
   const inner = [padded ? styles.padded : null, contentStyle]
 
+  // El scroll vive en el hilo de UI para que ScrollReveal, ParallaxTicket y los stickers lo sigan sin pasar por JS.
+  const scrollY = useSharedValue(0)
+  const viewportBottom = useSharedValue(Number.MAX_SAFE_INTEGER)
+  const viewportRef = useRef<View>(null)
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y
+  })
+  const measureViewport = useCallback(() => {
+    viewportRef.current?.measureInWindow((_x, y, _w, height) => {
+      if (height > 0) viewportBottom.value = y + height
+    })
+  }, [viewportBottom])
+  const scroll = useMemo(() => ({ y: scrollY, viewportBottom }), [scrollY, viewportBottom])
+
   const refresh = onRefresh ? (
     <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={theme.accent} colors={[theme.accent]} />
   ) : undefined
@@ -46,13 +62,19 @@ export function Screen({
       {mode === 'fixed' ? (
         <View style={[styles.flex, ...inner]}>{children}</View>
       ) : mode === 'scroll' ? (
-        <ScrollView
-          contentContainerStyle={[styles.grow, ...inner]}
-          refreshControl={refresh}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
+        <ScreenScrollProvider value={scroll}>
+          <View ref={viewportRef} style={styles.flex} onLayout={measureViewport}>
+            <Animated.ScrollView
+              contentContainerStyle={[styles.grow, ...inner]}
+              refreshControl={refresh}
+              keyboardShouldPersistTaps="handled"
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+            >
+              {children}
+            </Animated.ScrollView>
+          </View>
+        </ScreenScrollProvider>
       ) : (
         <KeyboardAwareScrollView
           contentContainerStyle={[styles.grow, ...inner]}

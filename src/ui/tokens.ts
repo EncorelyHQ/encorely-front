@@ -101,6 +101,19 @@ export const themes: Record<'venue' | 'papel', Theme> = {
   },
 }
 
+// Los stickers son iguales en venue y papel: son objetos pegados encima, no superficie del tema.
+// Todas las parejas fondo/texto pasan AA (la más baja, ink sobre band, 6,25:1).
+export const sticker = {
+  cut: '#FFFDF8',
+  shadow: 'rgba(0,0,0,0.32)',
+  paper: { bg: palette.paper, fg: palette.inkDark },
+  stamp: { bg: palette.stamp, fg: palette.inkDark },
+  band: { bg: palette.band500, fg: palette.inkDark },
+  ink: { bg: palette.inkDark, fg: palette.paper },
+} as const
+
+export type StickerTone = Exclude<keyof typeof sticker, 'cut' | 'shadow'>
+
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48, gutter: 20 } as const
 export const radius = { sm: 8, md: 16, full: 999 } as const
 export const touch = { min: 44, comfortable: 48, large: 56 } as const
