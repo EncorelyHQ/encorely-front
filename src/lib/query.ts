@@ -19,6 +19,7 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   me: ['me'] as const,
   dna: ['me', 'dna'] as const,
+  receivedReactions: ['me', 'reactions', 'received'] as const,
   genres: ['genres'] as const,
   feed: ['songs', 'feed'] as const,
   events: (city?: string) => ['events', city ?? 'all'] as const,
@@ -31,4 +32,5 @@ export const queryKeys = {
   peerKeys: (matchId: string) => ['matches', matchId, 'peer-keys'] as const,
   blocks: ['blocks'] as const,
   legal: ['legal'] as const,
+  profile: (userId: string) => ['users', userId, 'profile'] as const,
 }

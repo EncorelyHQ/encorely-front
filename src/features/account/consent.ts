@@ -24,3 +24,13 @@ export function currentConsentVersionOf(legal: Pick<LegalCurrent, 'consentVersio
   const version = legal?.consentVersion
   return typeof version === 'string' && version.trim() ? version : null
 }
+
+// Lo nuevo de cada versión en una frase, para no obligar a releer todo. El texto que obliga es el de los documentos.
+const CONSENT_CHANGES: Record<string, string> = {
+  '2026-10-14':
+    'Ahora cualquier persona en Encorely puede ver tu perfil: nombre, edad, ciudad, bio, géneros, artistas, estadísticas y tu nombre junto a las reacciones que dejes. Puedes ocultarlo cuando quieras en Tú → Privacidad.',
+}
+
+export function consentChangesOf(version: string | null): string | null {
+  return version ? (CONSENT_CHANGES[version] ?? null) : null
+}
