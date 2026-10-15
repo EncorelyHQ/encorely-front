@@ -12,6 +12,8 @@ export const makeProfile = (over: Partial<PublicProfile> = {}): PublicProfile =>
   stats: { swipeCount: 120, genresExplored: 9, eventsMarked: 3 },
   common: { affinity: 80, sharedGenres: ['salsa'], sharedArtists: ['bomba-estereo'] },
   myReactions: [],
+  likedByMe: false,
+  matched: false,
   ...over,
 })
 

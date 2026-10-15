@@ -35,6 +35,8 @@ const PROFILE: PublicProfile = {
   stats: { swipeCount: 128, genresExplored: 9, eventsMarked: 3 },
   common: { affinity: 80, sharedGenres: ['salsa'], sharedArtists: ['bomba-estereo'] },
   myReactions: [{ targetKind: 'genre', targetKey: 'salsa', reaction: 'meToo' }],
+  likedByMe: false,
+  matched: false,
 }
 
 const COUNTS: Record<string, number> = { 'genre|salsa': 4, 'artist|bomba-estereo': 12, 'genre|indie': 1 }
