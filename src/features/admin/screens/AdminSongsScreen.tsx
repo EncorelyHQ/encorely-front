@@ -10,6 +10,7 @@ import {
   MusicNotesIcon,
   radius,
   Screen,
+  SegmentedTabs,
   Skeleton,
   space,
   Text,
@@ -20,7 +21,6 @@ import {
 } from '@/ui'
 import { AdminGate, AdminQueryError } from '../components/AdminGate'
 import { Cover } from '../components/Cover'
-import { SegmentedTabs } from '../components/SegmentedTabs'
 import { useAdminSongs, useLoadMoreSongs, useUpdateSong } from '../hooks/queries'
 import { PlusIcon } from '../icons'
 import { canLoadMoreSongs, filterSongs, pageMayContinue, songToRequest } from '../model/songs'

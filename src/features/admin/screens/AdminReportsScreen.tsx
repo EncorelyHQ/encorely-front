@@ -1,9 +1,20 @@
 import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, View } from 'react-native'
 import { router, Stack } from 'expo-router'
-import { CheckCircleIcon, FlagIcon, radius, Screen, Skeleton, space, Text, useStyles, EmptyState, type Theme } from '@/ui'
+import {
+  CheckCircleIcon,
+  EmptyState,
+  FlagIcon,
+  radius,
+  Screen,
+  SegmentedTabs,
+  Skeleton,
+  space,
+  Text,
+  useStyles,
+  type Theme,
+} from '@/ui'
 import { AdminGate, AdminQueryError } from '../components/AdminGate'
-import { SegmentedTabs } from '../components/SegmentedTabs'
 import { StatusTag } from '../components/StatusTag'
 import { useAdminReports } from '../hooks/queries'
 import { bogotaLabel } from '../model/datetime'

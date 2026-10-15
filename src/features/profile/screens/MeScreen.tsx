@@ -5,21 +5,26 @@ import * as Application from 'expo-application'
 import { useMutation } from '@tanstack/react-query'
 import { meApi } from '@/lib/api/endpoints'
 import { userMessage } from '@/lib/api/errors'
-import type { Dna } from '@/lib/api/types'
+import type { Dna, Me } from '@/lib/api/types'
 import { useSession, useUser } from '@/lib/session/SessionContext'
 import {
-  Avatar,
+  Button,
   ConfirmSheet,
   EmptyState,
   ErrorState,
+  EyeIcon,
+  HeartIcon,
   ListRow,
   ListSection,
   LockKeyIcon,
   ProhibitIcon,
   Screen,
+  ScrollReveal,
+  SegmentedTabs,
   SignOutIcon,
   Skeleton,
   space,
+  StickerTitle,
   Text,
   TrashIcon,
   UserIcon,
@@ -32,6 +37,17 @@ import {
 import { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple'
 import { LegalRow, SessionsRow } from '@/features/account'
 import { AdminEntryRow } from '@/features/admin'
+import { genreName, useGenreLookup } from '@/features/events'
+import {
+  ArtistCarousel,
+  CountBadge,
+  ProfileTicket,
+  PublicProfileBody,
+  SeasonStats,
+  useProfile,
+  VISIBILITY_COPY,
+  visibilityOf,
+} from '@/features/social'
 import { ChatBackupRow, LinkDeviceRow } from '@/features/chat'
 import { SpotifyConnectCard } from '@/features/spotify'
 import { GenreBars } from '../components/GenreBars'
@@ -39,7 +55,23 @@ import { SpotifyLinkRow } from '../components/SpotifyLinkRow'
 import { computeGenreBars } from '../genreBars'
 import { useDnaQuery, useMeQuery } from '../queries'
 
-// Tab "Tú": el perfil como "mi pase" (quién soy y qué escucho) y debajo los ajustes en lista nativa.
+type Tab = 'mine' | 'seen'
+const TABS = [
+  { value: 'mine', label: 'Tu perfil' },
+  { value: 'seen', label: 'Así te ven' },
+] as const
+
+// Conteo de reacciones por objetivo (sumando los tres tipos), para pegarlo sobre cada sticker en "Así te ven".
+function reactionCounts(me: Me | undefined): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const r of me?.reactionsReceived ?? []) {
+    const key = `${r.targetKind}|${r.targetKey}`
+    counts.set(key, (counts.get(key) ?? 0) + r.count)
+  }
+  return counts
+}
+
+// Tab "Tú": la boleta con tus gustos como stickers, "Tu perfil | Así te ven", y debajo los ajustes en lista nativa.
 export function MeScreen() {
   const styles = useStyles(makeStyles)
   const theme = useTheme()
@@ -50,6 +82,8 @@ export function MeScreen() {
   const me = useMeQuery()
   const dna = useDnaQuery()
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [tab, setTab] = useState<Tab>('mine')
+  const { genres: catalog } = useGenreLookup()
   const [signingOut, setSigningOut] = useState(false)
 
   const exportData = useMutation({
@@ -88,33 +122,51 @@ export function MeScreen() {
       }}
     >
       <View style={styles.page}>
-        <View style={styles.pass}>
-          <Avatar name={name} size={96} />
-          <View style={styles.identity}>
-            <Text variant="title1" accessibilityRole="header">
-              {name}
-            </Text>
-            {meta ? (
-              <Text variant="callout" color="textMuted">
-                {meta}
-              </Text>
-            ) : me.isPending ? (
-              <Skeleton width="40%" height={space.lg} />
+        <ProfileTicket
+          name={name}
+          meta={meta || null}
+          bio={me.data?.bio}
+          genres={(me.data?.genres ?? []).map((slug) => ({ key: slug, name: genreName(slug, catalog) }))}
+        />
+
+        <SegmentedTabs segments={TABS} value={tab} onChange={setTab} accessibilityLabel="Cómo ver tu perfil" />
+
+        {tab === 'mine' ? (
+          <>
+            <ScrollReveal style={styles.music}>
+              <MusicSummary
+                data={dna.data}
+                pending={dna.isPending}
+                error={dna.isError ? dna.error : null}
+                retrying={dna.isRefetching}
+                onRetry={() => void dna.refetch()}
+              />
+            </ScrollReveal>
+
+            <ScrollReveal style={styles.section}>
+              <StickerTitle label="Tus artistas" tone="stamp" angle={2} />
+              {me.data?.artists.length ? (
+                <View style={styles.bleed}>
+                  <ArtistCarousel artists={me.data.artists} />
+                </View>
+              ) : null}
+              <SpotifyConnectCard />
+            </ScrollReveal>
+
+            {me.data ? (
+              <ScrollReveal style={styles.section}>
+                <Text variant="title2" accessibilityRole="header">
+                  Tu temporada
+                </Text>
+                <SeasonStats stats={me.data.stats} />
+              </ScrollReveal>
             ) : null}
-          </View>
-        </View>
-
-        <View style={styles.music}>
-          <MusicSummary
-            data={dna.data}
-            pending={dna.isPending}
-            error={dna.isError ? dna.error : null}
-            retrying={dna.isRefetching}
-            onRetry={() => void dna.refetch()}
-          />
-        </View>
-
-        <SpotifyConnectCard />
+          </>
+        ) : me.data ? (
+          <SeenByOthers me={me.data} />
+        ) : (
+          <Skeleton height={space.xxxl * 3} />
+        )}
 
         <ListSection title="Cuenta">
           <ListRow title="Editar perfil" icon={UserIcon} onPress={() => router.push('/profile/edit')} />
@@ -132,6 +184,13 @@ export function MeScreen() {
         </ListSection>
 
         <ListSection title="Privacidad y seguridad">
+          <ListRow
+            title="Privacidad del perfil"
+            subtitle={me.data ? (me.data.profileVisible ? 'Otras personas te ven' : 'Nadie más te ve') : undefined}
+            icon={EyeIcon}
+            onPress={() => router.push('/settings/profile-visibility')}
+          />
+          <ListRow title="Reacciones que recibiste" icon={HeartIcon} onPress={() => router.push('/reactions')} />
           <ListRow title="Personas bloqueadas" icon={ProhibitIcon} onPress={() => router.push('/settings/blocked')} />
           <ListRow
             title="Cómo protegemos tus chats"
@@ -182,6 +241,59 @@ export function MeScreen() {
   )
 }
 
+// "Así te ven": tu perfil público tal como lo pide cualquiera (GET /users/{tuId}/profile), con los conteos encima.
+function SeenByOthers({ me }: { me: Me }) {
+  const styles = useStyles(makeStyles)
+  const profile = useProfile(me.id)
+  const visibility = visibilityOf(me)
+  const counts = reactionCounts(me)
+  const total = [...counts.values()].reduce((sum, n) => sum + n, 0)
+
+  return (
+    <View style={styles.seen}>
+      <View style={styles.notice} accessible accessibilityLiveRegion="polite">
+        <Text variant="callout" color="textMuted">
+          {visibility === 'visible' ? 'Así te ve cualquier persona en Encorely. Los números son las reacciones que recibiste: solo tú los ves.' : VISIBILITY_COPY[visibility]}
+        </Text>
+        <View style={styles.noticeActions}>
+          {visibility !== 'visible' ? (
+            <Button label="Privacidad del perfil" variant="secondary" fullWidth={false} onPress={() => router.push('/settings/profile-visibility')} />
+          ) : null}
+          {total > 0 ? (
+            <Button
+              label={`Ver quién reaccionó (${total})`}
+              variant="secondary"
+              fullWidth={false}
+              onPress={() => router.push('/reactions')}
+            />
+          ) : null}
+        </View>
+      </View>
+
+      {profile.isPending ? (
+        <View style={styles.skeletons} accessible accessibilityRole="progressbar" accessibilityLabel="Cargando cómo te ven">
+          <Skeleton width="40%" height={space.xl} />
+          <Skeleton height={space.xxxl} />
+          <Skeleton height={space.xxxl * 2} />
+        </View>
+      ) : profile.isError ? (
+        <ErrorState
+          title="No pudimos cargar tu perfil público"
+          message={userMessage(profile.error)}
+          onRetry={() => void profile.refetch()}
+          retrying={profile.isRefetching}
+        />
+      ) : (
+        <PublicProfileBody
+          profile={profile.data}
+          titles={{ genres: 'Tus géneros', artists: 'Tus artistas', season: 'Tu temporada' }}
+          renderExtra={(t) => <CountBadge count={counts.get(`${t.targetKind}|${t.targetKey}`) ?? 0} />}
+        />
+      )}
+    </View>
+  )
+}
+
 function MusicSummary({
   data,
   pending,
@@ -197,11 +309,7 @@ function MusicSummary({
 }) {
   const styles = useStyles(makeStyles)
   const bars = useMemo(() => (data ? computeGenreBars(data.genres) : []), [data])
-  const heading = (
-    <Text variant="title2" accessibilityRole="header">
-      Tu música
-    </Text>
-  )
+  const heading = <StickerTitle label="Tu música" angle={-2} />
 
   if (pending) {
     return (
@@ -260,9 +368,12 @@ function MusicSummary({
 const makeStyles = (_t: Theme) =>
   StyleSheet.create({
     page: { gap: space.xxl, paddingBottom: space.xl },
-    pass: { gap: space.lg, paddingTop: space.lg },
-    identity: { gap: space.xs },
     music: { gap: space.lg },
+    section: { gap: space.lg },
+    bleed: { marginHorizontal: -space.gutter },
+    seen: { gap: space.xl },
+    notice: { gap: space.md },
+    noticeActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
     musicBody: { gap: space.lg },
     skeletons: { gap: space.lg },
     skeletonRow: { gap: space.sm },

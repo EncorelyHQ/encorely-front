@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native'
-import { haptics, radius, space, Text, touch, useStyles, useTheme, type Theme } from '@/ui'
+import { haptics } from './haptics'
+import { Text } from './Text'
+import { useStyles, useTheme } from './theme'
+import { radius, space, touch, type Theme } from './tokens'
 
 type Segment<T extends string> = { value: T; label: string }
 
