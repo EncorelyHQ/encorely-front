@@ -1,6 +1,7 @@
 import { ChatCircleTextIcon } from 'phosphor-react-native/src/icons/ChatCircleText'
 import { StyleSheet, View } from 'react-native'
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated'
+import { affinityPercent, affinitySentence } from '@/features/social'
 import type { RadarPerson } from '@/lib/api/types'
 import { Avatar, Button, CheckIcon, HeartIcon, Icon, Skeleton, Text, motion, radius, space, touch, useStyles, type Theme } from '@/ui'
 
@@ -14,10 +15,6 @@ type RadarPersonRowProps = {
   openingChat: boolean
 }
 
-// Sin señal suficiente de alguno de los dos el back manda null: mejor no mostrar número que uno inventado.
-// Espacio no separable: "78 %" nunca se parte en dos líneas.
-const percent = (value: number) => `${value} %`
-
 export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, openingChat }: RadarPersonRowProps) {
   const styles = useStyles(makeStyles)
   const facts = [person.age ? `${person.age} años` : null, person.city].filter(Boolean).join(' · ')
@@ -25,7 +22,8 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
     person.displayName,
     facts,
     genres ? `Les gusta ${genres}` : null,
-    person.affinity === null ? null : `${percent(person.affinity)} de afinidad`,
+    // Sin señal suficiente de alguno de los dos el back manda null: mejor ningún número que uno inventado.
+    affinitySentence(person.affinity),
   ]
     .filter(Boolean)
     .join('. ')
@@ -47,10 +45,10 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
         {person.affinity === null ? null : (
           <View style={styles.affinity}>
             <Text variant="data" color="textMuted">
-              {percent(person.affinity)}
+              {affinityPercent(person.affinity)}
             </Text>
             <Text variant="footnote" color="textMuted">
-              afinidad
+              en común
             </Text>
           </View>
         )}

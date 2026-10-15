@@ -53,7 +53,7 @@ function GenreBarRow({ bar, index }: { bar: GenreBar; index: number }) {
       </View>
       <View style={styles.track}>
         <Animated.View
-          style={[styles.fill, index === 0 ? styles.fillTop : styles.fillRest, { width: `${Math.max(bar.percent, 2)}%` }, fillStyle]}
+          style={[styles.fill, index === 0 && !bar.others ? styles.fillTop : styles.fillRest, { width: `${Math.max(bar.percent, 2)}%` }, fillStyle]}
         />
       </View>
     </View>

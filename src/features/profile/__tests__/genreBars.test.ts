@@ -1,4 +1,4 @@
-import { computeGenreBars, humanizeSlug } from '../genreBars'
+import { OTHERS_SLUG, computeGenreBars, humanizeSlug, largestRemainder } from '../genreBars'
 
 const names: Record<string, string> = {
   rock: 'Rock',
@@ -27,9 +27,10 @@ describe('computeGenreBars', () => {
       g('pop', 1),
       g('jazz', 1),
     ])
-    expect(bars).toHaveLength(5)
+    expect(bars).toHaveLength(6)
     expect(bars[0]).toMatchObject({ slug: 'rock', percent: 50 })
     expect(bars.slice(1).every((b) => b.percent === 10)).toBe(true)
+    expect(bars[5]).toMatchObject({ slug: OTHERS_SLUG, name: 'Otros', others: true })
   })
 
   it('desempata por nombre legible para que el orden sea estable', () => {
@@ -44,7 +45,7 @@ describe('computeGenreBars', () => {
   })
 
   it('respeta el límite pedido', () => {
-    expect(computeGenreBars([g('rock', 3), g('salsa', 2), g('indie', 1)], 2).map((b) => b.slug)).toEqual(['rock', 'salsa'])
+    expect(computeGenreBars([g('rock', 3), g('salsa', 2), g('indie', 1)], 2).map((b) => b.slug)).toEqual(['rock', 'salsa', OTHERS_SLUG])
   })
 
   it('devuelve vacío cuando no hay señal, para mostrar el estado vacío', () => {
@@ -56,5 +57,20 @@ describe('computeGenreBars', () => {
     const bars = computeGenreBars([{ genre: 'hip-hop', name: ' ', weight: 1 }])
     expect(bars[0].name).toBe('Hip hop')
     expect(humanizeSlug('vallenato_clasico')).toBe('Vallenato clasico')
+  })
+
+  it('las filas visibles suman 100 aunque cada parte tenga decimales', () => {
+    for (const weights of [[1, 1, 1], [5, 3, 2, 2, 1, 1, 1], [7, 7, 7, 1, 1, 1, 1, 1, 1, 1]]) {
+      const bars = computeGenreBars(weights.map((w, i) => g(`g${i}`, w)))
+      expect(bars.reduce((sum, b) => sum + b.percent, 0)).toBe(100)
+    }
+  })
+})
+
+describe('largestRemainder', () => {
+  it('reparte los puntos que faltan por la parte decimal más grande y desempata por orden', () => {
+    expect(largestRemainder([33.3, 33.3, 33.4])).toEqual([33, 33, 34])
+    expect(largestRemainder([100 / 3, 100 / 3, 100 / 3])).toEqual([34, 33, 33])
+    expect(largestRemainder([])).toEqual([])
   })
 })
