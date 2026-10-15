@@ -1,4 +1,5 @@
 import {
+  consentChangesOf,
   currentConsentVersionOf,
   decideConsent,
   shouldRedirectToConsent,
@@ -60,5 +61,13 @@ describe('documentos legales y contacto', () => {
     expect(PRIVACY_CONTACT_EMAIL).toBeNull()
     expect(contactMailto(PRIVACY_CONTACT_EMAIL)).toBeNull()
     expect(contactMailto('datos@dominio.co')).toMatch(/^mailto:datos@dominio\.co\?subject=/)
+  })
+})
+
+describe('consentChangesOf', () => {
+  it('resume la versión del perfil público y no inventa nada para versiones sin resumen', () => {
+    expect(consentChangesOf('2026-10-14')).toMatch(/cualquier persona en Encorely puede ver tu perfil/)
+    expect(consentChangesOf('2026-10-13')).toBeNull()
+    expect(consentChangesOf(null)).toBeNull()
   })
 })

@@ -20,7 +20,7 @@ import {
 import { ArrowSquareOutIcon } from 'phosphor-react-native/src/icons/ArrowSquareOut'
 import { FileTextIcon } from 'phosphor-react-native/src/icons/FileText'
 import { Checkbox } from '@/ui'
-import { CONSENT_REQUIRED_CODE, currentConsentVersionOf } from '../consent'
+import { CONSENT_REQUIRED_CODE, consentChangesOf, currentConsentVersionOf } from '../consent'
 import { clearConsentFlag } from '../consentSignal'
 import { effectiveDateLabel, legalDocumentsOf } from '../legal'
 import { useAcceptConsent, useLegalQuery } from '../queries'
@@ -41,6 +41,7 @@ export function ConsentScreen() {
   const [signingOut, setSigningOut] = useState(false)
 
   const version = currentConsentVersionOf(legal.data)
+  const changes = consentChangesOf(version)
   const effective = effectiveDateLabel(legal.data?.effectiveDate)
   const documents = legalDocumentsOf(legal.data)
   const busy = accept.isPending || signingOut
@@ -141,6 +142,15 @@ export function ConsentScreen() {
               ) : null}
             </View>
 
+            {changes ? (
+              <View style={styles.changes}>
+                <Text variant="headline" accessibilityRole="header">
+                  Qué cambia
+                </Text>
+                <Text variant="body">{changes}</Text>
+              </View>
+            ) : null}
+
             <ListSection>
               {documents.map((doc) => (
                 <ListRow
@@ -178,4 +188,5 @@ const makeStyles = (_t: Theme) =>
     head: { gap: space.sm },
     skeletons: { gap: space.md },
     version: { gap: space.xs },
+    changes: { gap: space.xs },
   })

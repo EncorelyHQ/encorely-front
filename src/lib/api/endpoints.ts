@@ -19,7 +19,11 @@ import type {
   MessagePage,
   OutgoingMessage,
   PeerKeyBundle,
+  PublicProfile,
   RadarPerson,
+  ReactionRequest,
+  ReactionTargetKind,
+  ReceivedReactionPage,
   RegisterRequest,
   ReportRequest,
   SentMessage,
@@ -54,6 +58,18 @@ export const meApi = {
   importSpotify: (body: SpotifyImportRequest) => api<Dna>('POST', '/me/spotify/import', { body }),
   linkSpotify: (body: SpotifyGrant) => api<void>('POST', '/me/spotify/link', { body }),
   unlinkSpotify: () => api<void>('DELETE', '/me/spotify/link'),
+  // Quién reaccionó a mi perfil, de la más reciente a la más vieja. `before` es el nextCursor opaco de la página anterior.
+  receivedReactions: (before?: string, limit = 20) =>
+    api<ReceivedReactionPage>('GET', '/me/reactions/received', { query: { before, limit } }),
+}
+
+// Perfil público. Un 404 user_not_found cubre bloqueo, cuenta suspendida, perfil oculto o inexistente: no se distingue.
+export const usersApi = {
+  profile: (userId: string) => api<PublicProfile>('GET', `/users/${id(userId)}/profile`),
+  // Una reacción por objetivo y por par: repetir reemplaza el tipo.
+  react: (userId: string, body: ReactionRequest) => api<void>('PUT', `/users/${id(userId)}/reactions`, { body }),
+  unreact: (userId: string, targetKind: ReactionTargetKind, targetKey: string) =>
+    api<void>('DELETE', `/users/${id(userId)}/reactions`, { query: { targetKind, targetKey } }),
 }
 
 export const catalogApi = {

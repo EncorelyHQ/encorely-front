@@ -14,6 +14,7 @@ type RadarPersonRowProps = {
   openingChat: boolean
 }
 
+// Sin señal suficiente de alguno de los dos el back manda null: mejor no mostrar número que uno inventado.
 // Espacio no separable: "78 %" nunca se parte en dos líneas.
 const percent = (value: number) => `${value} %`
 
@@ -24,7 +25,7 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
     person.displayName,
     facts,
     genres ? `Les gusta ${genres}` : null,
-    `${percent(person.affinity)} de afinidad`,
+    person.affinity === null ? null : `${percent(person.affinity)} de afinidad`,
   ]
     .filter(Boolean)
     .join('. ')
@@ -43,14 +44,16 @@ export function RadarPersonRow({ person, genres, onLike, onOpenChat, liking, ope
             </Text>
           ) : null}
         </View>
-        <View style={styles.affinity}>
-          <Text variant="data" color="textMuted">
-            {percent(person.affinity)}
-          </Text>
-          <Text variant="footnote" color="textMuted">
-            afinidad
-          </Text>
-        </View>
+        {person.affinity === null ? null : (
+          <View style={styles.affinity}>
+            <Text variant="data" color="textMuted">
+              {percent(person.affinity)}
+            </Text>
+            <Text variant="footnote" color="textMuted">
+              afinidad
+            </Text>
+          </View>
+        )}
       </View>
 
       {genres ? (

@@ -17,9 +17,9 @@ function artist(name: unknown, genres?: unknown, id = String(name)) {
 }
 
 describe('toImportPayload', () => {
-  test('sends only name and genres', () => {
+  test('sends name, genres and image, never the Spotify id or popularity', () => {
     expect(toImportPayload([artist('Bomba Estéreo', ['cumbia', 'electro'])])).toEqual({
-      topArtists: [{ name: 'Bomba Estéreo', genres: ['cumbia', 'electro'] }],
+      topArtists: [{ name: 'Bomba Estéreo', genres: ['cumbia', 'electro'], imageUrl: 'https://i.scdn.co/x' }],
     })
   })
 
@@ -54,6 +54,22 @@ describe('toImportPayload', () => {
     const [first] = toImportPayload([artist('x'.repeat(300), genres)]).topArtists
     expect(first.name).toHaveLength(200)
     expect(first.genres).toHaveLength(20)
+  })
+
+  test('sends the largest Spotify image only when it comes from the Spotify CDN', () => {
+    const withImages = (images: unknown) => ({ ...artist('A', []), images })
+    const payload = toImportPayload([
+      withImages([{ url: 'https://i.scdn.co/image/big' }, { url: 'https://i.scdn.co/image/small' }]),
+      { ...withImages([{ url: 'https://evil.example/x.png' }]), name: 'B' },
+      { ...withImages('nope'), name: 'C' },
+      { ...withImages([]), name: 'D' },
+    ])
+    expect(payload.topArtists).toEqual([
+      { name: 'A', genres: [], imageUrl: 'https://i.scdn.co/image/big' },
+      { name: 'B', genres: [] },
+      { name: 'C', genres: [] },
+      { name: 'D', genres: [] },
+    ])
   })
 
   test('skips items without a usable name', () => {

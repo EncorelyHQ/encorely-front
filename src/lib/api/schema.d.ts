@@ -194,6 +194,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perfil de otra persona; 404 si no existe, está suspendida o hay bloqueo en cualquier sentido */
+        get: operations["GetUserProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Reacciona a un artista o género de su perfil (reemplaza la reacción anterior a ese objetivo) */
+        put: operations["SetProfileReaction"];
+        post?: never;
+        /** Quita mi reacción a ese objetivo (204 aunque no hubiera) */
+        delete: operations["RemoveProfileReaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/reactions/received": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quién reaccionó a mi perfil, de la más reciente a la más vieja. ?before=nextCursor pagina */
+        get: operations["ListReceivedReactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/genres": {
         parameters: {
             query?: never;
@@ -1009,6 +1061,7 @@ export interface components {
             matches: components["schemas"]["ExportMatch"][];
             blocks: components["schemas"]["ExportBlock"][];
             consents: components["schemas"]["ExportConsent"][];
+            reactions: components["schemas"]["ExportReaction"][];
             /** Format: int32 */
             pushDevices: number;
             /** Format: date-time */
@@ -1084,6 +1137,15 @@ export interface components {
             createdAt: string;
             /** Format: int32 */
             messagesSent: number;
+        };
+        /** @description Reacción que dejé en el perfil de otra persona. */
+        ExportReaction: {
+            peerDisplayName: string;
+            targetKind: components["schemas"]["ReactionTargetKind"];
+            targetKey: string;
+            reaction: components["schemas"]["ReactionType"];
+            /** Format: date-time */
+            updatedAt: string;
         };
         ExportSwipe: {
             songTitle: string;
@@ -1233,6 +1295,15 @@ export interface components {
             spotifyLinked: boolean;
             /** @description false en cuentas creadas con Spotify: no pueden entrar por correo ni desvincular Spotify. */
             hasPassword: boolean;
+            /** @description Mi top de artistas importado de Spotify (máx. 12), como lo ven los demás. */
+            artists: components["schemas"]["ProfileArtistDto"][];
+            stats: components["schemas"]["ProfileStatsDto"];
+            /** @description Resumen de reacciones a mi perfil, agregado por objetivo y tipo. Quién reaccionó: `GET /me/reactions/received`. */
+            reactionsReceived: components["schemas"]["ReceivedReactionDto"][];
+            /** @description Interruptor del perfil público (PATCH /me lo cambia). */
+            showProfileToOthers: boolean;
+            /** @description true si otros ven mi perfil ahora: interruptor encendido y la versión de consentimiento con esa finalidad aceptada. */
+            profileVisible: boolean;
         };
         MessageAcceptedDto: {
             /** Format: uuid */
@@ -1272,6 +1343,11 @@ export interface components {
              */
             nextCursor: null | number;
         };
+        MyReactionDto: {
+            targetKind: components["schemas"]["ReactionTargetKind"];
+            targetKey: string;
+            reaction: components["schemas"]["ReactionType"];
+        };
         PeerDto: {
             /** Format: uuid */
             id: string;
@@ -1294,6 +1370,65 @@ export interface components {
             errors?: {
                 [key: string]: string[];
             };
+        };
+        ProfileArtistDto: {
+            /** @description Nombre normalizado ("bad-bunny"): identifica al artista al reaccionar y al cruzar perfiles. */
+            key: string;
+            name: string;
+            /** @description Imagen de Spotify (https://i.scdn.co/…); null si no vino. */
+            imageUrl: null | string;
+            /** @description true si el artista también está en el perfil de quien mira (en `/me` siempre false). */
+            shared: boolean;
+        };
+        ProfileCommonDto: {
+            /**
+             * Format: int32
+             * @description 0–100, o null si alguno de los dos aún no tiene señal suficiente (pocos swipes y sin Spotify).
+             */
+            affinity: null | number;
+            /** @description Slugs de géneros con peso en ambos (máx. 3). */
+            sharedGenres: string[];
+            /** @description Keys de artistas que están en ambos perfiles. */
+            sharedArtists: string[];
+        };
+        ProfileGenreDto: {
+            slug: string;
+            name: string;
+        };
+        ProfileStatsDto: {
+            /**
+             * Format: int32
+             * @description Canciones calificadas.
+             */
+            swipeCount: number;
+            /**
+             * Format: int32
+             * @description Géneros distintos entre las canciones calificadas.
+             */
+            genresExplored: number;
+            /**
+             * Format: int32
+             * @description Eventos con asistencia marcada (no implica que haya ido).
+             */
+            eventsMarked: number;
+        };
+        /** @description Perfil de otra persona visto por quien llama. */
+        PublicProfileDto: {
+            /** Format: uuid */
+            id: string;
+            displayName: string;
+            /** Format: int32 */
+            age: null | number;
+            city: null | string;
+            bio: null | string;
+            /** @description Géneros con más peso en su ADN (máx. 8). */
+            genres: components["schemas"]["ProfileGenreDto"][];
+            /** @description Su top de artistas (máx. 12). */
+            artists: components["schemas"]["ProfileArtistDto"][];
+            stats: components["schemas"]["ProfileStatsDto"];
+            common: components["schemas"]["ProfileCommonDto"];
+            /** @description Las reacciones que quien llama dejó en este perfil. */
+            myReactions: components["schemas"]["MyReactionDto"][];
         };
         PushTokenRequest: {
             /** @description ExpoPushToken[...]. */
@@ -1329,13 +1464,59 @@ export interface components {
             city: null | string;
             /**
              * Format: int32
-             * @description Afinidad real 0–100 (coseno entre vectores de géneros).
+             * @description Afinidad 0–100 (coseno entre vectores de géneros), o null si alguno de los dos aún no tiene señal suficiente (pocos swipes y sin Spotify).
              */
-            affinity: number;
+            affinity: null | number;
             /** @description Slugs de géneros con peso en ambos ADN (máx. 3, de mayor a menor). */
             sharedGenres: string[];
             likedByMe: boolean;
             matched: boolean;
+        };
+        ReactionFromDto: {
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
+        };
+        ReactionRequest: {
+            targetKind: components["schemas"]["ReactionTargetKind"];
+            /** @description Slug del género o key del artista; debe estar en el perfil de esa persona. */
+            targetKey: string;
+            reaction: components["schemas"]["ReactionType"];
+        };
+        /** @enum {unknown} */
+        ReactionTargetKind: "artist" | "genre";
+        /**
+         * @description "Yo también", "Vamos a verlo", "Pásame una".
+         * @enum {unknown}
+         */
+        ReactionType: "meToo" | "letsGo" | "sendOne";
+        /** @description Resumen de reacciones recibidas, agregado por objetivo y tipo. El detalle con quién está en `/me/reactions/received`. */
+        ReceivedReactionDto: {
+            targetKind: components["schemas"]["ReactionTargetKind"];
+            targetKey: string;
+            /** @description Nombre del artista o del género, para mostrarlo sin otra consulta. */
+            targetName: string;
+            reaction: components["schemas"]["ReactionType"];
+            /** Format: int32 */
+            count: number;
+        };
+        ReceivedReactionItemDto: {
+            from: components["schemas"]["ReactionFromDto"];
+            targetKind: components["schemas"]["ReactionTargetKind"];
+            targetKey: string;
+            /** @description Nombre del artista o género cuando se reaccionó (puede ya no estar en mi perfil). */
+            targetName: string;
+            reaction: components["schemas"]["ReactionType"];
+            /**
+             * Format: date-time
+             * @description Cuándo se puso o se cambió por última vez.
+             */
+            reactedAt: string;
+        };
+        ReceivedReactionPage: {
+            items: components["schemas"]["ReceivedReactionItemDto"][];
+            /** @description Pasarlo como `?before` para la página siguiente; null si no hay más. */
+            nextCursor: null | string;
         };
         RefreshRequest: {
             refreshToken: string;
@@ -1444,6 +1625,8 @@ export interface components {
         SpotifyArtist: {
             name: string;
             genres: string[];
+            /** @description Opcional: `images[0].url` de Spotify. Solo se guarda si es https de i.scdn.co; si no, se ignora. */
+            imageUrl?: null | string;
         };
         SpotifyAuthResponse: {
             accessToken: string;
@@ -1505,6 +1688,8 @@ export interface components {
             bio?: null | string;
             /** @description Reemplaza la lista completa de géneros declarados (slugs, 1 a 10). */
             genres?: null | string[];
+            /** @description Apagado: nadie más ve mi perfil ni puede reaccionarle, y mis reacciones dejan de mostrarse. */
+            showProfileToOthers?: null | boolean;
         };
         /** @description Publica (o rota) las llaves PÚBLICAS del usuario. El servidor nunca recibe privadas. */
         UploadKeysRequest: {
@@ -2164,6 +2349,201 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataExportResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicProfileDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SetProfileReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    RemoveProfileReaction: {
+        parameters: {
+            query: {
+                /** @description artist o genre */
+                targetKind: "artist" | "genre";
+                /** @description Slug del género o key del artista */
+                targetKey: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ListReceivedReactions: {
+        parameters: {
+            query?: {
+                /** @description nextCursor de la página anterior */
+                before?: string;
+                /** @description 1–50, por defecto 20 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivedReactionPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */

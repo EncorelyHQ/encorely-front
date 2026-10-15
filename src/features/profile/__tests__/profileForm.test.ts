@@ -20,6 +20,11 @@ const me: Me = {
   consentUpToDate: true,
   spotifyLinked: false,
   hasPassword: true,
+  artists: [],
+  stats: { swipeCount: 0, genresExplored: 0, eventsMarked: 0 },
+  reactionsReceived: [],
+  showProfileToOthers: true,
+  profileVisible: true,
 }
 
 const edit = (patch: Partial<ProfileDraft>): ProfileDraft => ({ ...draftFromMe(me), ...patch })
