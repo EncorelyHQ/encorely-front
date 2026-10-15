@@ -21,9 +21,9 @@ import {
 import { AdminGate, AdminQueryError } from '../components/AdminGate'
 import { Cover } from '../components/Cover'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { useAdminSongs, useUpdateSong } from '../hooks/queries'
+import { useAdminSongs, useLoadMoreSongs, useUpdateSong } from '../hooks/queries'
 import { PlusIcon } from '../icons'
-import { filterSongs, SONGS_PAGE_CAP, songToRequest } from '../model/songs'
+import { canLoadMoreSongs, filterSongs, pageMayContinue, songToRequest } from '../model/songs'
 import type { AdminSong } from '../types'
 
 export function AdminSongsScreen() {
@@ -46,6 +46,11 @@ function AdminSongs() {
   const styles = useStyles(makeStyles)
   const toast = useToast()
   const songs = useAdminSongs()
+  const loadMore = useLoadMoreSongs()
+  // Total en el que una página llegó incompleta. Un refetch vuelve a la primera página y cambia el total, así que no se pega.
+  const [endAt, setEndAt] = useState<number | null>(null)
+  const loaded = songs.data?.length ?? 0
+  const canLoadMore = canLoadMoreSongs(loaded, endAt)
   const update = useUpdateSong()
   const { genres } = useGenreLookup()
   const [query, setQuery] = useState('')
@@ -134,9 +139,9 @@ function AdminSongs() {
               <Text variant="data" color="textMuted">{total}</Text> en el feed. Desactivar una canción la saca de Descubrir sin
               borrar lo que ya calificaron.
             </Text>
-            {total >= SONGS_PAGE_CAP ? (
+            {canLoadMore ? (
               <Text variant="footnote" color="textSubtle">
-                Se muestran las primeras {SONGS_PAGE_CAP} por artista. Si no ves una, búscala en iTunes al agregar.
+                La búsqueda solo ve las canciones cargadas. Si no ves una, carga más al final de la lista.
               </Text>
             ) : null}
           </View>
@@ -161,6 +166,25 @@ function AdminSongs() {
             />
           </View>
         )}
+        ListFooterComponent={
+          canLoadMore ? (
+            <View style={styles.more}>
+              <Button
+                label="Cargar más canciones"
+                variant="secondary"
+                loading={loadMore.isPending}
+                onPress={() =>
+                  loadMore.mutate(total, {
+                    onSuccess: (page) => {
+                      if (!pageMayContinue(page.length)) setEndAt(total + page.length)
+                    },
+                    onError: (error) => toast.show(userMessage(error), 'danger'),
+                  })
+                }
+              />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           total === 0 ? (
             <EmptyState
@@ -201,4 +225,5 @@ const makeStyles = (t: Theme) =>
     rowFirst: { borderTopLeftRadius: GROUP_RADIUS, borderTopRightRadius: GROUP_RADIUS },
     rowLast: { borderBottomLeftRadius: GROUP_RADIUS, borderBottomRightRadius: GROUP_RADIUS },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: t.border },
+    more: { paddingHorizontal: space.gutter, paddingVertical: space.lg },
   })

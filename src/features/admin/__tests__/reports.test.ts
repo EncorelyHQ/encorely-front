@@ -25,6 +25,7 @@ const report = (over: Partial<AdminReport>): AdminReport => ({
   createdAt: '2026-10-01T00:00:00Z',
   resolvedAt: null,
   priorReportsAgainstUser: 0,
+  evidencePurgedAt: null,
   ...over,
 })
 

@@ -4,6 +4,7 @@ import { useSession } from '@/lib/session/SessionContext'
 import { queryKeys } from '@/lib/query'
 import { adminKeys } from '../queryKeys'
 import { sortClosed, TAB_STATUSES, type ReportTab } from '../model/reports'
+import { appendSongs, SONGS_PAGE_CAP } from '../model/songs'
 import type {
   AdminEvent,
   AdminEventRequest,
@@ -70,7 +71,15 @@ export function useDeleteEvent() {
 // ---------- Canciones ----------
 
 export function useAdminSongs() {
-  return useQuery({ queryKey: adminKeys.songs, queryFn: () => adminApi.songs() })
+  return useQuery({ queryKey: adminKeys.songs, queryFn: () => adminApi.songs(SONGS_PAGE_CAP, 0) })
+}
+
+export function useLoadMoreSongs() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (offset: number) => adminApi.songs(SONGS_PAGE_CAP, offset),
+    onSuccess: (page) => queryClient.setQueryData<AdminSong[]>(adminKeys.songs, (prev) => appendSongs(prev, page)),
+  })
 }
 
 function upsertSong(prev: AdminSong[] | undefined, saved: AdminSong): AdminSong[] | undefined {

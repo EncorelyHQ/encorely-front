@@ -47,6 +47,7 @@ export type ReportRequest = S['ReportRequest']
 export type ReportCreated = S['ReportCreatedDto']
 
 export type SpotifyImportRequest = S['SpotifyImportRequest']
+export type SpotifyImportResponse = S['SpotifyImportResponse']
 export type DevicePlatform = S['DevicePlatform']
 export type DataExport = S['DataExportResponse']
 

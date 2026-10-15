@@ -1,4 +1,4 @@
-import { filterSongs, guessGenre, songToRequest, trackToRequest, validateSongForm } from '../model/songs'
+import { appendSongs, canLoadMoreSongs, filterSongs, guessGenre, pageMayContinue, songToRequest, trackToRequest, validateSongForm } from '../model/songs'
 import type { AdminSong } from '../types'
 
 const song = (over: Partial<AdminSong>): AdminSong => ({
@@ -70,5 +70,24 @@ describe('canciones', () => {
       coverUrl: expect.any(String),
       previewUrl: expect.any(String),
     })
+  })
+})
+
+describe('paginación del catálogo (draft.12)', () => {
+  const song = (id: string) => ({ id }) as AdminSong
+
+  it('pega la página siguiente sin repetir ids', () => {
+    expect(appendSongs([song('a'), song('b')], [song('b'), song('c')]).map((s) => s.id)).toEqual(['a', 'b', 'c'])
+    expect(appendSongs(undefined, [song('a')]).map((s) => s.id)).toEqual(['a'])
+  })
+
+  it('ofrece cargar más solo con páginas completas y hasta llegar al final', () => {
+    expect(canLoadMoreSongs(0, null)).toBe(false)
+    expect(canLoadMoreSongs(150, null)).toBe(false)
+    expect(canLoadMoreSongs(200, null)).toBe(true)
+    expect(canLoadMoreSongs(400, 400)).toBe(false)
+    expect(canLoadMoreSongs(200, 400)).toBe(true)
+    expect(pageMayContinue(200)).toBe(true)
+    expect(pageMayContinue(12)).toBe(false)
   })
 })
