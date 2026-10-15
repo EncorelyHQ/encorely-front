@@ -31,6 +31,7 @@ import type {
   SpotifyAuthResponse,
   SpotifyGrant,
   SpotifyImportRequest,
+  SpotifyImportResponse,
   SpotifyLoginRequest,
   SwipeDirection,
   SwipeResult,
@@ -55,7 +56,7 @@ export const meApi = {
   export: () => api<DataExport>('GET', '/me/export'),
   consent: (version: string) => api<void>('POST', '/me/consents', { body: { version } }),
   dna: () => api<Dna>('GET', '/me/dna'),
-  importSpotify: (body: SpotifyImportRequest) => api<Dna>('POST', '/me/spotify/import', { body }),
+  importSpotify: (body: SpotifyImportRequest) => api<SpotifyImportResponse>('POST', '/me/spotify/import', { body }),
   linkSpotify: (body: SpotifyGrant) => api<void>('POST', '/me/spotify/link', { body }),
   unlinkSpotify: () => api<void>('DELETE', '/me/spotify/link'),
   // Quién reaccionó a mi perfil, de la más reciente a la más vieja. `before` es el nextCursor opaco de la página anterior.
@@ -136,7 +137,8 @@ export const adminApi = {
   updateEvent: (eventId: string, body: AdminSchemas['AdminEventRequest']) =>
     api<AdminSchemas['AdminEventDto']>('PUT', `/admin/events/${id(eventId)}`, { body }),
   deleteEvent: (eventId: string) => api<void>('DELETE', `/admin/events/${id(eventId)}`),
-  songs: (limit = 200) => api<AdminSchemas['AdminSongDto'][]>('GET', '/admin/songs', { query: { limit } }),
+  songs: (limit = 200, offset = 0) =>
+    api<AdminSchemas['AdminSongDto'][]>('GET', '/admin/songs', { query: { limit, offset } }),
   createSong: (body: AdminSchemas['AdminSongRequest']) =>
     api<AdminSchemas['AdminSongDto']>('POST', '/admin/songs', { body }),
   updateSong: (songId: string, body: AdminSchemas['AdminSongRequest']) =>

@@ -267,7 +267,14 @@ function ConversationBody({ conversation, name, onSecurity, onLeave }: BodyProps
             <Button label="Revisar el código" onPress={onSecurity} />
           </Notice>
         ) : (
-          <Composer onSend={conversation.send} disabled={peerState.kind !== 'ready' || !peerState.canSend} />
+          <>
+            {conversation.quotaFull ? (
+              <Text variant="footnote" color="textMuted" accessibilityLiveRegion="polite">
+                {name} todavía no recibe tus mensajes anteriores. Cuando abra el chat podrás enviar más.
+              </Text>
+            ) : null}
+            <Composer onSend={conversation.send} disabled={peerState.kind !== 'ready' || !peerState.canSend} />
+          </>
         )}
       </BottomBar>
     </>

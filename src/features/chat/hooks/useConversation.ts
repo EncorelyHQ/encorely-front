@@ -59,6 +59,8 @@ export function useConversationAs(matchId: string, me: string) {
   const match: MatchSummary | undefined = matchQuery.data
   const peerUserId = match?.peer.id
   const [closedBySend, setClosedBySend] = useState(false)
+  // 429 chat_quota_exceeded: hay 50 MiB míos sin recoger en este match. Se libera cuando el otro abre el chat.
+  const [quotaFull, setQuotaFull] = useState(false)
   const matchClosed =
     closedBySend || match?.status === 'closed' || (matchQuery.isError && isClosedError(matchQuery.error))
   const enabled = !!peerUserId && !matchClosed
@@ -165,6 +167,7 @@ export function useConversationAs(matchId: string, me: string) {
         }
 
         outbox.current.delete(id)
+        setQuotaFull(false)
         const confirmed: ChatMessage = {
           id,
           seq: sent?.seq ?? null,
@@ -181,6 +184,7 @@ export function useConversationAs(matchId: string, me: string) {
         setPending((list) => list.filter((m) => m.id !== id))
       } catch (error) {
         if (isClosedError(error)) setClosedBySend(true)
+        if (isApiError(error, 'chat_quota_exceeded')) setQuotaFull(true)
         if (error instanceof SendBlockedError) {
           void queryClient.invalidateQueries({ queryKey: queryKeys.peerKeys(matchId), exact: true })
         }
@@ -282,6 +286,7 @@ export function useConversationAs(matchId: string, me: string) {
     retry,
     peerState,
     keyChanged: sawKeyChange || changedNow,
+    quotaFull,
     acceptKeyChange,
     status,
     error: matchQuery.error ?? messagesQuery.error ?? (peerProblem === 'error' ? peerQuery.error : null),

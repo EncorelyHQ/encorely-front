@@ -1,8 +1,24 @@
 import type { Genre } from '@/lib/api/types'
 import type { AdminSong, AdminSongRequest, ITunesTrack } from '../types'
 
-// Límite del back para GET /admin/songs: la búsqueda local solo ve estas.
+// Tamaño de página de GET /admin/songs (draft.12 agregó offset): la búsqueda local solo ve lo ya cargado.
 export const SONGS_PAGE_CAP = 200
+
+// Una página completa puede tener más detrás; una incompleta es la última.
+export const pageMayContinue = (pageSize: number) => pageSize >= SONGS_PAGE_CAP
+
+// Solo páginas completas pueden tener más detrás, salvo que ya se llegó al final con este mismo total.
+export function canLoadMoreSongs(loaded: number, endAt: number | null): boolean {
+  return loaded > 0 && loaded % SONGS_PAGE_CAP === 0 && endAt !== loaded
+}
+
+// Pega la página siguiente sin repetir: si alguien agregó canciones mientras tanto, el offset se corre.
+export function appendSongs(prev: readonly AdminSong[] | undefined, page: readonly AdminSong[]): AdminSong[] {
+  const list = [...(prev ?? [])]
+  const seen = new Set(list.map((s) => s.id))
+  for (const song of page) if (!seen.has(song.id)) list.push(song)
+  return list
+}
 
 export const fold = (value: string) =>
   value

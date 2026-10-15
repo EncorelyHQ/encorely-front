@@ -34,7 +34,7 @@ type Props = {
 export function SpotifyConnectCard({ onImported }: Props) {
   const styles = useStyles(makeStyles)
   const toast = useToast()
-  const { status, importedCount, errorMessage, errorKind, isLinked, connect, disconnect } = useSpotifyImport({
+  const { status, importedCount, dnaUnchanged, errorMessage, errorKind, isLinked, connect, disconnect } = useSpotifyImport({
     onImported,
   })
   const reduceMotion = useReducedMotion()
@@ -84,7 +84,9 @@ export function SpotifyConnectCard({ onImported }: Props) {
                 <Text variant="headline">{status === 'done' ? doneText : 'Spotify conectado'}</Text>
                 <Text variant="footnote" color="textMuted">
                   {status === 'done'
-                    ? 'Ya los usamos para afinar con quién coincides.'
+                    ? dnaUnchanged
+                      ? 'No reconocimos los géneros de esos artistas, así que tu música no cambió.'
+                      : 'Ya los usamos para afinar con quién coincides.'
                     : status === 'authorizing'
                       ? 'Termina en Spotify y vuelve aquí.'
                       : status === 'importing'

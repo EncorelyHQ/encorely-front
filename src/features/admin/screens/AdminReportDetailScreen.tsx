@@ -249,9 +249,11 @@ function ReportView({ report }: { report: AdminReport }) {
       <Section
         title={report.evidence.length ? `Evidencia (${report.evidence.length})` : 'Evidencia'}
         footer={
-          report.evidence.length
-            ? 'Verificado quiere decir que el servidor comprobó la firma del mensaje: lo envió esa cuenta y nadie lo cambió.'
-            : undefined
+          report.evidencePurgedAt
+            ? `El ${bogotaLabel(report.evidencePurgedAt)} se borró el texto de la evidencia y el detalle por la política de retención. Quedan los ids y si estaban verificados.`
+            : report.evidence.length
+              ? 'Verificado quiere decir que el servidor comprobó la firma del mensaje: lo envió esa cuenta y nadie lo cambió.'
+              : undefined
         }
       >
         {report.evidence.length ? (

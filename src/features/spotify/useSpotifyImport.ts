@@ -5,7 +5,7 @@ import type { Dna } from '@/lib/api/types'
 import { queryKeys } from '@/lib/query'
 import { useSession } from '@/lib/session/SessionContext'
 import { isSpotifyError, SpotifyError, spotifyUserMessage, type SpotifyErrorKind } from './errors'
-import { getTopArtists, toImportPayload } from './spotifyApi'
+import { allGenresUnmapped, getTopArtists, toImportPayload } from './spotifyApi'
 import {
   authorizeWithSpotify,
   completeAuthorizationRedirect,
@@ -19,7 +19,8 @@ ensureSpotifyCleanup()
 
 export type SpotifyImportStatus = 'idle' | 'authorizing' | 'importing' | 'done' | 'error'
 
-export type SpotifyImportResult = { count: number; dna: Dna }
+// dnaUnchanged: ningún género de esos artistas aportó al ADN (el back los devolvió todos en unmappedGenres).
+export type SpotifyImportResult = { count: number; dna: Dna; dnaUnchanged: boolean }
 
 type Source = { kind: 'connect' } | { kind: 'redirect'; params: AuthorizationParams }
 
@@ -112,8 +113,8 @@ export function useSpotifyImport({ onImported }: Options = {}) {
 
       const payload = toImportPayload(items)
       if (payload.topArtists.length === 0) throw new SpotifyError('empty')
-      const dna = await meApi.importSpotify(payload)
-      return { count: payload.topArtists.length, dna }
+      const { unmappedGenres, ...dna } = await meApi.importSpotify(payload)
+      return { count: payload.topArtists.length, dna, dnaUnchanged: allGenresUnmapped(payload, unmappedGenres) }
     },
     onSuccess: (result) => {
       if (!result) return
@@ -167,6 +168,7 @@ export function useSpotifyImport({ onImported }: Options = {}) {
   return {
     status,
     importedCount: mutation.data?.count ?? null,
+    dnaUnchanged: mutation.data?.dnaUnchanged ?? false,
     errorMessage: mutation.error ? spotifyUserMessage(mutation.error) : null,
     errorKind,
     isLinked,

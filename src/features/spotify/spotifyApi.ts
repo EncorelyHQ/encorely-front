@@ -63,3 +63,12 @@ function cleanGenres(genres: unknown): string[] {
   }
   return out
 }
+
+// Draft.12: el back devuelve en unmappedGenres los géneros que no aportaron al ADN. Si son todos, el ADN no cambió.
+export function allGenresUnmapped(payload: SpotifyImportRequest, unmapped: readonly string[]): boolean {
+  const key = (genre: string) => genre.trim().toLocaleLowerCase()
+  const sent = new Set(payload.topArtists.flatMap((a) => a.genres.map(key)))
+  if (sent.size === 0) return false
+  const ignored = new Set(unmapped.map(key))
+  return [...sent].every((genre) => ignored.has(genre))
+}

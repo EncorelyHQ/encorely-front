@@ -323,7 +323,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Importa top artistas de Spotify (leídos en el dispositivo) para enriquecer el ADN */
+        /** Importa top artistas de Spotify (leídos en el dispositivo) para enriquecer el ADN; avisa los géneros que no mapean */
         post: operations["ImportSpotify"];
         delete?: never;
         options?: never;
@@ -441,7 +441,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Mis matches activos, el más reciente primero */
+        /** Mis matches activos, el más reciente primero; paginable con limit, beforeAt y beforeId */
         get: operations["ListMatches"];
         put?: never;
         post?: never;
@@ -600,7 +600,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Reporta a un usuario para revisión */
+        /** Reporta a un usuario para revisión; si ya tengo uno abierto contra esa persona, le suma la evidencia (mismo id) */
         post: operations["ReportUser"];
         delete?: never;
         options?: never;
@@ -940,8 +940,16 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             resolvedAt: null | string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Otras personas (no reportes) que reportaron a la misma cuenta, en cualquier estado.
+             */
             priorReportsAgainstUser: number;
+            /**
+             * Format: date-time
+             * @description Si tiene valor, ya se borraron el detalle y el texto de la evidencia (retención).
+             */
+            evidencePurgedAt: null | string;
         };
         AdminSongDto: {
             /** Format: uuid */
@@ -1650,6 +1658,20 @@ export interface components {
         SpotifyImportRequest: {
             topArtists: components["schemas"]["SpotifyArtist"][];
         };
+        /** @description El ADN tras importar, más los géneros de Spotify que no se pudieron llevar a ningún género del catálogo. */
+        SpotifyImportResponse: {
+            genres: components["schemas"]["DnaGenreDto"][];
+            /** Format: int32 */
+            swipeCount: number;
+            /** Format: int32 */
+            radarThreshold: number;
+            radarUnlocked: boolean;
+            /**
+             * @description Géneros recibidos que no aportaron al ADN (sin repetidos, en el orden en que llegaron, máx. 50). Si todos
+             *         quedan aquí, la importación no cambió el ADN y conviene avisarlo.
+             */
+            unmappedGenres: string[];
+        };
         /** @description Entrar con Spotify: el grant PKCE más el consentimiento, que solo cuenta si se crea la cuenta. */
         SpotifyLoginRequest: {
             /** @description Authorization code recibido en la redirect URI. De un solo uso. */
@@ -1941,6 +1963,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     Logout: {
@@ -1965,6 +1996,15 @@ export interface operations {
             };
             /** @description Bad Request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2360,6 +2400,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     GetUserProfile: {
@@ -2726,7 +2775,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DnaResponse"];
+                    "application/json": components["schemas"]["SpotifyImportResponse"];
                 };
             };
             /** @description Bad Request */
@@ -2740,6 +2789,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2872,6 +2930,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3079,7 +3146,14 @@ export interface operations {
     };
     ListMatches: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description 1–100. Sin él responde todos (hasta 500), como antes */
+                limit?: number;
+                /** @description lastMessageAt ?? createdAt del último match recibido (con beforeId) */
+                beforeAt?: string;
+                /** @description id del último match recibido (con beforeAt) */
+                beforeId?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3093,6 +3167,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -3724,6 +3807,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
+            /** @description Payload Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
             /** @description Too Many Requests */
             429: {
                 headers: {
@@ -3766,6 +3858,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3895,6 +3996,15 @@ export interface operations {
             };
             /** @description Payload Too Large */
             413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4111,6 +4221,15 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4453,6 +4572,8 @@ export interface operations {
                 genre?: string;
                 /** @description 1–200, por defecto 100 */
                 limit?: number;
+                /** @description Canciones a saltar (paginación; orden por artista y título) */
+                offset?: number;
             };
             header?: never;
             path?: never;

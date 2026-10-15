@@ -53,6 +53,7 @@ function fallbackMessage(status: number): string {
   if (status === 403) return 'No tienes permiso para hacer esto.'
   if (status === 404) return 'No encontramos lo que buscabas.'
   if (status === 409) return 'Esto cambió mientras tanto. Vuelve a intentarlo.'
+  if (status === 413) return 'Es demasiado grande para enviarlo.'
   if (status === 429) return 'Demasiados intentos. Espera un momento y vuelve a intentarlo.'
   if (status >= 500) return 'El servidor tuvo un problema. Intenta de nuevo en un rato.'
   return 'No pudimos completar la acción.'
