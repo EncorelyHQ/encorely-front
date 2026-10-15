@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { meApi, usersApi } from '@/lib/api/endpoints'
 import { queryKeys } from '@/lib/query'
 import { reactionMutationOptions, type ReactionVars } from './reactions'
+import { visibilityMutationOptions } from './visibility'
 import { nextCursorOf } from './received'
 
 export const useProfile = (userId: string | undefined) =>
@@ -31,3 +32,10 @@ export const useReceivedReactions = () =>
     initialPageParam: undefined as string | undefined,
     getNextPageParam: nextCursorOf,
   })
+
+export function useProfileVisibility({ onError }: { onError?: (error: unknown) => void } = {}) {
+  const qc = useQueryClient()
+  return useMutation(
+    visibilityMutationOptions(qc, (show) => meApi.update({ showProfileToOthers: show }), (error) => onError?.(error)),
+  )
+}

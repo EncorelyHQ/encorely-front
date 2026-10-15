@@ -16,3 +16,22 @@ export function flattenReceived(pages: readonly ReceivedReactionPage[] | undefin
   }
   return out
 }
+
+const DAY = 24 * 60 * 60 * 1000
+const startOfDay = (ms: number) => {
+  const d = new Date(ms)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+// "hoy", "ayer" o "12 oct": la hora exacta de una reacción no le importa a nadie.
+export function reactedAtLabel(iso: string, now: number = Date.now()): string {
+  const at = Date.parse(iso)
+  if (Number.isNaN(at)) return ''
+  const days = Math.round((startOfDay(now) - startOfDay(at)) / DAY)
+  if (days <= 0) return 'hoy'
+  if (days === 1) return 'ayer'
+  const d = new Date(at)
+  const sameYear = d.getFullYear() === new Date(now).getFullYear()
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}${sameYear ? '' : ` ${d.getFullYear()}`}`
+}
