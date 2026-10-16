@@ -14,6 +14,7 @@ export const makeProfile = (over: Partial<PublicProfile> = {}): PublicProfile =>
   myReactions: [],
   likedByMe: false,
   matched: false,
+  canLike: true,
   ...over,
 })
 

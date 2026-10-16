@@ -141,7 +141,7 @@ export function PersonScreen() {
       onSuccess: (result) => {
         // El back no devuelve el perfil: se marca en la caché con lo que respondió el like (draft.15).
         qc.setQueryData<PublicProfile>(queryKeys.profile(p.id), (prev) =>
-          prev ? { ...prev, likedByMe: true, matched: result.matched } : prev,
+          prev ? { ...prev, likedByMe: true, matched: result.matched, canLike: !result.matched } : prev,
         )
         if (result.matched) void qc.invalidateQueries({ queryKey: queryKeys.matches })
         if (result.matched && result.matchId) {
@@ -177,6 +177,10 @@ export function PersonScreen() {
         Te interesa
       </Text>
     </View>
+  ) : cta === 'noSharedEvent' ? (
+    <Text variant="callout" color="textMuted" align="center" style={styles.hintCta}>
+      Marquen un mismo concierto para conectar.
+    </Text>
   ) : (
     <Button
       label="Me interesa"
@@ -308,5 +312,6 @@ const makeStyles = (t: Theme) =>
     percentRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, flexWrap: 'wrap' },
     percent: { fontSize: 30, lineHeight: 34 },
     how: { alignItems: 'flex-start', marginLeft: -space.xl },
+    hintCta: { paddingVertical: space.sm },
     liked: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minHeight: space.xxxl },
   })

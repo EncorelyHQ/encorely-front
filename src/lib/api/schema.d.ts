@@ -1444,6 +1444,8 @@ export interface components {
             likedByMe: boolean;
             /** @description Hay un match activo entre los dos: manda sobre LikedByMe. False en el perfil propio. */
             matched: boolean;
+            /** @description POST /likes hacia esta persona respondería 200 ahora: van a un mismo evento vigente. False si hay match o en el perfil propio. */
+            canLike: boolean;
         };
         PushTokenRequest: {
             /** @description ExponentPushToken[...] o ExpoPushToken[...]. */
