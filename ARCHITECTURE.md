@@ -1,4 +1,4 @@
-# Arquitectura — Encorely móvil (rama `rebuild/v1`)
+# Arquitectura — Encorely móvil
 
 App nativa Android/iOS con Expo SDK 57 (React Native 0.86, React 19.2, TypeScript estricto). La web de Expo no es objetivo. El back es `encorly_back` (.NET 10) y el contrato entre ambos es `encorly_back/contracts/openapi.v1.json`.
 
@@ -23,7 +23,7 @@ flowchart LR
 | Carpeta | Qué vive ahí | Regla |
 |---|---|---|
 | `src/app/` | Rutas de expo-router. Delgadas: importan la pantalla de su feature | Sin lógica de negocio |
-| `src/features/<dominio>/` | Pantallas, componentes, hooks y lógica pura de cada dominio: `auth`, `onboarding`, `discover`, `events`, `match`, `chat`, `profile`, `social`, `safety`, `push`, `spotify`, `dev` (solo `__DEV__`) | Un dominio no edita archivos de otro; reutiliza por su `index.ts` |
+| `src/features/<dominio>/` | Pantallas, componentes, hooks y lógica pura de cada dominio: `auth`, `onboarding`, `account`, `discover`, `events`, `match`, `chat`, `profile`, `social`, `safety`, `push`, `spotify`, `admin`, `dev` (solo `__DEV__`) | Un dominio no edita archivos de otro; reutiliza por su `index.ts` |
 | `src/ui/` | Design system "La boleta compartida": tokens, tema, primitivas, iconos | Única fuente de colores, tipos, espacios y radios |
 | `src/lib/` | Configuración, cliente API, tipos del contrato, sesión, Query, red | Sin UI salvo el aviso de red |
 
@@ -33,7 +33,7 @@ flowchart LR
 
 - `(auth)`: bienvenida, entrar, crear cuenta.
 - `(onboarding)`: datos básicos y géneros. Se sale cuando el back marca `onboardingCompleted`.
-- `(app)`: `Stack` con las tabs nativas (*Descubrir · Conciertos · Chats · Tú*) y, apiladas encima, las pantallas de detalle (concierto, match, chat, verificación, ajustes). Así hay swipe-back en iOS, la tab bar no tapa contenido y un push abre el chat con historial.
+- `(app)`: `Stack` con las tabs nativas (*Descubrir · Conciertos · Chats · Tú*) y, apiladas encima, las pantallas de detalle (concierto, match, chat, verificación, perfil de otra persona, reacciones recibidas, ajustes y el panel admin, que se protege con el rol). Así hay swipe-back en iOS, la tab bar no tapa contenido y un push abre el chat con historial.
 
 El splash se mantiene hasta resolver fuentes y sesión: no hay destello del login ni del onboarding.
 
