@@ -16,7 +16,8 @@ import {
 } from '@/ui'
 import { AdminGate, AdminQueryError } from '../components/AdminGate'
 import { StatusTag } from '../components/StatusTag'
-import { useAdminReports } from '../hooks/queries'
+import { LoadMoreButton } from '../components/LoadMoreButton'
+import { useAdminReports, useLoadMoreReports } from '../hooks/queries'
 import { bogotaLabel } from '../model/datetime'
 import {
   pendingCountLabel,
@@ -39,6 +40,7 @@ function AdminReports() {
   const styles = useStyles(makeStyles)
   const [tab, setTab] = useState<ReportTab>('pending')
   const reports = useAdminReports(tab)
+  const more = useLoadMoreReports(tab)
   const header = <Stack.Screen options={{ title: 'Reportes' }} />
 
   const segments = [
@@ -108,6 +110,9 @@ function AdminReports() {
             onPress={() => router.push({ pathname: '/admin/reports/[id]', params: { id: item.id, status: item.status } })}
           />
         )}
+        ListFooterComponent={
+          more.canLoadMore ? <LoadMoreButton label="Cargar más reportes" loading={more.isPending} onPress={more.loadMore} /> : null
+        }
         ListEmptyComponent={
           tab === 'pending' ? (
             <EmptyState
