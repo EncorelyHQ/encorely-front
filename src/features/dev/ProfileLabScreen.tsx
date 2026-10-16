@@ -37,6 +37,7 @@ const PROFILE: PublicProfile = {
   myReactions: [{ targetKind: 'genre', targetKey: 'salsa', reaction: 'meToo' }],
   likedByMe: false,
   matched: false,
+  canLike: true,
 }
 
 const COUNTS: Record<string, number> = { 'genre|salsa': 4, 'artist|bomba-estereo': 12, 'genre|indie': 1 }
