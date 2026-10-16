@@ -130,8 +130,10 @@ export const devicesApi = {
 type AdminSchemas = import('./schema').components['schemas']
 
 export const adminApi = {
-  events: (includePast = true) =>
-    api<AdminSchemas['AdminEventDto'][]>('GET', '/admin/events', { query: { includePast: String(includePast) } }),
+  events: (includePast = true, limit = 200, offset = 0) =>
+    api<AdminSchemas['AdminEventDto'][]>('GET', '/admin/events', {
+      query: { includePast: String(includePast), limit, offset },
+    }),
   createEvent: (body: AdminSchemas['AdminEventRequest']) =>
     api<AdminSchemas['AdminEventDto']>('POST', '/admin/events', { body }),
   updateEvent: (eventId: string, body: AdminSchemas['AdminEventRequest']) =>
@@ -145,8 +147,9 @@ export const adminApi = {
     api<AdminSchemas['AdminSongDto']>('PUT', `/admin/songs/${id(songId)}`, { body }),
   searchITunes: (term: string) =>
     api<AdminSchemas['ITunesTrackDto'][]>('GET', '/admin/itunes/search', { query: { term } }),
-  reports: (status: AdminSchemas['ReportStatus']) =>
-    api<AdminSchemas['AdminReportDto'][]>('GET', '/admin/reports', { query: { status } }),
+  // Cursor y no offset: la cola cambia mientras se modera. afterAt y afterId van juntos (draft.16).
+  reports: (status: AdminSchemas['ReportStatus'], page: { limit?: number; afterAt?: string; afterId?: string } = {}) =>
+    api<AdminSchemas['AdminReportDto'][]>('GET', '/admin/reports', { query: { status, limit: 200, ...page } }),
   resolveReport: (reportId: string, body: AdminSchemas['ResolveReportRequest']) =>
     api<AdminSchemas['AdminReportDto']>('POST', `/admin/reports/${id(reportId)}/resolve`, { body }),
   setUserStatus: (userId: string, status: AdminSchemas['UserStatus']) =>

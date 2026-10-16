@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/lib/api/endpoints'
 import { useSession } from '@/lib/session/SessionContext'
 import { queryKeys } from '@/lib/query'
 import { adminKeys } from '../queryKeys'
 import { sortClosed, TAB_STATUSES, type ReportTab } from '../model/reports'
+import { ADMIN_PAGE, appendById, canLoadMore, nextReportCursor, pageMayContinue } from '../model/pages'
 import { appendSongs, SONGS_PAGE_CAP } from '../model/songs'
 import type {
   AdminEvent,
@@ -25,7 +27,21 @@ export function useIsAdmin(): boolean {
 // ---------- Conciertos ----------
 
 export function useAdminEvents() {
-  return useQuery({ queryKey: adminKeys.events, queryFn: () => adminApi.events(true) })
+  return useQuery({ queryKey: adminKeys.events, queryFn: () => adminApi.events(true, ADMIN_PAGE, 0) })
+}
+
+export function useLoadMoreEvents() {
+  const queryClient = useQueryClient()
+  const loaded = queryClient.getQueryData<AdminEvent[]>(adminKeys.events)?.length ?? 0
+  const [endAt, setEndAt] = useState<number | null>(null)
+  const mutation = useMutation({
+    mutationFn: (offset: number) => adminApi.events(true, ADMIN_PAGE, offset),
+    onSuccess: (page, offset) => {
+      queryClient.setQueryData<AdminEvent[]>(adminKeys.events, (prev) => appendById(prev, page))
+      if (!pageMayContinue(page.length)) setEndAt(offset + page.length)
+    },
+  })
+  return { canLoadMore: canLoadMore(loaded, endAt), loadMore: () => mutation.mutateAsync(loaded), isPending: mutation.isPending }
 }
 
 // Un cambio del panel debe verse ya en la pestaña Conciertos (caché pública bajo 'events').
@@ -158,6 +174,31 @@ export function useAdminReports(tab: ReportTab) {
     isRefetching: results.some((r) => r.isRefetching),
     refetch: () => Promise.all(results.map((r) => r.refetch())),
   }
+}
+
+// "Cargar más" de una pestaña: pide la página siguiente de cada estado que tenga una página completa.
+export function useLoadMoreReports(tab: ReportTab) {
+  const queryClient = useQueryClient()
+  const [endAt, setEndAt] = useState<Partial<Record<ReportStatus, number>>>({})
+  const loadedOf = (status: ReportStatus) => queryClient.getQueryData<AdminReport[]>(adminKeys.reports(status)) ?? []
+  const pending = TAB_STATUSES[tab].filter((s) => canLoadMore(loadedOf(s).length, endAt[s] ?? null))
+  const mutation = useMutation({
+    mutationFn: () =>
+      Promise.all(
+        pending.map(async (status) => {
+          const loaded = loadedOf(status)
+          const page = await adminApi.reports(status, { ...nextReportCursor(loaded) })
+          return { status, page, before: loaded.length }
+        }),
+      ),
+    onSuccess: (results) => {
+      for (const { status, page, before } of results) {
+        queryClient.setQueryData<AdminReport[]>(adminKeys.reports(status), (prev) => appendById(prev, page))
+        if (!pageMayContinue(page.length)) setEndAt((prev) => ({ ...prev, [status]: before + page.length }))
+      }
+    },
+  })
+  return { canLoadMore: pending.length > 0, loadMore: () => mutation.mutateAsync(), isPending: mutation.isPending }
 }
 
 export function usePendingReportsCount(enabled = true) {

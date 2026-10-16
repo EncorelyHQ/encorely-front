@@ -5,7 +5,8 @@ import { formatEventDate, lineupText } from '@/features/events/format'
 import { Button, EmptyState, radius, Screen, Skeleton, space, Text, TicketIcon, useStyles, type Theme } from '@/ui'
 import { AdminGate, AdminQueryError } from '../components/AdminGate'
 import { StatusTag } from '../components/StatusTag'
-import { useAdminEvents } from '../hooks/queries'
+import { LoadMoreButton } from '../components/LoadMoreButton'
+import { useAdminEvents, useLoadMoreEvents } from '../hooks/queries'
 import { PlusIcon } from '../icons'
 import type { AdminEvent } from '../types'
 
@@ -32,6 +33,7 @@ function splitByTime(events: readonly AdminEvent[], now: number): Section[] {
 function AdminEvents() {
   const styles = useStyles(makeStyles)
   const events = useAdminEvents()
+  const more = useLoadMoreEvents()
   // Referencia = momento de la última carga: puro durante el render y se actualiza con cada refetch.
   const sections = useMemo(() => splitByTime(events.data ?? [], events.dataUpdatedAt), [events.data, events.dataUpdatedAt])
   const header = <Stack.Screen options={{ title: 'Conciertos' }} />
@@ -87,6 +89,9 @@ function AdminEvents() {
             onPress={() => router.push({ pathname: '/admin/events/[id]', params: { id: item.id } })}
           />
         )}
+        ListFooterComponent={
+          more.canLoadMore ? <LoadMoreButton label="Cargar más conciertos" loading={more.isPending} onPress={more.loadMore} /> : null
+        }
         ListEmptyComponent={
           <EmptyState
             icon={TicketIcon}

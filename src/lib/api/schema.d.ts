@@ -4374,6 +4374,10 @@ export interface operations {
             query?: {
                 /** @description Incluye eventos pasados */
                 includePast?: boolean;
+                /** @description 1–200, por defecto 100 */
+                limit?: number;
+                /** @description Eventos a saltar (paginación; orden por fecha) */
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -4388,6 +4392,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminEventDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -4821,6 +4834,12 @@ export interface operations {
             query?: {
                 /** @description Filtra por estado; por defecto open */
                 status?: "open" | "resolved" | "dismissed";
+                /** @description 1–200, por defecto 50 */
+                limit?: number;
+                /** @description createdAt del último reporte recibido (página siguiente; va con afterId) */
+                afterAt?: string;
+                /** @description id del último reporte recibido (va con afterAt) */
+                afterId?: string;
             };
             header?: never;
             path?: never;
