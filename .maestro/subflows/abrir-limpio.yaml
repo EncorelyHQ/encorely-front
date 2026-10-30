@@ -1,0 +1,9 @@
+# Abre la app sin sesión. En iOS la sesión vive en el Keychain, que clearState no borra: por eso clearKeychain.
+appId: com.encorely.app
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible: "Crear cuenta"
+    timeout: 20000

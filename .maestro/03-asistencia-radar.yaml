@@ -1,0 +1,30 @@
+# Marca asistencia a un concierto del seed y abre el radar. MAESTRO_E2E_EVENT = nombre exacto del evento.
+appId: com.encorely.app
+name: Asistencia y radar
+tags:
+  - conciertos
+---
+- runFlow:
+    file: subflows/entrar.yaml
+    env:
+      EMAIL: ${MAESTRO_E2E_EMAIL}
+      PASSWORD: ${MAESTRO_E2E_PASSWORD}
+- tapOn: "Conciertos"
+- scrollUntilVisible:
+    element: "Concierto ${MAESTRO_E2E_EVENT}.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Concierto ${MAESTRO_E2E_EVENT}.*"
+- runFlow:
+    when:
+      visible: "Voy a este concierto"
+    commands:
+      - tapOn: "Voy a este concierto"
+- extendedWaitUntil:
+    visible: "Ya no voy"
+    timeout: 15000
+# Radar: o hay personas, o el estado vacío honesto; nunca un spinner infinito.
+- scrollUntilVisible:
+    element: "Me interesa|Te interesa.*|Hicieron match · Escribir|Todavía nadie más con tu música marcó que va"
+    direction: DOWN
+    timeout: 20000

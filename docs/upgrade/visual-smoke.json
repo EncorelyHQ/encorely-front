@@ -1,0 +1,104 @@
+{
+  "scope": "Onboarding pasos 1-3. Capturas original/actual a 390,768,1440; comparación visual limitada a este flujo.",
+  "initialTextComparison": "No exacta: requiere revisión de iconos/espaciado; no constituye equivalencia completa de UI",
+  "baseline": [
+    {
+      "width": 390,
+      "textMatches": false,
+      "baselineOverflow": false,
+      "baselineScript": "http://127.0.0.1:8765/_expo/static/js/web/entry-36024fda3e21e014695f50dcb68cff62.js"
+    },
+    {
+      "width": 768,
+      "textMatches": false,
+      "baselineOverflow": false,
+      "baselineScript": "http://127.0.0.1:8765/_expo/static/js/web/entry-36024fda3e21e014695f50dcb68cff62.js"
+    },
+    {
+      "width": 1440,
+      "textMatches": false,
+      "baselineOverflow": false,
+      "baselineScript": "http://127.0.0.1:8765/_expo/static/js/web/entry-36024fda3e21e014695f50dcb68cff62.js"
+    }
+  ],
+  "current": [
+    {
+      "height": 844,
+      "overflow": false,
+      "scripts": [
+        "http://127.0.0.1:8765/_expo/static/js/web/entry-6bd8ed7e831ed79333bac9e3ad9fdca0.js"
+      ],
+      "width": 390
+    },
+    {
+      "height": 1024,
+      "overflow": false,
+      "scripts": [
+        "http://127.0.0.1:8765/_expo/static/js/web/entry-6bd8ed7e831ed79333bac9e3ad9fdca0.js"
+      ],
+      "width": 768
+    },
+    {
+      "height": 900,
+      "overflow": false,
+      "scripts": [
+        "http://127.0.0.1:8765/_expo/static/js/web/entry-6bd8ed7e831ed79333bac9e3ad9fdca0.js"
+      ],
+      "width": 1440
+    }
+  ],
+  "screenshotComparison": [
+    {
+      "width": 390,
+      "beforeSize": [
+        390,
+        844
+      ],
+      "afterSize": [
+        390,
+        844
+      ],
+      "meanPixelDifference": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "identical": true
+    },
+    {
+      "width": 768,
+      "beforeSize": [
+        768,
+        1024
+      ],
+      "afterSize": [
+        768,
+        1024
+      ],
+      "meanPixelDifference": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "identical": true
+    },
+    {
+      "width": 1440,
+      "beforeSize": [
+        1440,
+        900
+      ],
+      "afterSize": [
+        1440,
+        900
+      ],
+      "meanPixelDifference": [
+        0.041291666666666664,
+        0.0338912037037037,
+        0.06268518518518519
+      ],
+      "identical": false
+    }
+  ],
+  "limitations": "Onboarding solo; DOM inicial difiere en glifos. Capturas finales tomadas tras cargar fuentes. Sin OAuth o flujos autenticados."
+}

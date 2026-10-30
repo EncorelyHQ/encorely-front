@@ -1,0 +1,7 @@
+Issues with peer dependencies found
+
+✕ unmet peer react
+  Installed: 19.2.3
+  Wanted:
+    ^19.3.0:
+      react-reconciler@0.34.0

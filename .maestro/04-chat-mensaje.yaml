@@ -1,0 +1,26 @@
+# Envía un mensaje cifrado a un match existente. MAESTRO_E2E_PEER_NAME = nombre visible del match de MAESTRO_E2E_EMAIL.
+appId: com.encorely.app
+name: Enviar mensaje
+tags:
+  - chat
+---
+- runFlow:
+    file: subflows/entrar.yaml
+    env:
+      EMAIL: ${MAESTRO_E2E_EMAIL}
+      PASSWORD: ${MAESTRO_E2E_PASSWORD}
+- tapOn: "Chats"
+- extendedWaitUntil:
+    visible: "${MAESTRO_E2E_PEER_NAME}.*"
+    timeout: 20000
+- tapOn: "${MAESTRO_E2E_PEER_NAME}.*"
+- extendedWaitUntil:
+    visible: "Mensaje"
+    timeout: 20000
+- tapOn: "Mensaje"
+- evalScript: ${output.message = 'Hola desde Maestro ' + Date.now()}
+- inputText: ${output.message}
+- tapOn: "Enviar"
+- extendedWaitUntil:
+    visible: ${output.message}
+    timeout: 15000

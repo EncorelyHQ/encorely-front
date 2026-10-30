@@ -1,0 +1,8 @@
+# El primer arranque con sesión puede ofrecer activar avisos (PushPrimer). Las pruebas no dependen de push.
+appId: com.encorely.app
+---
+- runFlow:
+    when:
+      visible: "Activar avisos"
+    commands:
+      - tapOn: "Ahora no"

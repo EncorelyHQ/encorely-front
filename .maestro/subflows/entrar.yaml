@@ -1,0 +1,18 @@
+# Inicia sesión con EMAIL y PASSWORD recibidos por env desde el flujo que lo llama.
+appId: com.encorely.app
+---
+- runFlow: abrir-limpio.yaml
+- tapOn: "Ya tengo cuenta"
+- tapOn: "nombre@correo.com"
+- inputText: ${EMAIL}
+# El label visible y el campo comparten texto ("Contraseña"); index 1 es el campo (va después del label).
+- tapOn:
+    text: "Contraseña"
+    index: 1
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "Entrar"
+- runFlow: descartar-avisos.yaml
+- extendedWaitUntil:
+    visible: "Descubrir"
+    timeout: 20000

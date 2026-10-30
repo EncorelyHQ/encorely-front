@@ -1,0 +1,11 @@
+appId: com.encorely.app
+name: Registro y onboarding
+tags:
+  - registro
+---
+- runFlow:
+    file: subflows/registrar.yaml
+    env:
+      PASSWORD: ${MAESTRO_E2E_NEW_PASSWORD}
+- assertVisible: "Descubrir"
+- assertVisible: "Tú"

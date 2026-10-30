@@ -1,0 +1,209 @@
+✓ Lockfile passes supply-chain policies (verified 4m ago)
+[WARN] Moving @expo/ngrok that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @testing-library/react-native that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @types/react that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @types/styled-components-react-native that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving jest-expo that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving jest that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @types/jest that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-test-renderer that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving typescript that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @expo-google-fonts/golos-text that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @expo-google-fonts/inter that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @expo/metro-runtime that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @expo/vector-icons that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving @react-native-async-storage/async-storage that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-auth-session that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-blur that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-constants that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-crypto that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-font that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-haptics that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-linear-gradient that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-linking that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-router that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-secure-store that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-splash-screen that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-status-bar that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving expo-web-browser that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving lottie-react-native that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-dom that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-reanimated that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-gesture-handler that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-safe-area-context that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-screens that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-svg that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-web that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving react-native-worklets that was installed by a different package manager to "node_modules/.ignored"
+[WARN] Moving styled-components that was installed by a different package manager to "node_modules/.ignored"
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 31, reused 8, downloaded 0, added 0
+Progress: resolved 37, reused 14, downloaded 0, added 0
+Progress: resolved 40, reused 16, downloaded 9, added 0
+Progress: resolved 109, reused 27, downloaded 15, added 0
+Progress: resolved 150, reused 32, downloaded 15, added 0
+Progress: resolved 175, reused 49, downloaded 16, added 0
+Progress: resolved 180, reused 105, downloaded 16, added 0
+Progress: resolved 319, reused 132, downloaded 16, added 0
+Progress: resolved 374, reused 135, downloaded 17, added 0
+Progress: resolved 431, reused 139, downloaded 23, added 0
+Progress: resolved 574, reused 208, downloaded 31, added 0
+Progress: resolved 719, reused 239, downloaded 32, added 0
+Progress: resolved 840, reused 286, downloaded 32, added 0
+[WARN] 10 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 894, reused 419, downloaded 39, added 0
+Packages: +102 -158
++++++++++++++++++++++++++++++++-------------------------------------------------
+Progress: resolved 894, reused 712, downloaded 39, added 0
+Progress: resolved 894, reused 830, downloaded 39, added 10
+Progress: resolved 894, reused 830, downloaded 39, added 20
+Progress: resolved 894, reused 830, downloaded 39, added 33
+Progress: resolved 894, reused 830, downloaded 39, added 48
+Progress: resolved 894, reused 830, downloaded 39, added 65
+Progress: resolved 894, reused 830, downloaded 39, added 67
+Progress: resolved 894, reused 830, downloaded 39, added 68
+Progress: resolved 894, reused 830, downloaded 39, added 69
+Progress: resolved 894, reused 830, downloaded 39, added 75
+Progress: resolved 894, reused 830, downloaded 40, added 93
+Progress: resolved 894, reused 830, downloaded 40, added 97
+Progress: resolved 894, reused 830, downloaded 40, added 98
+Progress: resolved 894, reused 830, downloaded 40, added 99
+Progress: resolved 894, reused 830, downloaded 41, added 99
+Progress: resolved 894, reused 830, downloaded 42, added 100
+Progress: resolved 894, reused 830, downloaded 42, added 101
+Progress: resolved 894, reused 830, downloaded 43, added 101
+Progress: resolved 894, reused 830, downloaded 43, added 102
+Progress: resolved 894, reused 830, downloaded 43, added 102, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+dependencies:
++ @expo-google-fonts/golos-text 0.4.2
++ @expo-google-fonts/inter 0.4.2
+- @expo/metro-runtime
++ @expo/metro-runtime 55.0.12 (57.0.16 is available)
+- @expo/vector-icons
++ @expo/vector-icons 15.1.1
+- @react-native-async-storage/async-storage
++ @react-native-async-storage/async-storage 2.2.0 (3.1.1 is available)
+- expo
++ expo 55.0.31 (57.0.28 is available)
+- expo-auth-session
++ expo-auth-session 55.0.18 (57.0.15 is available)
+- expo-blur
++ expo-blur 55.0.18 (57.0.3 is available)
+- expo-constants
++ expo-constants 55.0.17 (57.0.21 is available)
+- expo-crypto
++ expo-crypto 55.0.19 (57.0.4 is available)
+- expo-font
++ expo-font 55.0.8 (57.0.4 is available)
+- expo-haptics
++ expo-haptics 55.0.18 (57.0.3 is available)
+- expo-linear-gradient
++ expo-linear-gradient 55.0.18 (57.0.2 is available)
+- expo-linking
++ expo-linking 55.0.17 (57.0.12 is available)
+- expo-router
++ expo-router 55.0.18 (57.0.26 is available)
+- expo-secure-store
++ expo-secure-store 55.0.18 (57.0.4 is available)
+- expo-splash-screen
++ expo-splash-screen 55.0.25 (57.0.10 is available)
+- expo-status-bar
++ expo-status-bar 55.0.6 (57.0.1 is available)
+- expo-web-browser
++ expo-web-browser 55.0.20 (57.0.3 is available)
+- lottie-react-native
++ lottie-react-native 7.3.6 (7.5.0 is available)
+- react
++ react 19.2.0 (19.3.0 is available)
+- react-dom
++ react-dom 19.2.0 (19.3.0 is available)
+- react-native
++ react-native 0.83.10 (0.87.1 is available)
+- react-native-gesture-handler
++ react-native-gesture-handler 2.30.1 (3.3.0 is available)
+- react-native-reanimated
++ react-native-reanimated 4.2.1 (4.7.1 is available)
+- react-native-safe-area-context
++ react-native-safe-area-context 5.6.2 (5.10.1 is available)
+- react-native-screens
++ react-native-screens 4.23.0
+- react-native-svg
++ react-native-svg 15.15.3 (15.15.5 is available)
+- react-native-web
++ react-native-web 0.21.2 (0.21.4 is available)
+- react-native-worklets
++ react-native-worklets 0.7.4 (0.13.0 is available)
+- styled-components
++ styled-components 6.3.12 (6.6.0 is available)
+
+devDependencies:
++ @expo/ngrok 4.1.3
+- @testing-library/react-native
++ @testing-library/react-native 14.1.0
+- @types/jest
++ @types/jest 29.5.14 (30.0.0 is available)
+- @types/react
++ @types/react 19.2.18 (19.3.0 is available)
++ @types/styled-components-react-native 5.2.5
++ jest 29.7.0 (30.5.2 is available)
+- jest-expo
++ jest-expo 55.0.22 (57.0.6 is available)
+- react-test-renderer
++ react-test-renderer 19.3.0
++ typescript 5.9.3 (7.0.2 is available)
+
+Done in 1m 16.3s using pnpm v11.21.0
+› Installing 1 SDK 55.0.0 compatible native module using pnpm
+> pnpm add expo-audio@~55.0.18
+✓ Lockfile passes supply-chain policies (verified 18s ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 26, reused 0, downloaded 0, added 0
+Progress: resolved 39, reused 25, downloaded 0, added 0
+Progress: resolved 40, reused 34, downloaded 0, added 0
+Progress: resolved 168, reused 45, downloaded 0, added 0
+Progress: resolved 179, reused 55, downloaded 0, added 0
+Progress: resolved 184, reused 72, downloaded 0, added 0
+Progress: resolved 407, reused 86, downloaded 0, added 0
+Progress: resolved 615, reused 150, downloaded 0, added 0
+Progress: resolved 793, reused 181, downloaded 0, added 0
+Progress: resolved 895, reused 241, downloaded 1, added 0
+[WARN] 10 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 895, reused 285, downloaded 1, added 0
+Packages: +1
++
+Progress: resolved 895, reused 600, downloaded 1, added 0
+Progress: resolved 895, reused 873, downloaded 1, added 0
+Progress: resolved 895, reused 873, downloaded 1, added 1, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+dependencies:
++ expo-audio 55.0.18 (57.0.5 is available)
+
+Done in 19.3s using pnpm v11.21.0
+"LSE" no se reconoce como un comando interno o externo,
+programa o archivo por lotes ejecutable.
+› Installing 1 SDK 55.0.0 compatible native module using pnpm
+> pnpm add expo-audio@~55.0.18
+✓ Lockfile passes supply-chain policies (verified 5s ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 37, reused 8, downloaded 0, added 0
+Progress: resolved 86, reused 27, downloaded 0, added 0
+Progress: resolved 174, reused 38, downloaded 0, added 0
+Progress: resolved 184, reused 59, downloaded 0, added 0
+Progress: resolved 332, reused 69, downloaded 0, added 0
+Progress: resolved 437, reused 97, downloaded 0, added 0
+Progress: resolved 619, reused 111, downloaded 0, added 0
+Progress: resolved 740, reused 143, downloaded 0, added 0
+Progress: resolved 895, reused 193, downloaded 0, added 0
+[WARN] 10 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 895, reused 223, downloaded 0, added 0
+Already up to date
+Progress: resolved 895, reused 243, downloaded 0, added 0, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+Done in 22.7s using pnpm v11.21.0

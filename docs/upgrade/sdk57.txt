@@ -1,0 +1,203 @@
+› Installing 1 other package using pnpm
+› Using 57.0.28 instead of ~56.0.23 for expo because this version was explicitly provided. Packages excluded from dependency validation should be listed in expo.install.exclude in package.json. Learn more: https://docs.expo.dev/more/expo-cli/#configuring-dependency-validation
+> pnpm add expo@57.0.28
+✓ Lockfile passes supply-chain policies (verified 1m ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 40, reused 21, downloaded 0, added 0
+Progress: resolved 105, reused 33, downloaded 0, added 0
+Progress: resolved 177, reused 38, downloaded 0, added 0
+Progress: resolved 184, reused 46, downloaded 0, added 0
+Progress: resolved 249, reused 67, downloaded 0, added 0
+Progress: resolved 421, reused 82, downloaded 0, added 0
+Progress: resolved 517, reused 110, downloaded 0, added 0
+Progress: resolved 669, reused 134, downloaded 0, added 0
+Progress: resolved 779, reused 158, downloaded 0, added 0
+Progress: resolved 850, reused 172, downloaded 0, added 0
+Progress: resolved 906, reused 231, downloaded 0, added 0
+Progress: resolved 911, reused 277, downloaded 0, added 0
+[WARN] 9 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 911, reused 299, downloaded 0, added 0
+[WARN] Tarball download average speed 21 KiB/s (size 45 KiB) is below 50 KiB/s: https://registry.npmjs.org/@expo/prebuild-config/-/prebuild-config-57.0.18.tgz (GET)
+[WARN] Tarball download average speed 35 KiB/s (size 78 KiB) is below 50 KiB/s: https://registry.npmjs.org/@expo/metro-file-map/-/metro-file-map-57.0.4.tgz (GET)
+Packages: +62 -41
+++++++++++++++++++++++++++++++++++++++++++++++++--------------------------------
+Progress: resolved 911, reused 350, downloaded 1, added 0
+Progress: resolved 911, reused 512, downloaded 8, added 0
+Progress: resolved 911, reused 599, downloaded 9, added 0
+Progress: resolved 911, reused 782, downloaded 11, added 0
+Progress: resolved 911, reused 846, downloaded 16, added 0
+Progress: resolved 911, reused 849, downloaded 27, added 0
+Progress: resolved 911, reused 849, downloaded 35, added 2
+Progress: resolved 911, reused 849, downloaded 38, added 8
+Progress: resolved 911, reused 849, downloaded 39, added 14
+Progress: resolved 911, reused 849, downloaded 39, added 19
+Progress: resolved 911, reused 849, downloaded 39, added 24
+Progress: resolved 911, reused 849, downloaded 39, added 26
+Progress: resolved 911, reused 849, downloaded 39, added 34
+Progress: resolved 911, reused 849, downloaded 39, added 46
+Progress: resolved 911, reused 849, downloaded 40, added 56
+Progress: resolved 911, reused 849, downloaded 40, added 58
+Progress: resolved 911, reused 849, downloaded 40, added 59
+Progress: resolved 911, reused 849, downloaded 40, added 60
+Progress: resolved 911, reused 849, downloaded 40, added 61
+Progress: resolved 911, reused 849, downloaded 41, added 61
+Progress: resolved 911, reused 849, downloaded 41, added 62
+Progress: resolved 911, reused 849, downloaded 41, added 62, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+dependencies:
+- expo 56.0.23
++ expo 57.0.28
+
+Done in 59.6s using pnpm v11.21.0
+› Running npx expo install under the updated expo version
+> expo install --fix
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+The following packages should be updated for best compatibility with the installed expo version:
+  @expo/metro-runtime@56.0.21 - expected version: ~57.0.16
+  expo-audio@56.0.13 - expected version: ~57.0.5
+  expo-auth-session@56.0.19 - expected version: ~57.0.15
+  expo-blur@56.0.4 - expected version: ~57.0.3
+  expo-constants@56.0.27 - expected version: ~57.0.21
+  expo-crypto@56.0.5 - expected version: ~57.0.4
+  expo-font@56.0.7 - expected version: ~57.0.4
+  expo-haptics@56.0.3 - expected version: ~57.0.3
+  expo-linear-gradient@56.0.4 - expected version: ~57.0.2
+  expo-linking@56.0.18 - expected version: ~57.0.12
+  expo-router@56.2.21 - expected version: ~57.0.26
+  expo-secure-store@56.0.4 - expected version: ~57.0.4
+  expo-splash-screen@56.0.15 - expected version: ~57.0.10
+  expo-status-bar@56.0.4 - expected version: ~57.0.1
+  expo-web-browser@56.0.6 - expected version: ~57.0.3
+  lottie-react-native@7.3.6 - expected version: ~7.3.8
+  react-native@0.85.3 - expected version: 0.86.3
+  react-native-gesture-handler@2.31.2 - expected version: ~2.32.0
+  react-native-reanimated@4.3.1 - expected version: 4.5.1
+  react-native-worklets@0.8.3 - expected version: 0.10.1
+  jest-expo@56.0.5 - expected version: ~57.0.6
+Your project may not work correctly until you install the expected versions of the packages.
+› Installing 21 SDK 57.0.0 compatible native modules using pnpm
+> pnpm add @expo/metro-runtime@~57.0.16 expo-audio@~57.0.5 expo-auth-session@~57.0.15 expo-blur@~57.0.3 expo-constants@~57.0.21 expo-crypto@~57.0.4 expo-font@~57.0.4 expo-haptics@~57.0.3 expo-linear-gradient@~57.0.2 expo-linking@~57.0.12 expo-router@~57.0.26 expo-secure-store@~57.0.4 expo-splash-screen@~57.0.10 expo-status-bar@~57.0.1 expo-web-browser@~57.0.3 lottie-react-native@~7.3.8 react-native@0.86.3 react-native-gesture-handler@~2.32.0 react-native-reanimated@4.5.1 react-native-worklets@0.10.1
+✓ Lockfile passes supply-chain policies (verified 8s ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 36, reused 7, downloaded 0, added 0
+Progress: resolved 40, reused 19, downloaded 0, added 0
+Progress: resolved 41, reused 20, downloaded 1, added 0
+Progress: resolved 117, reused 22, downloaded 7, added 0
+Progress: resolved 173, reused 30, downloaded 12, added 0
+Progress: resolved 181, reused 52, downloaded 12, added 0
+Progress: resolved 228, reused 66, downloaded 12, added 0
+Progress: resolved 305, reused 80, downloaded 12, added 0
+Progress: resolved 384, reused 94, downloaded 12, added 0
+Progress: resolved 453, reused 111, downloaded 13, added 0
+Progress: resolved 487, reused 144, downloaded 14, added 0
+Progress: resolved 540, reused 174, downloaded 17, added 0
+Progress: resolved 660, reused 209, downloaded 18, added 0
+Progress: resolved 795, reused 260, downloaded 18, added 0
+Progress: resolved 872, reused 343, downloaded 18, added 0
+[WARN] 9 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 875, reused 367, downloaded 18, added 0
+Packages: +54 -90
+++++++++++++++++++++++++++++++--------------------------------------------------
+Progress: resolved 875, reused 431, downloaded 22, added 0
+Progress: resolved 875, reused 552, downloaded 24, added 0
+Progress: resolved 875, reused 820, downloaded 25, added 0
+Progress: resolved 875, reused 822, downloaded 28, added 3
+Progress: resolved 875, reused 822, downloaded 28, added 6
+Progress: resolved 875, reused 822, downloaded 29, added 11
+Progress: resolved 875, reused 822, downloaded 30, added 21
+Progress: resolved 875, reused 822, downloaded 30, added 37
+Progress: resolved 875, reused 822, downloaded 30, added 39
+Progress: resolved 875, reused 822, downloaded 30, added 43
+Progress: resolved 875, reused 822, downloaded 30, added 47
+Progress: resolved 875, reused 822, downloaded 30, added 48
+Progress: resolved 875, reused 822, downloaded 30, added 50
+Progress: resolved 875, reused 822, downloaded 30, added 51
+Progress: resolved 875, reused 822, downloaded 31, added 51
+Progress: resolved 875, reused 822, downloaded 31, added 52
+Progress: resolved 875, reused 822, downloaded 32, added 52
+Progress: resolved 875, reused 822, downloaded 32, added 53
+Progress: resolved 875, reused 822, downloaded 32, added 54
+Progress: resolved 875, reused 822, downloaded 32, added 54, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+dependencies:
+- @expo/metro-runtime 56.0.21
++ @expo/metro-runtime 57.0.16
+- expo-audio 56.0.13
++ expo-audio 57.0.5
+- expo-auth-session 56.0.19
++ expo-auth-session 57.0.15
+- expo-blur 56.0.4
++ expo-blur 57.0.3
+- expo-constants 56.0.27
++ expo-constants 57.0.21
+- expo-crypto 56.0.5
++ expo-crypto 57.0.4
+- expo-font 56.0.7
++ expo-font 57.0.4
+- expo-haptics 56.0.3
++ expo-haptics 57.0.3
+- expo-linear-gradient 56.0.4
++ expo-linear-gradient 57.0.2
+- expo-linking 56.0.18
++ expo-linking 57.0.12
+- expo-router 56.2.21
++ expo-router 57.0.26
+- expo-secure-store 56.0.4
++ expo-secure-store 57.0.4
+- expo-splash-screen 56.0.15
++ expo-splash-screen 57.0.10
+- expo-status-bar 56.0.4
++ expo-status-bar 57.0.1
+- expo-web-browser 56.0.6
++ expo-web-browser 57.0.3
+- lottie-react-native 7.3.6
++ lottie-react-native 7.3.8 (7.5.0 is available)
+- react-native 0.85.3
++ react-native 0.86.3 (0.87.1 is available)
+- react-native-gesture-handler 2.31.2
++ react-native-gesture-handler 2.32.0 (3.3.0 is available)
+- react-native-reanimated 4.3.1
++ react-native-reanimated 4.5.1 (4.7.1 is available)
+- react-native-worklets 0.8.3
++ react-native-worklets 0.10.1 (0.13.0 is available)
+
+Done in 45.7s using pnpm v11.21.0
+› Added config plugin: expo-status-bar
+> pnpm add --save-dev jest-expo@~57.0.6
+✓ Lockfile passes supply-chain policies (verified 4s ago)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 38, reused 16, downloaded 0, added 0
+Progress: resolved 85, reused 30, downloaded 0, added 0
+Progress: resolved 177, reused 48, downloaded 0, added 0
+Progress: resolved 283, reused 66, downloaded 0, added 0
+Progress: resolved 463, reused 98, downloaded 0, added 0
+Progress: resolved 708, reused 130, downloaded 1, added 0
+Progress: resolved 872, reused 190, downloaded 1, added 0
+Progress: resolved 876, reused 272, downloaded 1, added 0
+[WARN] 9 deprecated subdependencies found: @ungap/structured-clone@1.3.0, @xmldom/xmldom@0.8.11, abab@2.0.6, domexception@4.0.0, glob@7.2.3, inflight@1.0.6, uuid@3.4.0, uuid@7.0.3, whatwg-encoding@2.0.0
+Progress: resolved 876, reused 319, downloaded 1, added 0
+Packages: +40 -39
+++++++++++++++++++++++++++++++++++++++++---------------------------------------
+Progress: resolved 876, reused 591, downloaded 1, added 0
+Progress: resolved 876, reused 816, downloaded 1, added 0
+Progress: resolved 876, reused 853, downloaded 2, added 4
+Progress: resolved 876, reused 853, downloaded 2, added 9
+Progress: resolved 876, reused 853, downloaded 2, added 13
+Progress: resolved 876, reused 853, downloaded 2, added 20
+Progress: resolved 876, reused 853, downloaded 2, added 28
+Progress: resolved 876, reused 853, downloaded 2, added 29
+Progress: resolved 876, reused 853, downloaded 2, added 30
+Progress: resolved 876, reused 853, downloaded 2, added 32
+Progress: resolved 876, reused 853, downloaded 2, added 33
+Progress: resolved 876, reused 853, downloaded 2, added 34
+Progress: resolved 876, reused 853, downloaded 2, added 39
+Progress: resolved 876, reused 853, downloaded 2, added 40, done
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+devDependencies:
+- jest-expo 56.0.5
++ jest-expo 57.0.6
+
+Done in 26.3s using pnpm v11.21.0

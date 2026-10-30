@@ -1,0 +1,11 @@
+src/__tests__/usePreviewAudio.test.ts(27,11): error TS2339: Property 'rerender' does not exist on type 'Promise<RenderHookResult<unknown, unknown>>'.
+src/__tests__/usePreviewAudio.test.ts(27,35): error TS2345: Argument of type '({ front, url }: { front: any; url: any; }) => { isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }' is not assignable to parameter of type '(props: unknown) => { isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }'.
+  Types of parameters '__0' and 'props' are incompatible.
+    Type 'unknown' is not assignable to type '{ front: any; url: any; }'.
+src/__tests__/usePreviewAudio.test.ts(37,11): error TS2339: Property 'result' does not exist on type 'Promise<RenderHookResult<unknown, unknown>>'.
+src/__tests__/usePreviewAudio.test.ts(37,19): error TS2339: Property 'rerender' does not exist on type 'Promise<RenderHookResult<unknown, unknown>>'.
+src/__tests__/usePreviewAudio.test.ts(37,43): error TS2345: Argument of type '({ front }: { front: any; }) => { isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }' is not assignable to parameter of type '(props: unknown) => { isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }'.
+  Types of parameters '__0' and 'props' are incompatible.
+    Type 'unknown' is not assignable to type '{ front: any; }'.
+src/__tests__/usePreviewAudio.test.ts(53,11): error TS2339: Property 'unmount' does not exist on type 'Promise<RenderHookResult<{ isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }, unknown>>'.
+src/__tests__/usePreviewAudio.test.ts(63,11): error TS2339: Property 'result' does not exist on type 'Promise<RenderHookResult<{ isPlaying: boolean; progress: number; stopAndUnload: () => void; togglePlay: () => void; }, unknown>>'.

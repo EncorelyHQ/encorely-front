@@ -1,0 +1,117 @@
+FAIL src/__tests__/usePreviewAudio.test.ts (9.772 s)
+  ● no crea audio para tarjetas traseras o sin preview
+
+    TypeError: rerender is not a function
+
+      28 |     initialProps: { front: false, url: 'https://example.com/preview.mp3' },
+      29 |   });
+    > 30 |   rerender({ front: true, url: '' });
+         |   ^
+      31 |   expect(mockCreatePlayer).not.toHaveBeenCalled();
+      32 | });
+      33 |
+
+      at Object.rerender (src/__tests__/usePreviewAudio.test.ts:30:3)
+
+  ● reproduce, pausa y libera la tarjeta al salir del frente
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 0
+
+      41 |   player.playing = true;
+      42 |   act(() => result.current.togglePlay());
+    > 43 |   expect(player.pause).toHaveBeenCalledTimes(1);
+         |                        ^
+      44 |   rerender({ front: false });
+      45 |   expect(player.remove).toHaveBeenCalledTimes(1);
+      46 | });
+
+      at Object.toHaveBeenCalledTimes (src/__tests__/usePreviewAudio.test.ts:43:24)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● reproduce, pausa y libera la tarjeta al salir del frente
+
+    TypeError: Cannot read properties of undefined (reading 'current')
+
+      40 |   await waitFor(() => expect(player.play).toHaveBeenCalledTimes(1));
+      41 |   player.playing = true;
+    > 42 |   act(() => result.current.togglePlay());
+         |                    ^
+      43 |   expect(player.pause).toHaveBeenCalledTimes(1);
+      44 |   rerender({ front: false });
+      45 |   expect(player.remove).toHaveBeenCalledTimes(1);
+
+      at current (src/__tests__/usePreviewAudio.test.ts:42:20)
+      at callback (node_modules/.pnpm/@testing-library+react-nati_583f240f1c782db0c8307f553696b583/node_modules/@testing-library/react-native/src/act.ts:72:33)
+      at callback (node_modules/.pnpm/@testing-library+react-nati_583f240f1c782db0c8307f553696b583/node_modules/@testing-library/react-native/src/act.ts:30:24)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/.pnpm/react@19.2.0/node_modules/react/cjs/react.development.js:814:22)
+      at actImplementation (node_modules/.pnpm/@testing-library+react-nati_583f240f1c782db0c8307f553696b583/node_modules/@testing-library/react-native/src/act.ts:29:25)
+      at _act (node_modules/.pnpm/@testing-library+react-nati_583f240f1c782db0c8307f553696b583/node_modules/@testing-library/react-native/src/act.ts:72:10)
+      at Object.<anonymous> (src/__tests__/usePreviewAudio.test.ts:42:6)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● ignora la carga tardía de una tarjeta desmontada
+
+    TypeError: unmount is not a function
+
+      52 |   mockCreatePlayer.mockReturnValue(player as unknown as ReturnType<typeof createAudioPlayer>);
+      53 |   const { unmount } = renderHook(() => usePreviewAudio('preview.mp3', true));
+    > 54 |   unmount();
+         |   ^
+      55 |   await act(async () => { finishMode(); });
+      56 |   expect(player.play).not.toHaveBeenCalled();
+      57 |   expect(player.remove).toHaveBeenCalledTimes(1);
+
+      at Object.unmount (src/__tests__/usePreviewAudio.test.ts:54:3)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● actualiza el progreso y el fin de pista
+
+    TypeError: Cannot read properties of undefined (reading '1')
+
+      62 |   mockCreatePlayer.mockReturnValue(player as unknown as ReturnType<typeof createAudioPlayer>);
+      63 |   const { result } = renderHook(() => usePreviewAudio('preview.mp3', true));
+    > 64 |   const notify = player.addListener.mock.calls[0][1] as (status: object) => void;
+         |                                                  ^
+      65 |   act(() => notify({ playing: true, currentTime: 5, duration: 10, didJustFinish: false }));
+      66 |   expect(result.current.progress).toBe(0.5);
+      67 |   expect(result.current.isPlaying).toBe(true);
+
+      at Object.<anonymous> (src/__tests__/usePreviewAudio.test.ts:64:50)
+
+  ● libera el reproductor cuando falla la configuración de audio
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 0
+
+      76 |   mockCreatePlayer.mockReturnValue(player as unknown as ReturnType<typeof createAudioPlayer>);
+      77 |   renderHook(() => usePreviewAudio('preview.mp3', true));
+    > 78 |   await waitFor(() => expect(player.remove).toHaveBeenCalledTimes(1));
+         |                ^
+      79 |   expect(player.play).not.toHaveBeenCalled();
+      80 | });
+      81 |
+
+      at Object.<anonymous> (src/__tests__/usePreviewAudio.test.ts:78:16)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+PASS src/__tests__/useSwipeEngine.test.ts
+PASS src/__tests__/SpotifyAuthContext.test.tsx
+PASS src/__tests__/apiRequest.test.ts
+
+Test Suites: 1 failed, 3 passed, 4 total
+Tests:       5 failed, 24 passed, 29 total
+Snapshots:   0 total
+Time:        19.424 s

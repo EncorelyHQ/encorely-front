@@ -1,0 +1,29 @@
+# Bloquea al match desde el chat. DESTRUCTIVO para ese par: corre al final o con una pareja desechable.
+appId: com.encorely.app
+name: Bloquear
+tags:
+  - seguridad
+---
+- runFlow:
+    file: subflows/entrar.yaml
+    env:
+      EMAIL: ${MAESTRO_E2E_EMAIL}
+      PASSWORD: ${MAESTRO_E2E_PASSWORD}
+- tapOn: "Chats"
+- tapOn: "${MAESTRO_E2E_PEER_NAME}.*"
+- tapOn: "Más opciones"
+- tapOn: "Bloquear o reportar"
+- tapOn: "Bloquear a ${MAESTRO_E2E_PEER_NAME}"
+# En el paso de confirmación el título del sheet y el botón dicen lo mismo: el título va primero (0), el botón es el 1.
+- tapOn:
+    text: "Bloquear a ${MAESTRO_E2E_PEER_NAME}"
+    index: 1
+- extendedWaitUntil:
+    notVisible: "Más opciones"
+    timeout: 15000
+- tapOn: "Tú"
+- scrollUntilVisible:
+    element: "Personas bloqueadas"
+    direction: DOWN
+- tapOn: "Personas bloqueadas"
+- assertVisible: "${MAESTRO_E2E_PEER_NAME}.*"
