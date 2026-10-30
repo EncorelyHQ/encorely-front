@@ -74,7 +74,10 @@
       "typedRoutes": false
     },
     "extra": {
-      "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c"
+      "spotifyClientId": "30306a5149be49afb8dc14a58a611b1c",
+      "eas": {
+        "projectId": "c483e356-e23a-4ba4-806e-583225237d7f"
+      }
     },
     "ios": {
       "supportsTablet": false,
@@ -138,6 +141,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "single"
-    }
+    },
+    "owner": "lmilo"
   }
 }
