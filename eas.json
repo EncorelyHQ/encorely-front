@@ -17,7 +17,7 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://api-staging.encorely.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://encorely-api.onrender.com" }
     },
     "demo": {
       "distribution": "internal",
@@ -27,7 +27,7 @@
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://api.encorely.example" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://encorely-api.onrender.com" }
     }
   },
   "submit": {
