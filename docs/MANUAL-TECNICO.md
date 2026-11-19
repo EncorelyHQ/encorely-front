@@ -434,8 +434,8 @@ Es lo que hace la CI. Genera los bundles Hermes de Android e iOS en `dist/` (ign
 |---|---|---|
 | `development` | Dev client interno, APK | `http://10.0.2.2:5000` |
 | `development-simulator` | Igual, para el simulador de iOS | hereda de `development` |
-| `preview` | APK interno o ad hoc iOS para QA | placeholder `https://api-staging.encorely.example` |
-| `production` | AAB para Play / IPA para App Store, `autoIncrement` | placeholder `https://api.encorely.example` |
+| `preview` | APK interno o ad hoc iOS para QA | `https://encorely-api.northcentralus.cloudapp.azure.com` (Azure) |
+| `production` | AAB para Play / IPA para App Store, `autoIncrement` | `https://encorely-api.northcentralus.cloudapp.azure.com` (Azure) |
 
 `cli.appVersionSource: remote`: EAS lleva `versionCode` y `buildNumber`. La CLI se usa fijada a la versión de `eas.json`:
 

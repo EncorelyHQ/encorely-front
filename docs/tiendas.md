@@ -22,8 +22,8 @@ Leyenda: ✅ hecho en el repo · 🟡 hecho a medias o con placeholder · ⬜ lo
 |---|---|---|
 | `development` | Dev client interno, APK | `http://10.0.2.2:5000` (back local visto desde el emulador Android) |
 | `development-simulator` | Igual, para el simulador iOS (reemplaza al viejo `validation-ios-simulator`) | igual |
-| `preview` | Instalable interno (APK / ad hoc iOS) para QA y testers | 🟡 placeholder `https://api-staging.encorely.example` |
-| `production` | AAB para Play / IPA para App Store, `autoIncrement` | 🟡 placeholder `https://api.encorely.example` |
+| `preview` | Instalable interno (APK / ad hoc iOS) para QA y testers | `https://encorely-api.northcentralus.cloudapp.azure.com` (Azure) |
+| `production` | AAB para Play / IPA para App Store, `autoIncrement` | `https://encorely-api.northcentralus.cloudapp.azure.com` (Azure) |
 
 Los perfiles `validation-*` anteriores se reemplazaron: no tenían `EXPO_PUBLIC_API_URL`, así que el build arrancaba sin
 servidor (la app muestra "no tiene configurada la dirección del servidor"). `development` cubre `validation-android`,
